@@ -16,12 +16,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TasaVE">
 
-        <!-- Google Mobile Ads (AdMob) App ID -->
-        <!-- ID de prueba oficial de Google para desarrollo / evaluación: ca-app-pub-3940256099942544~3347511713 -->
-        <!-- NOTA: Reemplazar por tu App ID real de AdMob obtenido en admob.google.com antes de publicar en Play Store -->
+        <!-- Google Mobile Ads (AdMob) App ID Real de Producción -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-1192254236776922~3391721063" />
 
         <activity
             android:name=".MainActivity"
