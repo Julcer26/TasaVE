@@ -1,6 +1,7 @@
 {
   "name": "Tasa VE",
-  "description": "Calculadora y cotizadora de tasas de cambio en tiempo real para Venezuela (Dólar, Euro, USDT) con modo offline.",
+  "description": "Calculadora y cotizadora de tasas de cambio en tiempo real para Venezuela (Dólar BCV, Euro BCV, USDT Binance) con modo offline, historial de conversiones, anuncios no invasivos y compra Pro.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "version": "1.0.0",
+  "applicationId": "com.julcer26.tasave"
 }

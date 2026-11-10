@@ -1,9 +1,11 @@
-package com.example.ui
+package com.julcer26.tasave.ui
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import com.julcer26.tasave.ads.TopBannerAd
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -51,17 +53,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.R
+import com.julcer26.tasave.R
 import androidx.compose.ui.res.painterResource
-import com.example.data.ConversionHistory
-import com.example.data.RateInfo
+import com.julcer26.tasave.data.ConversionHistory
+import com.julcer26.tasave.data.RateInfo
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun TasaVeScreen(viewModel: TasaVeViewModel) {
+fun TasaVeScreen(
+    viewModel: TasaVeViewModel,
+    activity: Activity? = null
+) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -69,11 +74,23 @@ fun TasaVeScreen(viewModel: TasaVeViewModel) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
+    val proPrice by viewModel.proProductPrice.collectAsStateWithLifecycle()
+    val purchaseStatus by viewModel.purchaseStatusMessage.collectAsStateWithLifecycle()
+    val historyList by viewModel.historyState.collectAsStateWithLifecycle()
 
     val isDark = themeMode == "DARK"
 
-    // Settings Modal State
+    // Settings & History Modal States
     var showSettings by remember { mutableStateOf(false) }
+    var showHistory by remember { mutableStateOf(false) }
+
+    LaunchedEffect(purchaseStatus) {
+        purchaseStatus?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearPurchaseStatus()
+        }
+    }
 
     // Focus state for inputs
     var topFocused by remember { mutableStateOf(false) }
@@ -155,9 +172,84 @@ fun TasaVeScreen(viewModel: TasaVeViewModel) {
                             color = textPrimary,
                             letterSpacing = (-0.5).sp
                         )
+
+                        if (isProUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFFF59E0B))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "PRO",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Black
+                                )
+                            }
+                        }
                     }
                 },
                 actions = {
+                    // Pro Buy Button (if not already pro)
+                    if (!isProUser) {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 6.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(Color(0xFFF59E0B), Color(0xFFD97706))
+                                    )
+                                )
+                                .clickable {
+                                    if (activity != null) {
+                                        viewModel.purchasePro(activity)
+                                    } else {
+                                        showSettings = true
+                                    }
+                                }
+                                .padding(horizontal = 9.dp, vertical = 5.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Pro",
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = "PRO $proPrice",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                    }
+
+                    // Conversion History Button
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
+                            .clickable(onClick = { showHistory = true }),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Historial",
+                            tint = textPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
                     // Modern Circle Refresh Button
                     Box(
                         modifier = Modifier
@@ -219,10 +311,14 @@ fun TasaVeScreen(viewModel: TasaVeViewModel) {
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(2.dp))
+            // Non-intrusive Top Banner Ad (hidden for Pro users)
+            TopBannerAd(
+                isDark = isDark,
+                isProUser = isProUser
+            )
 
             // Resilience & Offline alerts banner
             if (uiState.isOfflineError || (uiState.usdBcv?.isLocalOffline == true)) {
@@ -700,6 +796,49 @@ fun TasaVeScreen(viewModel: TasaVeViewModel) {
                         }
                     }
 
+                    // Actions: Guardar en Historial y Ver Historial
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                val saved = viewModel.saveConversionToHistory()
+                                if (saved) {
+                                    Toast.makeText(context, "Conversión guardada en el historial", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Ingresa un monto para guardar el cálculo", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isDark) Color(0x1F10B981) else Color(0x1410B981),
+                                contentColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                            ),
+                            contentPadding = PaddingValues(vertical = 10.dp)
+                        ) {
+                            Icon(Icons.Default.BookmarkAdd, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Guardar cálculo", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = { showHistory = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, if (isDark) Color(0x2694A3B8) else Color(0x26475569)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = textPrimary
+                            ),
+                            contentPadding = PaddingValues(vertical = 10.dp)
+                        ) {
+                            Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Ver historial", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     // Live Multi-Rate Comparison Panel
                     val parsedVes = viewModel.vesAmount.toDoubleOrNull() ?: 0.0
                     val parsedForeign = viewModel.foreignAmount.toDoubleOrNull() ?: 0.0
@@ -949,12 +1088,41 @@ fun TasaVeScreen(viewModel: TasaVeViewModel) {
         }
     }
 
-    // 4. SETTINGS LIGHTWEIGHT COMPACT POPUP
+    // 4. DIALOGS: HISTORY AND SETTINGS
+    if (showHistory) {
+        HistoryDialog(
+            isDark = isDark,
+            historyList = historyList,
+            onDismiss = { showHistory = false },
+            onLoadItem = { item ->
+                viewModel.loadConversion(item)
+                showHistory = false
+                Toast.makeText(context, "Conversión cargada en la calculadora", Toast.LENGTH_SHORT).show()
+            },
+            onClearHistory = {
+                viewModel.clearHistory()
+                Toast.makeText(context, "Historial vaciado", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
     if (showSettings) {
         SleekSettingsDialog(
             isDark = isDark,
+            isProUser = isProUser,
+            proPrice = proPrice,
             onDismiss = { showSettings = false },
-            onToggleTheme = { viewModel.toggleTheme() }
+            onToggleTheme = { viewModel.toggleTheme() },
+            onPurchasePro = {
+                if (activity != null) {
+                    viewModel.purchasePro(activity)
+                } else {
+                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onRestorePurchases = {
+                viewModel.restorePurchases()
+            }
         )
     }
 }
@@ -991,7 +1159,12 @@ fun RateSelectorCard(
                 scaleY = scale.value
             }
             .clip(RoundedCornerShape(20.dp))
-            .clickable { onSelect() }
+            .clickable {
+                onSelect()
+                if (rateInfo != null) {
+                    onCopy(rateInfo.rate)
+                }
+            }
             .background(
                 if (isSelected) {
                     if (isDark) Color(0x1F222226) else Color(0x3DFFFFFF)
@@ -1052,10 +1225,202 @@ fun RateSelectorCard(
 }
 
 @Composable
+fun HistoryDialog(
+    isDark: Boolean,
+    historyList: List<ConversionHistory>,
+    onDismiss: () -> Unit,
+    onLoadItem: (ConversionHistory) -> Unit,
+    onClearHistory: () -> Unit
+) {
+    val dialogBg = if (isDark) Color(0xFF0E0E10) else Color(0xFFF1F5F9)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    Dialog(
+        onDismissRequest = { onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.85f)
+                .padding(12.dp)
+                .border(
+                    BorderStroke(1.dp, if (isDark) Color(0x1F94A3B8) else Color(0x1F475569)),
+                    RoundedCornerShape(24.dp)
+                ),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = null,
+                            tint = if (isDark) Color(0xFF10B981) else Color(0xFF059669),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Historial de Conversiones",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0x1AFFFFFF) else Color(0x0D000000))
+                            .clickable { onDismiss() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cerrar",
+                            tint = textSecondary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+
+                Divider(color = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569))
+
+                if (historyList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BookmarkBorder,
+                                contentDescription = null,
+                                tint = textSecondary,
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Text(
+                                text = "Sin conversiones guardadas aún",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textPrimary
+                            )
+                            Text(
+                                text = "Usa 'Guardar cálculo' en la calculadora para almacenar tus conversiones aquí.",
+                                fontSize = 11.sp,
+                                color = textSecondary,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        historyList.forEach { item ->
+                            val dateStr = SimpleDateFormat("dd/MM/yyyy h:mm a", Locale.getDefault()).format(Date(item.timestamp))
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .clickable { onLoadItem(item) }
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        Text(
+                                            text = "${String.format(Locale.US, "%,.2f", item.amountFrom)} ${item.currencyFrom} = ${String.format(Locale.US, "%,.2f", item.amountTo)} ${item.currencyTo}",
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = textPrimary
+                                        )
+                                        Text(
+                                            text = "Tasa: Bs. ${String.format(Locale.US, "%.2f", item.rate)} • $dateStr",
+                                            fontSize = 10.sp,
+                                            color = textSecondary
+                                        )
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(if (isDark) Color(0x1F10B981) else Color(0x1410B981))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Cargar",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Botón para vaciar historial
+                    OutlinedButton(
+                        onClick = onClearHistory,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFEF4444)
+                        ),
+                        border = BorderStroke(1.dp, Color(0x40EF4444))
+                    ) {
+                        Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = "Borrar todo el historial", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun SleekSettingsDialog(
     isDark: Boolean,
+    isProUser: Boolean,
+    proPrice: String,
     onDismiss: () -> Unit,
-    onToggleTheme: () -> Unit
+    onToggleTheme: () -> Unit,
+    onPurchasePro: () -> Unit,
+    onRestorePurchases: () -> Unit
 ) {
     var expandPrivacy by remember { mutableStateOf(false) }
     var expandTerms by remember { mutableStateOf(false) }
@@ -1118,7 +1483,91 @@ fun SleekSettingsDialog(
 
                 Divider(color = dividerColor)
 
-                // Interfax / Switch Mode Selector Row
+                // PRO UPGRADE / IAP SECTION ($2.99 USD)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isProUser) {
+                            if (isDark) Color(0x1F10B981) else Color(0x1410B981)
+                        } else {
+                            if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
+                        }
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isProUser) Color(0x4D10B981) else Color(0x4DF59E0B)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isProUser) Icons.Default.Verified else Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (isProUser) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = if (isProUser) "Tasa VE Pro Activo ⭐" else "Tasa VE Pro ($proPrice)",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                            )
+                        }
+
+                        Text(
+                            text = if (isProUser) {
+                                "¡Gracias por tu apoyo! Los anuncios están desactivados permanentemente y cuentas con funciones premium."
+                            } else {
+                                "Pago único de $proPrice (sin suscripciones recurrentes). Elimina para siempre todos los anuncios publicitarios y respalda las mejoras del proyecto."
+                            },
+                            fontSize = 11.sp,
+                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                            lineHeight = 16.sp
+                        )
+
+                        if (!isProUser) {
+                            Button(
+                                onClick = onPurchasePro,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFF59E0B),
+                                    contentColor = Color.Black
+                                )
+                            ) {
+                                Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Quitar Publicidad ($proPrice)",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                TextButton(onClick = onRestorePurchases) {
+                                    Text(
+                                        text = "Restaurar compra anterior",
+                                        fontSize = 11.sp,
+                                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Interfaz / Switch Mode Selector Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1165,13 +1614,13 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Privacy Disclosure con Local storage
+                // Privacy Disclosure con Local storage y Google Play compliance
                 SleekDisclosurePanel(
                     title = "Política de Privacidad de Datos",
                     isExpanded = expandPrivacy,
                     isDark = isDark,
                     onToggle = { expandPrivacy = !expandPrivacy },
-                    content = "Tasa VE es una aplicación 100% libre de servidores de almacenamiento de datos privados. Toda la información como historial de conversiones, caché de cotización y tus configuraciones visuales se guardan estrictamente de manera local en el almacenamiento seguro de tu dispositivo móvil mediante preferencias encriptadas y SQLite local. No recopilamos, compartimos, ni transmitimos datos personales de ningún tipo a terceros."
+                    content = "Tasa VE respeta profundamente tu privacidad. Las configuraciones del usuario, caché de cotizaciones e historial de conversiones se almacenan únicamente de forma local en tu dispositivo móvil. Los servicios de Google Mobile Ads (AdMob) y Google Play Billing procesan identificadores técnicos estándar para la entrega no invasiva de anuncios y la verificación de compras in-app conforme a las directrices de privacidad de Google Play. No vendemos ni compartimos datos personales a terceros."
                 )
 
                 // Terms and Conditions Disclosure (Data Disclaimer)
@@ -1180,12 +1629,12 @@ fun SleekSettingsDialog(
                     isExpanded = expandTerms,
                     isDark = isDark,
                     onToggle = { expandTerms = !expandTerms },
-                    content = "Esta herramienta tiene un carácter estrictamente informativo, educativo y de utilidad matemática. Los datos presentados se obtienen a través de consultas automatizadas a fuentes públicas provistas de forma gratuita por 'DolarAPI/ve.dolarapi.com'. Tasa VE no fija, manipula ni influye en el valor oficial de divisas en Venezuela ni tiene carácter oficial o vinculante. Al utilizar esta herramienta, el usuario asume el descargo de responsabilidad sobre fluctuaciones eventuales y se recomienda cotejar con los portales del Banco Central de Venezuela antes de transacciones oficiales."
+                    content = "Esta herramienta tiene un carácter estrictamente informativo, educativo y de cálculo matemático. Los datos de cotizaciones se obtienen de fuentes públicas de acceso libre provistas por DolarAPI y el Banco Central de Venezuela (BCV). Tasa VE no fija, manipula ni influye en el valor oficial ni paralelo de divisas, no presta servicios financieros, captación ni intermediación cambiaria. Se recomienda verificar cotizaciones oficiales antes de transacciones bancarias."
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Sleek Footer version detail matching the popup, featuring the internal logo
+                // Sleek Footer version detail
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -1219,7 +1668,7 @@ fun SleekSettingsDialog(
                         color = if (isDark) Color.White else Color(0xFF0F172A)
                     )
                     Text(
-                        text = "Proyecto libre de publicidad y membresías.",
+                        text = if (isProUser) "Versión Pro • Sin Anuncios ⭐" else "Versión Gratuita con Anuncios • Pro Disponible",
                         fontSize = 10.sp,
                         color = if (isDark) Color(0xFF64748B) else Color(0xFF64748B)
                     )

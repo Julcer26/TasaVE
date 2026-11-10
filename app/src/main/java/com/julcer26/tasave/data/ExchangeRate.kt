@@ -1,4 +1,4 @@
-package com.example.data
+package com.julcer26.tasave.data
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

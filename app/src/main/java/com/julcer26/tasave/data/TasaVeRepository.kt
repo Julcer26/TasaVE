@@ -1,4 +1,4 @@
-package com.example.data
+package com.julcer26.tasave.data
 
 import android.content.Context
 import android.util.Log
@@ -44,6 +44,9 @@ class TasaVeRepository(
 
     fun getLocalTheme(): String = cacheHelper.getTheme()
     fun saveLocalTheme(theme: String) = cacheHelper.saveTheme(theme)
+
+    fun isProUser(): Boolean = cacheHelper.isProUser()
+    fun setProUser(isPro: Boolean) = cacheHelper.setProUser(isPro)
 
     fun getCachedRates(): Triple<RateInfo, RateInfo, RateInfo> {
         return cacheHelper.getRates()
@@ -106,27 +109,37 @@ class TasaVeRepository(
 
     private fun formatDate(dateStr: String?): String? {
         if (dateStr == null) return null
-        return try {
-            // Format from "2026-06-11T03:22:37Z" to "dd/MM/yyyy hh:mm a"
-            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-            val outputFormat = SimpleDateFormat("dd/MM/yyyy h:mm a", Locale.getDefault())
-            val date = inputFormat.parse(dateStr)
-            if (date != null) {
-                outputFormat.format(date)
-            } else null
-        } catch (e: Exception) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             try {
-                // Secondary check for standard ISO representation "2026-06-11T03:22:37Z"
-                val altInput = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
-                val outputFormat = SimpleDateFormat("dd/MM/yyyy h:mm a", Locale.getDefault())
-                val date = altInput.parse(dateStr)
-                if (date != null) {
-                    outputFormat.format(date)
-                } else null
-            } catch (e2: Exception) {
-                dateStr // Fallback to raw string
+                val parsed = java.time.OffsetDateTime.parse(dateStr)
+                val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy h:mm a", Locale.getDefault())
+                return parsed.format(formatter)
+            } catch (_: Exception) {
+                // Continue to SimpleDateFormat fallbacks
             }
         }
+
+        val patterns = listOf(
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd"
+        )
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy h:mm a", Locale.getDefault())
+        for (pattern in patterns) {
+            try {
+                val sdf = SimpleDateFormat(pattern, Locale.US)
+                val date = sdf.parse(dateStr)
+                if (date != null) {
+                    return outputFormat.format(date)
+                }
+            } catch (_: Exception) {
+                // try next pattern
+            }
+        }
+        return dateStr
     }
 
     private fun getCurrentDateString(): String {

@@ -1,12 +1,14 @@
-package com.example.ui
+package com.julcer26.tasave.ui
 
+import android.app.Activity
 import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.*
+import com.julcer26.tasave.billing.BillingManager
+import com.julcer26.tasave.data.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +33,20 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     
     private val database by lazy { AppDatabase.getDatabase(application) }
     private val repository by lazy { TasaVeRepository(application, database.conversionHistoryDao) }
+    private val localStorageHelper by lazy { LocalStorageHelper(application) }
+
+    // Official Google Play Billing integration
+    val billingManager by lazy {
+        BillingManager(
+            context = application,
+            storageHelper = localStorageHelper,
+            scope = viewModelScope
+        )
+    }
+
+    val isProUser: StateFlow<Boolean> = billingManager.isProUser
+    val proProductPrice: StateFlow<String> = billingManager.productPrice
+    val purchaseStatusMessage: StateFlow<String?> = billingManager.purchaseStatusMessage
 
     private val _uiState = MutableStateFlow(TasaVeUiState())
     val uiState: StateFlow<TasaVeUiState> = _uiState.asStateFlow()
@@ -86,6 +102,18 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         repository.saveLocalTheme(nextTheme)
     }
 
+    fun purchasePro(activity: Activity) {
+        billingManager.launchPurchase(activity)
+    }
+
+    fun restorePurchases() {
+        billingManager.restorePurchases()
+    }
+
+    fun clearPurchaseStatus() {
+        billingManager.clearStatusMessage()
+    }
+
     fun fetchRates(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
@@ -99,7 +127,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                         isFromCache = result.isFromCache,
                         isOfflineError = result.isOfflineError
                     )
-                    // Reset inputs or recalculate with new rates
+                    // Recalculate with newly fetched rates
                     recalculateVES()
                 }
                 is TasaVeRatesResult.Error -> {
@@ -125,7 +153,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
 
-        // Keep input raw to prevent keyboard/IME desync, but filter invalid characters and multiple decimal separators
         val dotCount = input.count { it == '.' }
         val commaCount = input.count { it == ',' }
         if (dotCount + commaCount <= 1 && input.all { it.isDigit() || it == '.' || it == ',' }) {
@@ -136,7 +163,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             val rate = getSelectedRateValue()
             vesAmount = if (rate > 0) {
                 val calculated = value * rate
-                // Present in clean string format
                 String.format(Locale.US, "%.2f", calculated)
             } else {
                 ""
@@ -151,7 +177,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
 
-        // Keep input raw to prevent keyboard/IME desync, but filter invalid characters and multiple decimal separators
         val dotCount = input.count { it == '.' }
         val commaCount = input.count { it == ',' }
         if (dotCount + commaCount <= 1 && input.all { it.isDigit() || it == '.' || it == ',' }) {
@@ -175,44 +200,74 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         if (rate <= 0) return
 
         if (isVesAsInput) {
-            // We transitioned from (foreign as input) to (ves as input).
-            // Retain calculated/entered vesAmount, and update foreignAmount.
             val value = parseDouble(vesAmount)
-            if (value != null) {
-                foreignAmount = String.format(Locale.US, "%.2f", value / rate)
+            foreignAmount = if (value != null) {
+                String.format(Locale.US, "%.2f", value / rate)
             } else {
-                foreignAmount = ""
+                ""
             }
         } else {
-            // We transitioned from (ves as input) to (foreign as input).
-            // Retain calculated/entered foreignAmount, and update vesAmount.
             val value = parseDouble(foreignAmount)
-            if (value != null) {
-                vesAmount = String.format(Locale.US, "%.2f", value * rate)
+            vesAmount = if (value != null) {
+                String.format(Locale.US, "%.2f", value * rate)
             } else {
-                vesAmount = ""
+                ""
             }
         }
     }
 
-    fun saveConversionToHistory() {
-        val fVal = parseDouble(foreignAmount) ?: return
-        val vVal = parseDouble(vesAmount) ?: return
+    fun saveConversionToHistory(): Boolean {
+        val fVal = parseDouble(foreignAmount) ?: return false
+        val vVal = parseDouble(vesAmount) ?: return false
         val rate = getSelectedRateValue()
-        if (rate <= 0.0) return
+        if (rate <= 0.0) return false
 
-        val rateObj = getSelectedRateInfo() ?: return
+        val rateObj = getSelectedRateInfo() ?: return false
+
+        val (fromAmount, fromCurrency, toAmount, toCurrency) = if (isVesAsInput) {
+            listOf(vVal, "Bs.", fVal, rateObj.symbol)
+        } else {
+            listOf(fVal, rateObj.symbol, vVal, "Bs.")
+        }
 
         viewModelScope.launch {
             repository.insertHistory(
                 ConversionHistory(
-                    amountFrom = fVal,
-                    currencyFrom = rateObj.symbol,
-                    amountTo = vVal,
-                    currencyTo = "Bs.",
+                    amountFrom = fromAmount as Double,
+                    currencyFrom = fromCurrency as String,
+                    amountTo = toAmount as Double,
+                    currencyTo = toCurrency as String,
                     rate = rate
                 )
             )
+        }
+        return true
+    }
+
+    fun loadConversion(item: ConversionHistory) {
+        val matchingRate = when (item.currencyFrom) {
+            "$" -> "USD_BCV"
+            "€" -> "EUR_BCV"
+            "₮" -> "USDT"
+            else -> when (item.currencyTo) {
+                "$" -> "USD_BCV"
+                "€" -> "EUR_BCV"
+                "₮" -> "USDT"
+                else -> null
+            }
+        }
+        if (matchingRate != null) {
+            selectedRateKey = matchingRate
+        }
+
+        if (item.currencyFrom == "Bs.") {
+            isVesAsInput = true
+            vesAmount = String.format(Locale.US, "%.2f", item.amountFrom)
+            foreignAmount = String.format(Locale.US, "%.2f", item.amountTo)
+        } else {
+            isVesAsInput = false
+            foreignAmount = String.format(Locale.US, "%.2f", item.amountFrom)
+            vesAmount = String.format(Locale.US, "%.2f", item.amountTo)
         }
     }
 
@@ -264,5 +319,10 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                 vesAmount = ""
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        billingManager.destroy()
     }
 }

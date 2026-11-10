@@ -1,4 +1,4 @@
-package com.example.data
+package com.julcer26.tasave.data
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -15,13 +15,14 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_USDT_DATE = "usdt_date"
         private const val KEY_LAST_CACHED_TIME = "last_cached_time"
         private const val KEY_THEME = "theme"
+        private const val KEY_IS_PRO_USER = "is_pro_user"
 
         private const val CACHE_EXPIRATION_MS = 4 * 60 * 60 * 1000L // 4 Hours
 
         // Fallbacks logic in case of absolute empty first run and no network
-        const val FALLBACK_USD = 39.50
-        const val FALLBACK_EUR = 42.80
-        const val FALLBACK_USDT = 43.10
+        const val FALLBACK_USD = 850.00
+        const val FALLBACK_EUR = 950.00
+        const val FALLBACK_USDT = 1000.00
     }
 
     fun isCacheExpired(): Boolean {
@@ -72,5 +73,13 @@ class LocalStorageHelper(context: Context) {
 
     fun saveTheme(theme: String) {
         prefs.edit().putString(KEY_THEME, theme).apply()
+    }
+
+    fun isProUser(): Boolean {
+        return prefs.getBoolean(KEY_IS_PRO_USER, false)
+    }
+
+    fun setProUser(isPro: Boolean) {
+        prefs.edit().putBoolean(KEY_IS_PRO_USER, isPro).apply()
     }
 }

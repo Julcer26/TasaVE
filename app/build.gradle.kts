@@ -7,15 +7,15 @@ plugins {
 }
 
 android {
-  namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  namespace = "com.julcer26.tasave"
+  compileSdk = 35
 
   defaultConfig {
-    applicationId = "com.aistudio.tasave.qzwvly"
+    applicationId = "com.julcer26.tasave"
     minSdk = 24
-    targetSdk = 36
+    targetSdk = 35
     versionCode = 1
-    versionName = "1.0"
+    versionName = "1.0.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -41,10 +41,15 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+      if (file(keystorePath).exists()) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
     debug {
-      signingConfig = signingConfigs.getByName("debugConfig")
+      if (file("${rootDir}/debug.keystore").exists()) {
+        signingConfig = signingConfigs.getByName("debugConfig")
+      }
     }
   }
   compileOptions {
@@ -55,7 +60,21 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all { testTask ->
+        testTask.jvmArgs(
+          "-Djavax.net.ssl.trustStore=/home/antigravity/cacerts",
+          "-Djavax.net.ssl.trustStorePassword=changeit",
+          "-Dhttp.proxyHost=127.0.0.1",
+          "-Dhttp.proxyPort=${System.getProperty("http.proxyPort") ?: "8080"}",
+          "-Dhttps.proxyHost=127.0.0.1",
+          "-Dhttps.proxyPort=${System.getProperty("https.proxyPort") ?: "8080"}"
+        )
+      }
+    }
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
@@ -100,6 +119,8 @@ dependencies {
   implementation(libs.okhttp)
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
+  implementation(libs.play.services.ads)
+  implementation(libs.play.billing.ktx)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
