@@ -3,8 +3,8 @@ name: Deploy Privacy Policy to GitHub Pages
 on:
   push:
     branches: ["main"]
-    paths:
-      - "docs/**"
+    # paths:
+      
   workflow_dispatch:
 
 permissions:
