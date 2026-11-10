@@ -25,7 +25,11 @@ export KEYSTORE_PASSWORD="tasavepassword"
 export KEY_ALIAS="$KEY_ALIAS"
 export KEY_PASSWORD="tasavepassword"
 
-./gradlew bundleRelease --no-daemon
+if command -v gradle >/dev/null 2>&1; then
+    gradle bundleRelease --no-daemon
+else
+    ./gradlew bundleRelease --no-daemon
+fi
 
 echo ""
 echo "🎉 ¡LISTO! Tu archivo para subir a Google Play Store está en:"
