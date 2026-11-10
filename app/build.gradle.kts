@@ -64,14 +64,17 @@ android {
     unitTests {
       isIncludeAndroidResources = true
       all { testTask ->
-        testTask.jvmArgs(
-          "-Djavax.net.ssl.trustStore=/home/antigravity/cacerts",
-          "-Djavax.net.ssl.trustStorePassword=changeit",
-          "-Dhttp.proxyHost=127.0.0.1",
-          "-Dhttp.proxyPort=${System.getProperty("http.proxyPort") ?: "8080"}",
-          "-Dhttps.proxyHost=127.0.0.1",
-          "-Dhttps.proxyPort=${System.getProperty("https.proxyPort") ?: "8080"}"
-        )
+        val localTrustStore = file("/home/antigravity/cacerts")
+        if (localTrustStore.exists()) {
+          testTask.jvmArgs(
+            "-Djavax.net.ssl.trustStore=${localTrustStore.absolutePath}",
+            "-Djavax.net.ssl.trustStorePassword=changeit",
+            "-Dhttp.proxyHost=127.0.0.1",
+            "-Dhttp.proxyPort=${System.getProperty("http.proxyPort") ?: "8080"}",
+            "-Dhttps.proxyHost=127.0.0.1",
+            "-Dhttps.proxyPort=${System.getProperty("https.proxyPort") ?: "8080"}"
+          )
+        }
       }
     }
   }
