@@ -1,0 +1,6 @@
+{
+  "name": "Tasa VE",
+  "description": "Calculadora y cotizadora de tasas de cambio en tiempo real para Venezuela (Dólar, Euro, USDT) con modo offline.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
