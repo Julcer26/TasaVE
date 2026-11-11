@@ -90,9 +90,9 @@ class BillingManager(
             .setProductList(productList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsList ->
+        billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
             if (billingResult.responseCode == BillingResponseCode.OK) {
-                val details = queryProductDetailsList.firstOrNull { it.productId == PRODUCT_ID_PRO }
+                val details = queryProductDetailsResult.productDetailsList.firstOrNull { it.productId == PRODUCT_ID_PRO }
                 if (details != null) {
                     productDetails = details
                     val formattedPrice = details.oneTimePurchaseOfferDetails?.formattedPrice
