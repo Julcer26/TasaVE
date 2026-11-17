@@ -54,6 +54,9 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _themeMode = MutableStateFlow("DARK")
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
+    private val _remainingFreeScans = MutableStateFlow(localStorageHelper.getRemainingFreeScans())
+    val remainingFreeScans: StateFlow<Int> = _remainingFreeScans.asStateFlow()
+
     // Selection & Dynamic Calculator state
     var selectedRateKey by mutableStateOf("USD_BCV")
         private set
@@ -213,6 +216,30 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             } else {
                 ""
             }
+        }
+    }
+
+    fun canUseScanner(): Boolean {
+        return isProUser.value || _remainingFreeScans.value > 0
+    }
+
+    fun refreshRemainingFreeScans() {
+        _remainingFreeScans.value = localStorageHelper.getRemainingFreeScans()
+    }
+
+    fun applyScannedPrice(amount: Double, isVes: Boolean, targetRateKey: String? = null) {
+        if (targetRateKey != null) {
+            selectedRateKey = targetRateKey
+        }
+        isVesAsInput = isVes
+        val formattedInput = String.format(Locale.US, "%.2f", amount)
+        if (isVes) {
+            updateVesAmount(formattedInput)
+        } else {
+            updateForeignAmount(formattedInput)
+        }
+        if (!isProUser.value) {
+            _remainingFreeScans.value = localStorageHelper.recordFreeScanUsed()
         }
     }
 

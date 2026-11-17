@@ -16,6 +16,10 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_LAST_CACHED_TIME = "last_cached_time"
         private const val KEY_THEME = "theme"
         private const val KEY_IS_PRO_USER = "is_pro_user"
+        private const val KEY_SCAN_DATE = "scanner_last_date"
+        private const val KEY_SCAN_COUNT_TODAY = "scanner_count_today"
+
+        const val MAX_FREE_SCANS_PER_DAY = 3
 
         private const val CACHE_EXPIRATION_MS = 4 * 60 * 60 * 1000L // 4 Hours
 
@@ -81,5 +85,31 @@ class LocalStorageHelper(context: Context) {
 
     fun setProUser(isPro: Boolean) {
         prefs.edit().putBoolean(KEY_IS_PRO_USER, isPro).apply()
+    }
+
+    private fun todayDateKey(): String {
+        return java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+    }
+
+    fun getRemainingFreeScans(): Int {
+        val today = todayDateKey()
+        val savedDate = prefs.getString(KEY_SCAN_DATE, null)
+        if (savedDate != today) {
+            return MAX_FREE_SCANS_PER_DAY
+        }
+        val used = prefs.getInt(KEY_SCAN_COUNT_TODAY, 0)
+        return (MAX_FREE_SCANS_PER_DAY - used).coerceAtLeast(0)
+    }
+
+    fun recordFreeScanUsed(): Int {
+        val today = todayDateKey()
+        val savedDate = prefs.getString(KEY_SCAN_DATE, null)
+        val currentUsed = if (savedDate == today) prefs.getInt(KEY_SCAN_COUNT_TODAY, 0) else 0
+        val nextUsed = (currentUsed + 1).coerceAtMost(MAX_FREE_SCANS_PER_DAY)
+        prefs.edit()
+            .putString(KEY_SCAN_DATE, today)
+            .putInt(KEY_SCAN_COUNT_TODAY, nextUsed)
+            .apply()
+        return (MAX_FREE_SCANS_PER_DAY - nextUsed).coerceAtLeast(0)
     }
 }

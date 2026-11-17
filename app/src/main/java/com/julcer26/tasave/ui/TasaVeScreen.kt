@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import com.julcer26.tasave.ads.TopBannerAd
+import com.julcer26.tasave.scanner.PriceScannerDialog
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -78,12 +79,14 @@ fun TasaVeScreen(
     val proPrice by viewModel.proProductPrice.collectAsStateWithLifecycle()
     val purchaseStatus by viewModel.purchaseStatusMessage.collectAsStateWithLifecycle()
     val historyList by viewModel.historyState.collectAsStateWithLifecycle()
+    val remainingFreeScans by viewModel.remainingFreeScans.collectAsStateWithLifecycle()
 
     val isDark = themeMode == "DARK"
 
-    // Settings & History Modal States
+    // Settings, History & Scanner Modal States
     var showSettings by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
+    var showScanner by remember { mutableStateOf(false) }
 
     LaunchedEffect(purchaseStatus) {
         purchaseStatus?.let {
@@ -1123,6 +1126,32 @@ fun TasaVeScreen(
             onRestorePurchases = {
                 viewModel.restorePurchases()
             }
+        )
+    }
+
+    if (showScanner) {
+        PriceScannerDialog(
+            isProUser = isProUser,
+            remainingFreeScans = remainingFreeScans,
+            proPrice = proPrice,
+            selectedRateKey = viewModel.selectedRateKey,
+            usdBcv = uiState.usdBcv,
+            eurBcv = uiState.eurBcv,
+            usdtParalelo = uiState.usdtParalelo,
+            onSelectRate = { key -> viewModel.selectRate(key) },
+            onApplyPrice = { amount, isVes, rateKey ->
+                viewModel.applyScannedPrice(amount, isVes, rateKey)
+                Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
+            },
+            onUpgradePro = {
+                showScanner = false
+                if (activity != null) {
+                    viewModel.purchasePro(activity)
+                } else {
+                    showSettings = true
+                }
+            },
+            onDismiss = { showScanner = false }
         )
     }
 }
