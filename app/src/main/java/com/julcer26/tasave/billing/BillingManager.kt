@@ -6,6 +6,7 @@ import android.util.Log
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.BillingResponseCode
 import com.android.billingclient.api.BillingClient.ProductType
+import com.julcer26.tasave.BuildConfig
 import com.julcer26.tasave.data.LocalStorageHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ class BillingManager(
         const val PRODUCT_ID_PRO = "tasave_pro_remove_ads"
     }
 
-    private val _isProUser = MutableStateFlow(storageHelper.isProUser())
+    private val _isProUser = MutableStateFlow(BuildConfig.DEBUG || storageHelper.isProUser())
     val isProUser: StateFlow<Boolean> = _isProUser.asStateFlow()
 
     private val _productPrice = MutableStateFlow("$2.99 USD")
@@ -203,8 +204,9 @@ class BillingManager(
     }
 
     private fun setProStatus(isPro: Boolean) {
-        _isProUser.value = isPro
-        storageHelper.setProUser(isPro)
+        val effectivePro = BuildConfig.DEBUG || isPro
+        _isProUser.value = effectivePro
+        storageHelper.setProUser(effectivePro)
     }
 
     fun destroy() {

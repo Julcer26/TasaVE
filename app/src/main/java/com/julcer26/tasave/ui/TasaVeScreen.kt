@@ -235,6 +235,27 @@ fun TasaVeScreen(
                         }
                     }
 
+                    // Camera Price Scanner Quick Trigger
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0x2610B981) else Color(0x1F059669))
+                            .clickable {
+                                viewModel.refreshRemainingFreeScans()
+                                showScanner = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Escanear precio",
+                            tint = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
                     // Conversion History Button
                     Box(
                         modifier = Modifier
