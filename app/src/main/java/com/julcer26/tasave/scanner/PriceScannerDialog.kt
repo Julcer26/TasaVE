@@ -43,15 +43,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -520,15 +523,26 @@ fun PriceScannerDialog(
                     )
                 }
 
-                // Bottom Conversion & Controls Card
+                // Bottom Conversion & Controls Card (adapts dynamically to 3-button nav bar, gesture bar, or no nav bar)
+                val view = LocalView.current
+                val density = LocalDensity.current
+                val composeNavBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                val rootNavBottom = with(density) {
+                    val insets = ViewCompat.getRootWindowInsets(view)
+                    val px = insets?.getInsets(
+                        WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.displayCutout()
+                    )?.bottom ?: 0
+                    px.toDp()
+                }
+                val dynamicBottomPadding = maxOf(composeNavBottom, rootNavBottom) + 16.dp
+
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                         .background(Color(0xF5121216))
-                        .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 36.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = dynamicBottomPadding),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Rate Selector Chips
