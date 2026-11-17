@@ -8,14 +8,16 @@ class PriceScannerParserTest {
 
     @Test
     fun parsesUsdFormats() {
-        val prices = PriceScannerParser.extractPrices("Precio: $12.50\nREF 4.99\n19,99 USD")
-        assertEquals(3, prices.size)
+        val prices = PriceScannerParser.extractPrices("Precio: $12.50\nREF 4.99\n# 8.50\n19,99 USD")
+        assertEquals(4, prices.size)
         assertEquals(12.50, prices[0].amount, 0.001)
         assertEquals(CurrencyHint.USD, prices[0].currencyHint)
         assertEquals(4.99, prices[1].amount, 0.001)
         assertEquals(CurrencyHint.USD, prices[1].currencyHint)
-        assertEquals(19.99, prices[2].amount, 0.001)
+        assertEquals(8.50, prices[2].amount, 0.001)
         assertEquals(CurrencyHint.USD, prices[2].currencyHint)
+        assertEquals(19.99, prices[3].amount, 0.001)
+        assertEquals(CurrencyHint.USD, prices[3].currencyHint)
     }
 
     @Test

@@ -19,7 +19,7 @@ object PriceScannerParser {
 
     // Matches optional currency prefix, a formatted number, and optional currency suffix
     private val PRICE_REGEX = Regex(
-        pattern = """(?i)(?:(US\$|USD|\$|REF\.?|EUR|€|BS\.?[SD]?|VES)\s*)?(\d+(?:[.,]\d+)*)(?:\s*(USD|\$|EUR|€|BS\.?[SD]?|VES))?"""
+        pattern = """(?i)(?:(US\$|USD|\$|REF\.?|#|EUR|€|BS\.?[SD]?|VES)\s*)?(\d+(?:[.,]\d+)*)(?:\s*(USD|\$|EUR|€|BS\.?[SD]?|VES))?"""
     )
 
     fun extractPrices(ocrText: String): List<DetectedPrice> {
@@ -134,7 +134,7 @@ object PriceScannerParser {
     private fun resolveCurrencyHint(prefix: String, suffix: String): CurrencyHint {
         val tag = (prefix.ifEmpty { suffix }).uppercase(Locale.US)
         return when {
-            tag.contains("$") || tag.contains("USD") || tag.contains("REF") -> CurrencyHint.USD
+            tag.contains("$") || tag.contains("USD") || tag.contains("REF") || tag == "#" -> CurrencyHint.USD
             tag.contains("€") || tag.contains("EUR") -> CurrencyHint.EUR
             tag.contains("BS") || tag.contains("VES") -> CurrencyHint.VES
             else -> CurrencyHint.UNKNOWN

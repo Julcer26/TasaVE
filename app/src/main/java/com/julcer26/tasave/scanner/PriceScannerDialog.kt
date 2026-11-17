@@ -578,6 +578,7 @@ fun PriceScannerDialog(
                     }
 
                     // Detected Prices Strip (only prices inside the reticle)
+                    val currencySymbol = activeRateInfo?.symbol ?: "$"
                     if (detectedPrices.isNotEmpty()) {
                         Row(
                             modifier = Modifier
@@ -587,6 +588,15 @@ fun PriceScannerDialog(
                         ) {
                             detectedPrices.take(6).forEach { candidate ->
                                 val isSelected = selectedPrice == candidate
+                                val chipLabel = when (candidate.currencyHint) {
+                                    CurrencyHint.VES -> "Bs. ${String.format(Locale.US, "%,.2f", candidate.amount)}"
+                                    CurrencyHint.EUR -> "€ ${String.format(Locale.US, "%,.2f", candidate.amount)}"
+                                    CurrencyHint.USD -> "$ ${String.format(Locale.US, "%,.2f", candidate.amount)}"
+                                    CurrencyHint.UNKNOWN -> {
+                                        val sym = if (effectiveIsVes) "Bs." else currencySymbol
+                                        "$sym ${String.format(Locale.US, "%,.2f", candidate.amount)}"
+                                    }
+                                }
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(10.dp))
@@ -598,7 +608,7 @@ fun PriceScannerDialog(
                                         .padding(horizontal = 10.dp, vertical = 5.dp)
                                 ) {
                                     Text(
-                                        text = candidate.rawText,
+                                        text = chipLabel,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (isSelected) Color.Black else Color.White
@@ -611,7 +621,6 @@ fun PriceScannerDialog(
                     // Live Conversion Result Card (Stacked cleanly so amounts never overlap)
                     val current = selectedPrice
                     val rateValue = activeRateInfo?.rate ?: 0.0
-                    val currencySymbol = activeRateInfo?.symbol ?: "$"
 
                     Column(
                         modifier = Modifier
@@ -782,7 +791,6 @@ fun PriceScannerDialog(
             }
         }
     }
-}
 
 private fun computeReticleRectInImage(
     previewBounds: Rect?,
