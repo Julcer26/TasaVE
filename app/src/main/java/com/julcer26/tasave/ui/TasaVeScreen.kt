@@ -54,10 +54,17 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.julcer26.tasave.BuildConfig
 import com.julcer26.tasave.R
 import androidx.compose.ui.res.painterResource
 import com.julcer26.tasave.data.ConversionHistory
 import com.julcer26.tasave.data.RateInfo
+import com.julcer26.tasave.ultra.AppTab
+import com.julcer26.tasave.ultra.CartTab
+import com.julcer26.tasave.ultra.CheckoutTab
+import com.julcer26.tasave.ultra.MarketTab
+import com.julcer26.tasave.ultra.PlansComparisonDialog
+import com.julcer26.tasave.ultra.UserTier
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
