@@ -131,20 +131,13 @@ fun PriceScannerDialog(
     val emerald = Color(0xFF10B981)
     val emeraldLight = Color(0xFF34D399)
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false
-        )
+    BackHandler(onBack = onDismiss)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0A0A0B))
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF0A0A0B))
-        ) {
             if (!canScan) {
                 // Freemium Paywall View
                 Column(
@@ -805,7 +798,6 @@ fun PriceScannerDialog(
             }
         }
     }
-}
 
 private fun computeReticleRectInImage(
     previewBounds: Rect?,
