@@ -528,8 +528,8 @@ fun PriceScannerDialog(
                         .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                         .background(Color(0xF5121216))
                         .navigationBarsPadding()
-                        .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 36.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Rate Selector Chips
                     Row(
