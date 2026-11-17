@@ -1573,11 +1573,11 @@ fun SleekSettingsDialog(
 
                         Text(
                             text = if (isProUser) {
-                                "¡Gracias por tu apoyo! Los anuncios están desactivados permanentemente y cuentas con funciones premium."
+                                "¡Gracias por tu apoyo! Tienes escáner de precios con cámara ilimitado de por vida y cero anuncios en toda la app."
                             } else {
-                                "Pago único de $proPrice (sin suscripciones recurrentes). Elimina para siempre todos los anuncios publicitarios y respalda las mejoras del proyecto."
+                                "Pago único de $proPrice (sin suscripciones). Desbloquea el escáner de precios con cámara ilimitado, elimina todos los anuncios para siempre y apoya las mejoras del proyecto."
                             },
-                            fontSize = 11.sp,
+                            fontSize = 11.5.sp,
                             color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
                             lineHeight = 16.sp
                         )
@@ -1595,8 +1595,8 @@ fun SleekSettingsDialog(
                                 Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Quitar Publicidad ($proPrice)",
-                                    fontSize = 12.sp,
+                                    text = "Activar Pro: Sin Anuncios + Escáner ($proPrice)",
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -1664,22 +1664,22 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Privacy Disclosure con Local storage y Google Play compliance
+                // Privacy Disclosure con Local storage, Cámara on-device y Google Play compliance
                 SleekDisclosurePanel(
-                    title = "Política de Privacidad de Datos",
+                    title = "Política de Privacidad y Uso de Cámara",
                     isExpanded = expandPrivacy,
                     isDark = isDark,
                     onToggle = { expandPrivacy = !expandPrivacy },
-                    content = "Tasa VE respeta profundamente tu privacidad. Las configuraciones del usuario, caché de cotizaciones e historial de conversiones se almacenan únicamente de forma local en tu dispositivo móvil. Los servicios de Google Mobile Ads (AdMob) y Google Play Billing procesan identificadores técnicos estándar para la entrega no invasiva de anuncios y la verificación de compras in-app conforme a las directrices de privacidad de Google Play. No vendemos ni compartimos datos personales a terceros."
+                    content = "Tasa VE protege tu privacidad. Tus preferencias, historial de conversiones y caché de tasas se almacenan exclusivamente de forma local en tu dispositivo.\n\n• Cámara y Escáner: El permiso de cámara se emplea únicamente para reconocer precios en tiempo real dentro del propio dispositivo (ML Kit). No grabamos video, no guardamos fotografías ni enviamos imágenes a servidores externos.\n• Publicidad y Compras: Google Mobile Ads (AdMob) y Google Play Billing pueden procesar identificadores técnicos estándar para mostrar anuncios en la versión gratuita y validar tu licencia Pro conforme a las políticas de Google Play. Nunca vendemos ni cedemos datos personales a terceros."
                 )
 
-                // Terms and Conditions Disclosure (Data Disclaimer)
+                // Terms and Conditions Disclosure (Data & Scanner Disclaimer)
                 SleekDisclosurePanel(
-                    title = "Términos y Descargo de Responsabilidad",
+                    title = "Términos de Uso y Descargo de Responsabilidad",
                     isExpanded = expandTerms,
                     isDark = isDark,
                     onToggle = { expandTerms = !expandTerms },
-                    content = "Esta herramienta tiene un carácter estrictamente informativo, educativo y de cálculo matemático. Los datos de cotizaciones se obtienen de fuentes públicas de acceso libre provistas por DolarAPI y el Banco Central de Venezuela (BCV). Tasa VE no fija, manipula ni influye en el valor oficial ni paralelo de divisas, no presta servicios financieros, captación ni intermediación cambiaria. Se recomienda verificar cotizaciones oficiales antes de transacciones bancarias."
+                    content = "Tasa VE es una herramienta estrictamente informativa y de cálculo matemático. Las cotizaciones mostradas provienen de fuentes públicas de referencia (DolarAPI y Banco Central de Venezuela — BCV).\n\nEl desarrollador no fija, modifica ni intermedia en el valor de las divisas, ni presta servicios financieros, cambiarios o bancarios. La lectura automática por cámara es una asistencia visual sujeta a condiciones de iluminación o tipografía; verifica siempre el monto final y las tasas oficiales antes de efectuar pagos o transacciones."
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1712,13 +1712,13 @@ fun SleekSettingsDialog(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Tasa VE • Versión 1.0.0",
+                        text = "Tasa VE • Versión 1.1.0",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isDark) Color.White else Color(0xFF0F172A)
                     )
                     Text(
-                        text = if (isProUser) "Versión Pro • Sin Anuncios ⭐" else "Versión Gratuita con Anuncios • Pro Disponible",
+                        text = if (isProUser) "Versión Pro • Sin Anuncios + Escáner Ilimitado ⭐" else "Versión Gratuita • Pro Disponible",
                         fontSize = 10.sp,
                         color = if (isDark) Color(0xFF64748B) else Color(0xFF64748B)
                     )
@@ -1736,14 +1736,22 @@ fun SleekDisclosurePanel(
     onToggle: () -> Unit,
     content: String
 ) {
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "chevronRotation"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
             .clickable { onToggle() }
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .animateContentSize(
+                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)
+            )
+            .padding(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1754,28 +1762,27 @@ fun SleekDisclosurePanel(
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color(0xFF0F172A)
+                color = if (isDark) Color.White else Color(0xFF0F172A),
+                modifier = Modifier.weight(1f)
             )
             Icon(
-                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                imageVector = Icons.Default.ExpandMore,
                 contentDescription = if (isExpanded) "Cerrar" else "Abrir",
                 tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer { rotationZ = chevronRotation }
             )
         }
 
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
+        if (isExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = content,
-                fontSize = 10.5.sp,
-                lineHeight = 15.sp,
+                fontSize = 11.sp,
+                lineHeight = 16.sp,
                 color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
-                textAlign = TextAlign.Justify,
-                modifier = Modifier.padding(top = 2.dp)
+                textAlign = TextAlign.Start
             )
         }
     }
