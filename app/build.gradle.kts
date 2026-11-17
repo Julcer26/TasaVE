@@ -52,6 +52,8 @@ android {
       }
     }
     debug {
+      applicationIdSuffix = ".debug"
+      versionNameSuffix = "-scanner-test"
       if (file("${rootDir}/debug.keystore").exists()) {
         signingConfig = signingConfigs.getByName("debugConfig")
       }
