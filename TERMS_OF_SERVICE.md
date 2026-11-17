@@ -1,6 +1,6 @@
 # Términos de Servicio y Descargo de Responsabilidad — Tasa VE
 
-**Última actualización:** 10 de noviembre de 2026
+**Última actualización:** 17 de noviembre de 2026 (Versión 1.2.0)
 
 Bienvenido a **Tasa VE** (`com.julcer26.tasave`). Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de los términos, le solicitamos que no utilice la aplicación.
 
@@ -8,8 +8,8 @@ Bienvenido a **Tasa VE** (`com.julcer26.tasave`). Al descargar, instalar o utili
 
 ## 1. Naturaleza del Servicio y Propósito Informativo
 * **Herramienta de Utilidad Matemática e Informativa:** Tasa VE es una calculadora y cotizadora de consulta matemática para fines estrictamente referenciales, educativos e informativos.
-* **No es una Entidad Financiera:** Tasa VE, su desarrollador y sus colaboradores **NO son una institución financiera, banco, casa de cambio, operador de valores, billetera digital, ni intermediario cambiario**.
-* **Ausencia de Asesoría Financiera:** Ninguna información provista por la aplicación constituye asesoría de inversión, recomendación comercial, oferta de compra/venta de divisas, ni captación de fondos en ninguna jurisdicción.
+* **No es una Entidad Financiera ni Fiscal:** Tasa VE, su desarrollador y sus colaboradores **NO son una institución financiera, banco, casa de cambio, procesador de pagos, autoridad tributaria ni intermediario cambiario**.
+* **Uso Referencial de Escáner y Cálculos Auxiliares:** La lectura automática de precios mediante cámara (OCR local), los cálculos estimados de IVA (16%) / IGTF (3%), la brecha porcentual, las alertas de variación y la calculadora de pago mixto o vuelto son asistencias prácticas. El usuario es responsable de verificar siempre los montos finales, impuestos aplicables y cotizaciones oficiales antes de pagar, cobrar o facturar.
 
 ---
 
@@ -17,26 +17,34 @@ Bienvenido a **Tasa VE** (`com.julcer26.tasave`). Al descargar, instalar o utili
 * **Origen de las Tasas:** Las cotizaciones mostradas en la aplicación (incluyendo Dólar oficial BCV, Euro oficial BCV y USDT de mercado paralelo) se obtienen mediante consultas automatizadas a fuentes públicas y APIs abiertas (`ve.dolarapi.com`, datos de referencia del Banco Central de Venezuela y promedios de mercados P2P).
 * **Ausencia de Control Cambiario:** Tasa VE no fija, altera, manipula ni garantiza el valor, certeza, vigencia o disponibilidad de ninguna tasa de cambio.
 * **Margen de Error o Desfase Temporal:** Debido a posibles demoras en la actualización de las fuentes públicas o interrupciones de conectividad, las tasas pueden presentar ligeras discrepancias con las cotizaciones bancarias en tiempo real. Se recomienda cotejar siempre con los canales oficiales de las instituciones bancarias antes de pactar o formalizar operaciones comerciales o transacciones en divisas.
-* **Exclusión de Responsabilidad por Pérdidas:** El desarrollador de Tasa VE no se hace responsable de pérdidas financieras, lucro cesante, decisiones comerciales o perjuicios derivados directa o indirectamente del uso de la información suministrada por esta herramienta.
+* **Exclusión de Responsabilidad por Pérdidas:** El desarrollador de Tasa VE no se hace responsable de pérdidas financieras, lucro cesante, errores de lectura óptica, decisiones comerciales o perjuicios derivados directa o indirectamente del uso de la información suministrada por esta herramienta.
 
 ---
 
-## 3. Modelo de Monetización y Compras In-App
+## 3. Modelo de Monetización, Compras In-App y Suscripciones
 
 ### A. Versión Gratuita con Publicidad
-* La versión gratuita de la aplicación incluye espacios publicitarios (banners superiores) gestionados a través de la red oficial de **Google Mobile Ads (AdMob)**.
-* Los anuncios se muestran de acuerdo con las normativas publicitarias de Google Play ("Better Ads Standards").
+* Incluye la calculadora conversora multi-tasa, historial local y hasta **3 escaneos diarios** con cámara.
+* Muestra espacios publicitarios (banners superiores) gestionados a través de **Google Mobile Ads (AdMob)** conforme a las normativas de Google Play ("Better Ads Standards").
 
-### B. Versión Pro (Pago Único de $2.99 USD)
-* **Desbloqueo de por vida:** El usuario tiene la opción voluntaria de adquirir **Tasa VE Pro** mediante un pago único de **$2.99 USD** (o su equivalente en moneda local según la tasa de cambio establecida por Google Play en su país).
-* **Beneficios de la Compra Pro:**
-  - Eliminación permanente de todos los banners y avisos publicitarios dentro de la aplicación.
-  - Distintivo visual Pro activo.
-  - Soporte prioritario para futuras actualizaciones.
-* **Sin Suscripciones Recurrentes:** Esta compra no genera cobros mensuales ni renovaciones automáticas.
-* **Procesamiento de Pagos:** Todas las compras se efectúan y gestionan exclusivamente a través de la plataforma segura de **Google Play Billing**.
-* **Restauración de Compras:** La compra queda vinculada a la cuenta de Google del usuario y puede restaurarse en cualquier momento mediante la opción "Restaurar compra anterior" en el menú de Configuración.
-* **Reembolsos:** Las solicitudes de reembolso se rigen de acuerdo con las políticas oficiales de reembolso de Google Play Store.
+### B. Tasa VE Pro (Pago Único Vitalicio de $2.99 USD)
+* **Desbloqueo permanente sin suscripción:** Adquisición voluntaria mediante un pago único de **$2.99 USD** (o equivalente local en Google Play).
+* **Beneficios Pro:**
+  - Eliminación permanente de todos los banners publicitarios dentro de la aplicación.
+  - Acceso ilimitado al escáner de precios con cámara.
+
+### C. Tasa VE Ultra (Suscripción Mensual $1.49 USD / Anual $9.99 USD)
+* **Beneficios Pro incluidos sin pago adicional:** Mientras la suscripción **Tasa VE Ultra** permanezca activa, el usuario disfruta automáticamente de **todos los beneficios de Pro** (cero anuncios y escáner ilimitado) sin necesidad de comprar el paquete Pro por separado. Si el usuario ya había adquirido Pro previamente y luego cancela Ultra, conservará su licencia Pro vitalicia intacta.
+* **Funciones exclusivas Ultra:**
+  - **Carrito de Compras Inteligente** con escaneo directo y cálculos estimados de IVA (16%) e IGTF (3%).
+  - **Monitor de Mercado:** Brecha cambiaria porcentual, gráfico de tendencia local, **Alertas locales de cambio de tasa** y **Widget para pantalla de inicio**.
+  - **Calculadora de Cobros y Pago Mixto:** Cálculo de monto restante o vuelto en pagos combinados (`$` + `Bs.`), guardado local opcional de datos de Pago Móvil y resumen listo para copiar o compartir por WhatsApp.
+* **Renovación y Cancelación:** La suscripción se renueva automáticamente a través de **Google Play Billing** salvo cancelación con al menos 24 horas de antelación desde Google Play Store (*Suscripciones*).
+
+### D. Procesamiento, Restauración y Reembolsos
+* **Procesamiento de Pagos:** Todas las compras y suscripciones se gestionan exclusivamente mediante **Google Play Billing**.
+* **Restauración:** Las compras y suscripciones quedan vinculadas a la cuenta de Google del usuario y pueden restaurarse desde *Configuración > Restaurar compras y suscripciones*.
+* **Reembolsos:** Se rigen exclusivamente por las políticas oficiales de reembolso de Google Play Store.
 
 ---
 

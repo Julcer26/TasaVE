@@ -171,7 +171,7 @@ fun PriceScannerDialog(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Ya usaste tus 3 escaneos gratuitos de hoy. Pásate a Tasa VE Pro ($proPrice pago único) para obtener escáner ilimitado de por vida y cero anuncios.",
+                        text = "Ya usaste tus 3 escaneos gratuitos de hoy. Pásate a Pro ($proPrice pago único) o Ultra (todo incluido) para obtener escáner ilimitado y cero anuncios.",
                         fontSize = 13.sp,
                         color = Color(0xFF94A3B8),
                         textAlign = TextAlign.Center,
@@ -191,7 +191,7 @@ fun PriceScannerDialog(
                         Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Desbloquear Pro ($proPrice)",
+                            text = "Ver Planes (Pro / Ultra)",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )

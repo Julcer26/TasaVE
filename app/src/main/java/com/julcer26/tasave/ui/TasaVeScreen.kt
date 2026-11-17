@@ -76,17 +76,30 @@ fun TasaVeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
+    val isUltraUser by viewModel.isUltraUser.collectAsStateWithLifecycle()
+    val debugTier by viewModel.debugTier.collectAsStateWithLifecycle()
     val proPrice by viewModel.proProductPrice.collectAsStateWithLifecycle()
+    val ultraMonthlyPrice by viewModel.ultraMonthlyPrice.collectAsStateWithLifecycle()
+    val ultraYearlyPrice by viewModel.ultraYearlyPrice.collectAsStateWithLifecycle()
     val purchaseStatus by viewModel.purchaseStatusMessage.collectAsStateWithLifecycle()
     val historyList by viewModel.historyState.collectAsStateWithLifecycle()
     val remainingFreeScans by viewModel.remainingFreeScans.collectAsStateWithLifecycle()
+    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val cartIvaEnabled by viewModel.cartIvaEnabled.collectAsStateWithLifecycle()
+    val cartIgtfEnabled by viewModel.cartIgtfEnabled.collectAsStateWithLifecycle()
+    val rateSnapshots by viewModel.rateSnapshots.collectAsStateWithLifecycle()
+    val alertSettings by viewModel.alertSettings.collectAsStateWithLifecycle()
+    val pagoMovilInfo by viewModel.pagoMovilInfo.collectAsStateWithLifecycle()
 
     val isDark = themeMode == "DARK"
 
-    // Settings, History & Scanner Modal States
+    // Navigation & Modal States
+    var currentTab by remember { mutableStateOf(AppTab.CONVERTER) }
     var showSettings by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
     var showScanner by remember { mutableStateOf(false) }
+    var scannerForCart by remember { mutableStateOf(false) }
+    var showPlansDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(purchaseStatus) {
         purchaseStatus?.let {
@@ -148,10 +161,10 @@ fun TasaVeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Custom logo container displaying the beautiful internal app logo (with custom emerald-green and amber-yellow vector arrows)
+                        // Custom logo container displaying the beautiful internal app logo
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(38.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(if (isDark) Color(0x1F10B981) else Color(0x0F10B981))
                                 .border(
@@ -165,22 +178,42 @@ fun TasaVeScreen(
                                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                                 contentDescription = "Tasa VE Logo",
                                 tint = Color.Unspecified,
-                                modifier = Modifier.size(34.dp)
+                                modifier = Modifier.size(32.dp)
                             )
                         }
                         Text(
                             text = "Tasa VE",
-                            fontSize = 19.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = textPrimary,
                             letterSpacing = (-0.5).sp
                         )
 
-                        if (isProUser) {
+                        if (isUltraUser) {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF59E0B))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFFF59E0B), Color(0xFFEA580C))
+                                        )
+                                    )
+                                    .clickable { showPlansDialog = true }
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "ULTRA",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Black
+                                )
+                            }
+                        } else if (isProUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF10B981))
+                                    .clickable { showPlansDialog = true }
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
@@ -194,8 +227,8 @@ fun TasaVeScreen(
                     }
                 },
                 actions = {
-                    // Pro Buy Button (if not already pro)
-                    if (!isProUser) {
+                    // Plans Trigger Button (if not already Ultra)
+                    if (!isUltraUser) {
                         Box(
                             modifier = Modifier
                                 .padding(end = 6.dp)
@@ -205,13 +238,7 @@ fun TasaVeScreen(
                                         listOf(Color(0xFFF59E0B), Color(0xFFD97706))
                                     )
                                 )
-                                .clickable {
-                                    if (activity != null) {
-                                        viewModel.purchasePro(activity)
-                                    } else {
-                                        showSettings = true
-                                    }
-                                }
+                                .clickable { showPlansDialog = true }
                                 .padding(horizontal = 9.dp, vertical = 5.dp),
                             contentAlignment = Alignment.Center
                         ) {
@@ -220,14 +247,14 @@ fun TasaVeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = "Pro",
+                                    imageVector = Icons.Default.WorkspacePremium,
+                                    contentDescription = "Planes",
                                     tint = Color.Black,
                                     modifier = Modifier.size(13.dp)
                                 )
                                 Text(
-                                    text = "PRO $proPrice",
-                                    fontSize = 10.5.sp,
+                                    text = if (isProUser) "ULTRA" else "PLANES",
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.Black
                                 )
@@ -244,6 +271,7 @@ fun TasaVeScreen(
                             .background(if (isDark) Color(0x2610B981) else Color(0x1F059669))
                             .clickable {
                                 viewModel.refreshRemainingFreeScans()
+                                scannerForCart = false
                                 showScanner = true
                             },
                         contentAlignment = Alignment.Center
@@ -327,14 +355,122 @@ fun TasaVeScreen(
                     scrolledContainerColor = Color.Transparent
                 )
             )
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = if (isDark) Color(0xF0121216) else Color(0xF5FFFFFF),
+                tonalElevation = 0.dp
+            ) {
+                val navItems = listOf(
+                    Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, "Conversor"),
+                    Triple(AppTab.CART, Icons.Default.ShoppingCart, "Carrito"),
+                    Triple(AppTab.MARKET, Icons.Default.ShowChart, "Mercado"),
+                    Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, "Cobros")
+                )
+                navItems.forEach { (tab, icon, label) ->
+                    val selected = currentTab == tab
+                    NavigationBarItem(
+                        selected = selected,
+                        onClick = { currentTab = tab },
+                        icon = {
+                            if (tab == AppTab.CART && cartItems.isNotEmpty()) {
+                                BadgedBox(
+                                    badge = {
+                                        Badge(containerColor = Color(0xFF10B981), contentColor = Color.Black) {
+                                            Text("${cartItems.sumOf { it.quantity }}", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                ) {
+                                    Icon(imageVector = icon, contentDescription = label)
+                                }
+                            } else {
+                                Icon(imageVector = icon, contentDescription = label)
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = label,
+                                fontSize = 10.5.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                maxLines = 1
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
+                            selectedTextColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
+                            indicatorColor = if (isDark) Color(0x2610B981) else Color(0x1F059669),
+                            unselectedIconColor = textSecondary,
+                            unselectedTextColor = textSecondary
+                        )
+                    )
+                }
+            }
         }
     ) { innerPadding ->
-        Column(
+        Crossfade(
+            targetState = currentTab,
+            animationSpec = tween(durationMillis = 180),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(innerPadding),
+            label = "tabCrossfade"
+        ) { activeTab ->
+            when (activeTab) {
+                AppTab.CART -> {
+                    CartTab(
+                        isDark = isDark,
+                        isUltraUser = isUltraUser,
+                        ultraPrice = ultraMonthlyPrice,
+                        uiState = uiState,
+                        cartItems = cartItems,
+                        applyIva = cartIvaEnabled,
+                        applyIgtf = cartIgtfEnabled,
+                        onAddManualItem = { name, amount, isVes ->
+                            viewModel.addCartItem(name, amount, isVes)
+                        },
+                        onScanToCart = {
+                            viewModel.refreshRemainingFreeScans()
+                            scannerForCart = true
+                            showScanner = true
+                        },
+                        onUpdateQuantity = { id, delta -> viewModel.updateCartItemQuantity(id, delta) },
+                        onRemoveItem = { id -> viewModel.removeCartItem(id) },
+                        onClearCart = { viewModel.clearCart() },
+                        onToggleIva = { viewModel.toggleCartIva() },
+                        onToggleIgtf = { viewModel.toggleCartIgtf() },
+                        onOpenPlans = { showPlansDialog = true }
+                    )
+                }
+                AppTab.MARKET -> {
+                    MarketTab(
+                        isDark = isDark,
+                        isUltraUser = isUltraUser,
+                        ultraPrice = ultraMonthlyPrice,
+                        uiState = uiState,
+                        snapshots = rateSnapshots,
+                        alertSettings = alertSettings,
+                        onUpdateAlerts = { viewModel.updateAlertSettings(it) },
+                        onTestNotification = { viewModel.triggerTestAlertNotification() },
+                        onOpenPlans = { showPlansDialog = true }
+                    )
+                }
+                AppTab.CHECKOUT -> {
+                    CheckoutTab(
+                        isDark = isDark,
+                        isUltraUser = isUltraUser,
+                        ultraPrice = ultraMonthlyPrice,
+                        uiState = uiState,
+                        pagoMovilInfo = pagoMovilInfo,
+                        onSavePagoMovil = { viewModel.savePagoMovilInfo(it) },
+                        onOpenPlans = { showPlansDialog = true }
+                    )
+                }
+                AppTab.CONVERTER -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1102,7 +1238,7 @@ fun TasaVeScreen(
                         )
                     }
                     Text(
-                        text = "Tasa VE • Desarrollado localmente ❤️",
+                        text = "Tasa VE v1.2 • Local ❤️",
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = textSecondary
@@ -1110,9 +1246,12 @@ fun TasaVeScreen(
                 }
             }
         }
+                }
+            }
+        }
     }
 
-    // 4. DIALOGS: HISTORY AND SETTINGS
+    // 4. DIALOGS: HISTORY, SETTINGS, PLANS AND SCANNER
     if (showHistory) {
         HistoryDialog(
             isDark = isDark,
@@ -1134,9 +1273,17 @@ fun TasaVeScreen(
         SleekSettingsDialog(
             isDark = isDark,
             isProUser = isProUser,
+            isUltraUser = isUltraUser,
+            debugTier = debugTier,
             proPrice = proPrice,
+            ultraMonthlyPrice = ultraMonthlyPrice,
             onDismiss = { showSettings = false },
             onToggleTheme = { viewModel.toggleTheme() },
+            onSelectDebugTier = { tier -> viewModel.setDebugTier(tier) },
+            onOpenPlans = {
+                showSettings = false
+                showPlansDialog = true
+            },
             onPurchasePro = {
                 if (activity != null) {
                     viewModel.purchasePro(activity)
@@ -1147,6 +1294,42 @@ fun TasaVeScreen(
             onRestorePurchases = {
                 viewModel.restorePurchases()
             }
+        )
+    }
+
+    if (showPlansDialog) {
+        PlansComparisonDialog(
+            isDark = isDark,
+            isProUser = isProUser,
+            isUltraUser = isUltraUser,
+            proPrice = proPrice,
+            ultraMonthlyPrice = ultraMonthlyPrice,
+            ultraYearlyPrice = ultraYearlyPrice,
+            onPurchasePro = {
+                if (activity != null) {
+                    viewModel.purchasePro(activity)
+                } else {
+                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onPurchaseUltraMonthly = {
+                if (activity != null) {
+                    viewModel.purchaseUltra(activity, yearly = false)
+                } else {
+                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onPurchaseUltraYearly = {
+                if (activity != null) {
+                    viewModel.purchaseUltra(activity, yearly = true)
+                } else {
+                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onRestorePurchases = {
+                viewModel.restorePurchases()
+            },
+            onDismiss = { showPlansDialog = false }
         )
     }
 
@@ -1161,16 +1344,17 @@ fun TasaVeScreen(
             usdtParalelo = uiState.usdtParalelo,
             onSelectRate = { key -> viewModel.selectRate(key) },
             onApplyPrice = { amount, isVes, rateKey ->
-                viewModel.applyScannedPrice(amount, isVes, rateKey)
-                Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
+                if (scannerForCart) {
+                    viewModel.addCartItem("Producto escaneado", amount, isVes, rateKey)
+                    Toast.makeText(context, "Producto agregado al carrito", Toast.LENGTH_SHORT).show()
+                } else {
+                    viewModel.applyScannedPrice(amount, isVes, rateKey)
+                    Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
+                }
             },
             onUpgradePro = {
                 showScanner = false
-                if (activity != null) {
-                    viewModel.purchasePro(activity)
-                } else {
-                    showSettings = true
-                }
+                showPlansDialog = true
             },
             onDismiss = { showScanner = false }
         )
@@ -1466,9 +1650,14 @@ fun HistoryDialog(
 fun SleekSettingsDialog(
     isDark: Boolean,
     isProUser: Boolean,
+    isUltraUser: Boolean,
+    debugTier: UserTier,
     proPrice: String,
+    ultraMonthlyPrice: String,
     onDismiss: () -> Unit,
     onToggleTheme: () -> Unit,
+    onSelectDebugTier: (UserTier) -> Unit,
+    onOpenPlans: () -> Unit,
     onPurchasePro: () -> Unit,
     onRestorePurchases: () -> Unit
 ) {
@@ -1477,6 +1666,8 @@ fun SleekSettingsDialog(
 
     val dialogBg = if (isDark) Color(0xFF0E0E10) else Color(0xFFF1F5F9)
     val dividerColor = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
 
     Dialog(
         onDismissRequest = { onDismiss() },
@@ -1511,7 +1702,7 @@ fun SleekSettingsDialog(
                         text = "Configuración",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color(0xFF0F172A),
+                        color = textPrimary,
                         letterSpacing = (-0.3).sp
                     )
                     Box(
@@ -1525,29 +1716,86 @@ fun SleekSettingsDialog(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Cerrar",
-                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                            tint = textSecondary,
                             modifier = Modifier.size(14.dp)
                         )
                     }
                 }
 
-                Divider(color = dividerColor)
+                HorizontalDivider(color = dividerColor)
 
-                // PRO UPGRADE / IAP SECTION ($2.99 USD)
+                // DEBUG BUILD: Plan Switcher so user can test FREE / PRO / ULTRA without Play Store
+                if (BuildConfig.DEBUG) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isDark) Color(0x1F3B82F6) else Color(0x142563EB)
+                        ),
+                        border = BorderStroke(1.dp, Color(0x4D3B82F6))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "MODO PRUEBA v1.2 (SIMULAR PLAN)",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8),
+                                letterSpacing = 0.6.sp
+                            )
+                            Text(
+                                text = "Alterna libremente entre Gratis, Pro y Ultra para probar anuncios, límites y funciones.",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf(
+                                    UserTier.FREE to "Gratis",
+                                    UserTier.PRO to "Pro",
+                                    UserTier.ULTRA to "Ultra"
+                                ).forEach { (tier, label) ->
+                                    FilterChip(
+                                        selected = debugTier == tier,
+                                        onClick = { onSelectDebugTier(tier) },
+                                        modifier = Modifier.weight(1f),
+                                        label = {
+                                            Text(
+                                                text = label,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // PLANS STATUS & COMPARISON CARD (PRO + ULTRA)
+                val planBorderColor = when {
+                    isUltraUser -> Color(0x66F59E0B)
+                    isProUser -> Color(0x4D10B981)
+                    else -> Color(0x4DF59E0B)
+                }
+                val planContainerColor = when {
+                    isUltraUser -> if (isDark) Color(0x1FF59E0B) else Color(0x14F59E0B)
+                    isProUser -> if (isDark) Color(0x1F10B981) else Color(0x1410B981)
+                    else -> if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
+                }
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isProUser) {
-                            if (isDark) Color(0x1F10B981) else Color(0x1410B981)
-                        } else {
-                            if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
-                        }
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = if (isProUser) Color(0x4D10B981) else Color(0x4DF59E0B)
-                    )
+                    colors = CardDefaults.cardColors(containerColor = planContainerColor),
+                    border = BorderStroke(width = 1.dp, color = planBorderColor)
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -1558,58 +1806,82 @@ fun SleekSettingsDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = if (isProUser) Icons.Default.Verified else Icons.Default.Star,
+                                imageVector = when {
+                                    isUltraUser -> Icons.Default.WorkspacePremium
+                                    isProUser -> Icons.Default.Verified
+                                    else -> Icons.Default.Star
+                                },
                                 contentDescription = null,
-                                tint = if (isProUser) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                tint = if (isProUser && !isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = if (isProUser) "Tasa VE Pro Activo ⭐" else "Tasa VE Pro ($proPrice)",
+                                text = when {
+                                    isUltraUser -> "Tasa VE Ultra Activo ⭐"
+                                    isProUser -> "Tasa VE Pro Activo ✓"
+                                    else -> "Planes Tasa VE (Pro y Ultra)"
+                                },
                                 fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                                color = textPrimary
                             )
                         }
 
                         Text(
-                            text = if (isProUser) {
-                                "¡Gracias por tu apoyo! Tienes escáner de precios con cámara ilimitado de por vida y cero anuncios en toda la app."
-                            } else {
-                                "Pago único de $proPrice (sin suscripciones). Desbloquea el escáner de precios con cámara ilimitado, elimina todos los anuncios para siempre y apoya las mejoras del proyecto."
+                            text = when {
+                                isUltraUser -> "Tienes acceso total: Carrito con IVA/IGTF, Brecha y Alertas, Widget, Pago Mixto, cero anuncios y escáner ilimitado."
+                                isProUser -> "Tienes escáner ilimitado y cero anuncios de por vida. ¿Quieres Carrito, Brecha, Alertas y Cobros? Pásate a Ultra ($ultraMonthlyPrice)."
+                                else -> "Elige Pro ($proPrice pago único: cero anuncios + escáner ilimitado) o Ultra ($ultraMonthlyPrice: todo lo de Pro incluido sin pagar doble + Carrito, Alertas, Brecha, Widget y Cobros)."
                             },
                             fontSize = 11.5.sp,
-                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                            color = textSecondary,
                             lineHeight = 16.sp
                         )
 
-                        if (!isProUser) {
-                            Button(
+                        Button(
+                            onClick = onOpenPlans,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                contentColor = Color.Black
+                            )
+                        ) {
+                            Icon(Icons.Default.WorkspacePremium, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isUltraUser) "Ver detalle de tu Plan Ultra" else "Comparar Planes (Pro vs Ultra)",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (!isProUser && !isUltraUser) {
+                            OutlinedButton(
                                 onClick = onPurchasePro,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFF59E0B),
-                                    contentColor = Color.Black
-                                )
+                                border = BorderStroke(1.dp, Color(0xFF10B981))
                             ) {
-                                Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Activar Pro: Sin Anuncios + Escáner ($proPrice)",
+                                    text = "Activar solo Pro ($proPrice pago único)",
                                     fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
                                 )
                             }
+                        }
 
+                        if (!isUltraUser) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 TextButton(onClick = onRestorePurchases) {
                                     Text(
-                                        text = "Restaurar compra anterior",
+                                        text = "Restaurar compras y suscripciones",
                                         fontSize = 11.sp,
-                                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                        color = textSecondary
                                     )
                                 }
                             }
@@ -1642,12 +1914,12 @@ fun SleekSettingsDialog(
                                 text = "Modo de Interfaz",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                                color = textPrimary
                             )
                             Text(
                                 text = if (isDark) "Tema Oscuro Activo" else "Tema Claro Activo",
                                 fontSize = 10.sp,
-                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                color = textSecondary
                             )
                         }
                     }
@@ -1664,22 +1936,22 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Privacy Disclosure con Local storage, Cámara on-device y Google Play compliance
+                // Privacy Disclosure: Camera on-device, local notifications, local Cart/Pago Móvil & Billing
                 SleekDisclosurePanel(
-                    title = "Política de Privacidad y Uso de Cámara",
+                    title = "Política de Privacidad, Cámara y Notificaciones",
                     isExpanded = expandPrivacy,
                     isDark = isDark,
                     onToggle = { expandPrivacy = !expandPrivacy },
-                    content = "Tasa VE protege tu privacidad. Tus preferencias, historial de conversiones y caché de tasas se almacenan exclusivamente de forma local en tu dispositivo.\n\n• Cámara y Escáner: El permiso de cámara se emplea únicamente para reconocer precios en tiempo real dentro del propio dispositivo (ML Kit). No grabamos video, no guardamos fotografías ni enviamos imágenes a servidores externos.\n• Publicidad y Compras: Google Mobile Ads (AdMob) y Google Play Billing pueden procesar identificadores técnicos estándar para mostrar anuncios en la versión gratuita y validar tu licencia Pro conforme a las políticas de Google Play. Nunca vendemos ni cedemos datos personales a terceros."
+                    content = "Tasa VE protege tu privacidad. Tus preferencias, historial de conversiones, carrito de compras, datos opcionales de Pago Móvil y caché de tasas se almacenan exclusivamente de forma local en tu dispositivo.\n\n• Cámara y Escáner: El permiso de cámara se usa únicamente para leer precios en tiempo real dentro del propio dispositivo (ML Kit). No grabamos video ni enviamos fotografías a servidores.\n• Alertas y Widget: Las notificaciones de cambio de tasa se evalúan localmente en tu teléfono mediante WorkManager sin envío de datos personales.\n• Publicidad y Suscripciones: Google Mobile Ads (AdMob) y Google Play Billing gestionan los anuncios de la versión gratuita, el pago único Pro y la suscripción Ultra conforme a las políticas de Google Play. Ultra incluye automáticamente todos los beneficios Pro mientras esté activa."
                 )
 
-                // Terms and Conditions Disclosure (Data & Scanner Disclaimer)
+                // Terms and Conditions Disclosure (Data, Subscriptions, IVA/IGTF & Scanner Disclaimer)
                 SleekDisclosurePanel(
                     title = "Términos de Uso y Descargo de Responsabilidad",
                     isExpanded = expandTerms,
                     isDark = isDark,
                     onToggle = { expandTerms = !expandTerms },
-                    content = "Tasa VE es una herramienta estrictamente informativa y de cálculo matemático. Las cotizaciones mostradas provienen de fuentes públicas de referencia (DolarAPI y Banco Central de Venezuela — BCV).\n\nEl desarrollador no fija, modifica ni intermedia en el valor de las divisas, ni presta servicios financieros, cambiarios o bancarios. La lectura automática por cámara es una asistencia visual sujeta a condiciones de iluminación o tipografía; verifica siempre el monto final y las tasas oficiales antes de efectuar pagos o transacciones."
+                    content = "Tasa VE es una herramienta estrictamente informativa y de cálculo matemático. Las cotizaciones mostradas provienen de fuentes públicas de referencia (DolarAPI y Banco Central de Venezuela — BCV).\n\n• Planes Pro y Ultra: Tasa VE Pro es un pago único vitalicio (cero anuncios y escáner ilimitado). Tasa VE Ultra es una suscripción mensual o anual renovable desde Google Play que incluye todo lo de Pro sin costo adicional mientras permanezca activa, más Carrito, Monitor de Brecha, Alertas, Widget y Pago Mixto.\n• Descargo: El desarrollador no fija tasas de cambio ni presta servicios financieros o fiscales. Los cálculos de IVA (16%), IGTF (3%), brecha cambiaria, vuelto y lectura por cámara son asistencias referenciales; verifica siempre los montos antes de pagar o facturar."
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1712,15 +1984,19 @@ fun SleekSettingsDialog(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Tasa VE • Versión 1.1.0",
+                        text = "Tasa VE • Versión 1.2.0",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color(0xFF0F172A)
+                        color = textPrimary
                     )
                     Text(
-                        text = if (isProUser) "Versión Pro • Sin Anuncios + Escáner Ilimitado ⭐" else "Versión Gratuita • Pro Disponible",
+                        text = when {
+                            isUltraUser -> "Plan Ultra • Todo Desbloqueado ⭐"
+                            isProUser -> "Plan Pro • Sin Anuncios + Escáner ∞ ✓"
+                            else -> "Plan Gratuito • Pro y Ultra Disponibles"
+                        },
                         fontSize = 10.sp,
-                        color = if (isDark) Color(0xFF64748B) else Color(0xFF64748B)
+                        color = Color(0xFF64748B)
                     )
                 }
             }

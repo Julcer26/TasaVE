@@ -46,10 +46,21 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        cp app/build/outputs/apk/debug/app-debug.apk TasaVE-scanner-test.apk
-        gh release delete v1.1.0-scanner-test -y --cleanup-tag || true
-        gh release create v1.1.0-scanner-test TasaVE-scanner-test.apk \
+        if [ "${{ github.ref_name }}" = "feat/v1.2-ultra" ]; then
+          TAG="v1.2.0-ultra-test"
+          ASSET="TasaVE-v1.2-ultra-test.apk"
+          TITLE="Tasa VE v1.2.0 - Prueba Ultra"
+          NOTES="APK de prueba independiente para Tasa VE v1.2 Ultra (Carrito, Brecha, Alertas, Cobros y Widget)."
+        else
+          TAG="v1.1.0-scanner-test"
+          ASSET="TasaVE-scanner-test.apk"
+          TITLE="Tasa VE v1.1.0 - Prueba Escáner"
+          NOTES="APK de prueba directa para el escáner de precios con cámara."
+        fi
+        cp app/build/outputs/apk/debug/app-debug.apk "$ASSET"
+        gh release delete "$TAG" -y --cleanup-tag || true
+        gh release create "$TAG" "$ASSET" \
           --target "${{ github.ref_name }}" \
           --prerelease \
-          --title "Tasa VE v1.1.0 - Prueba Escáner" \
-          --notes "APK de prueba directa para el escáner de precios con cámara."
+          --title "$TITLE" \
+          --notes "$NOTES"

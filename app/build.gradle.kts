@@ -14,8 +14,8 @@ android {
     applicationId = "com.julcer26.tasave"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.0.1"
+    versionCode = 3
+    versionName = "1.2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -52,8 +52,8 @@ android {
       }
     }
     debug {
-      applicationIdSuffix = ".debug"
-      versionNameSuffix = "-scanner-test"
+      applicationIdSuffix = ".ultra"
+      versionNameSuffix = "-ultra-test"
       if (file("${rootDir}/debug.keystore").exists()) {
         signingConfig = signingConfigs.getByName("debugConfig")
       }
@@ -106,6 +106,7 @@ dependencies {
   implementation(libs.androidx.camera.lifecycle)
   implementation(libs.androidx.camera.view)
   implementation(libs.mlkit.text.recognition)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
   implementation(libs.androidx.compose.material3)

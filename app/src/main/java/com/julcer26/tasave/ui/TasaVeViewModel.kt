@@ -9,14 +9,15 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.julcer26.tasave.billing.BillingManager
 import com.julcer26.tasave.data.*
+import com.julcer26.tasave.ultra.*
+import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 data class TasaVeUiState(
@@ -30,12 +31,12 @@ data class TasaVeUiState(
 )
 
 class TasaVeViewModel(application: Application) : AndroidViewModel(application) {
-    
+
     private val database by lazy { AppDatabase.getDatabase(application) }
     private val repository by lazy { TasaVeRepository(application, database.conversionHistoryDao) }
     private val localStorageHelper by lazy { LocalStorageHelper(application) }
 
-    // Official Google Play Billing integration
+    // Official Google Play Billing integration (Pro + Ultra)
     val billingManager by lazy {
         BillingManager(
             context = application,
@@ -45,7 +46,11 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     val isProUser: StateFlow<Boolean> = billingManager.isProUser
+    val isUltraUser: StateFlow<Boolean> = billingManager.isUltraUser
+    val debugTier: StateFlow<UserTier> = billingManager.debugTier
     val proProductPrice: StateFlow<String> = billingManager.productPrice
+    val ultraMonthlyPrice: StateFlow<String> = billingManager.ultraMonthlyPrice
+    val ultraYearlyPrice: StateFlow<String> = billingManager.ultraYearlyPrice
     val purchaseStatusMessage: StateFlow<String?> = billingManager.purchaseStatusMessage
 
     private val _uiState = MutableStateFlow(TasaVeUiState())
@@ -56,6 +61,27 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _remainingFreeScans = MutableStateFlow(localStorageHelper.getRemainingFreeScans())
     val remainingFreeScans: StateFlow<Int> = _remainingFreeScans.asStateFlow()
+
+    // Ultra: Shopping Cart State
+    private val _cartItems = MutableStateFlow(localStorageHelper.getCartItems())
+    val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
+
+    private val _cartIvaEnabled = MutableStateFlow(localStorageHelper.isCartIvaEnabled())
+    val cartIvaEnabled: StateFlow<Boolean> = _cartIvaEnabled.asStateFlow()
+
+    private val _cartIgtfEnabled = MutableStateFlow(localStorageHelper.isCartIgtfEnabled())
+    val cartIgtfEnabled: StateFlow<Boolean> = _cartIgtfEnabled.asStateFlow()
+
+    // Ultra: Market Snapshots & Alerts
+    private val _rateSnapshots = MutableStateFlow(localStorageHelper.getRateSnapshots())
+    val rateSnapshots: StateFlow<List<RateSnapshot>> = _rateSnapshots.asStateFlow()
+
+    private val _alertSettings = MutableStateFlow(localStorageHelper.getAlertSettings())
+    val alertSettings: StateFlow<AlertSettings> = _alertSettings.asStateFlow()
+
+    // Ultra: Checkout / Mixed Payment & Pago Móvil
+    private val _pagoMovilInfo = MutableStateFlow(localStorageHelper.getPagoMovilInfo())
+    val pagoMovilInfo: StateFlow<PagoMovilInfo> = _pagoMovilInfo.asStateFlow()
 
     // Selection & Dynamic Calculator state
     var selectedRateKey by mutableStateOf("USD_BCV")
@@ -70,14 +96,9 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     var vesAmount by mutableStateOf("")
         private set
 
-    // Decimal formatter for standard clean presentation
-    private val decimalFormatter = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale.US))
-
     init {
-        // Load initial theme from localStorage/SharedPreferences
         _themeMode.value = repository.getLocalTheme()
-        
-        // Load cached/fallback rates immediately so user sees numbers and can calculate instantly without network delays!
+
         val cached = repository.getCachedRates()
         _uiState.value = TasaVeUiState(
             isLoading = false,
@@ -87,8 +108,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             isFromCache = true
         )
         recalculateVES()
-
-        // Fetch fresh rates asynchronously
         fetchRates()
     }
 
@@ -105,8 +124,16 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         repository.saveLocalTheme(nextTheme)
     }
 
+    fun setDebugTier(tier: UserTier) {
+        billingManager.setDebugTier(tier)
+    }
+
     fun purchasePro(activity: Activity) {
         billingManager.launchPurchase(activity)
+    }
+
+    fun purchaseUltra(activity: Activity, yearly: Boolean = false) {
+        billingManager.launchUltraSubscription(activity, yearly)
     }
 
     fun restorePurchases() {
@@ -119,7 +146,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
     fun fetchRates(forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = repository.fetchRates(forceRefresh)) {
                 is TasaVeRatesResult.Success -> {
                     _uiState.value = TasaVeUiState(
@@ -130,14 +157,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                         isFromCache = result.isFromCache,
                         isOfflineError = result.isOfflineError
                     )
-                    // Recalculate with newly fetched rates
+                    _rateSnapshots.value = localStorageHelper.getRateSnapshots()
                     recalculateVES()
+                    TasaVeRatesWidgetProvider.updateAllWidgets(getApplication())
                 }
                 is TasaVeRatesResult.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
+                    _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
                 }
             }
         }
@@ -145,7 +170,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
     fun selectRate(key: String) {
         selectedRateKey = key
-        // Keep inputs as they are, but recalculate the alternate amount based on the new rate
         recalculateVES()
     }
 
@@ -219,10 +243,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun canUseScanner(): Boolean {
-        return isProUser.value || _remainingFreeScans.value > 0
-    }
-
     fun refreshRemainingFreeScans() {
         _remainingFreeScans.value = localStorageHelper.getRemainingFreeScans()
     }
@@ -241,6 +261,106 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         if (!isProUser.value) {
             _remainingFreeScans.value = localStorageHelper.recordFreeScanUsed()
         }
+    }
+
+    // --- Ultra: Shopping Cart Actions ---
+    fun addCartItem(name: String, amount: Double, isVes: Boolean, rateKey: String = "USD_BCV", quantity: Int = 1) {
+        val rate = when (rateKey) {
+            "EUR_BCV" -> _uiState.value.eurBcv?.rate
+            "USDT" -> _uiState.value.usdtParalelo?.rate
+            else -> _uiState.value.usdBcv?.rate
+        } ?: getSelectedRateValue().takeIf { it > 0 } ?: 1.0
+
+        val usdBcvRate = _uiState.value.usdBcv?.rate ?: rate
+        val unitUsd = if (isVes) {
+            if (usdBcvRate > 0) amount / usdBcvRate else 0.0
+        } else {
+            if (rateKey == "USD_BCV" || usdBcvRate <= 0.0) amount else (amount * rate) / usdBcvRate
+        }
+        if (unitUsd <= 0.0) return
+
+        val nextList = _cartItems.value.toMutableList().apply {
+            add(
+                0,
+                CartItem(
+                    id = System.currentTimeMillis(),
+                    name = name.ifBlank { "Producto #${size + 1}" },
+                    unitPriceUsd = unitUsd,
+                    quantity = quantity.coerceAtLeast(1)
+                )
+            )
+        }
+        _cartItems.value = nextList
+        localStorageHelper.saveCartItems(nextList)
+    }
+
+    fun updateCartItemQuantity(id: Long, delta: Int) {
+        val nextList = _cartItems.value.mapNotNull { item ->
+            if (item.id != id) {
+                item
+            } else {
+                val nextQty = item.quantity + delta
+                if (nextQty <= 0) null else item.copy(quantity = nextQty)
+            }
+        }
+        _cartItems.value = nextList
+        localStorageHelper.saveCartItems(nextList)
+    }
+
+    fun removeCartItem(id: Long) {
+        val nextList = _cartItems.value.filterNot { it.id == id }
+        _cartItems.value = nextList
+        localStorageHelper.saveCartItems(nextList)
+    }
+
+    fun clearCart() {
+        _cartItems.value = emptyList()
+        localStorageHelper.saveCartItems(emptyList())
+    }
+
+    fun toggleCartIva() {
+        val next = !_cartIvaEnabled.value
+        _cartIvaEnabled.value = next
+        localStorageHelper.setCartIvaEnabled(next)
+    }
+
+    fun toggleCartIgtf() {
+        val next = !_cartIgtfEnabled.value
+        _cartIgtfEnabled.value = next
+        localStorageHelper.setCartIgtfEnabled(next)
+    }
+
+    // --- Ultra: Alerts & Widget ---
+    fun updateAlertSettings(updated: AlertSettings) {
+        _alertSettings.value = updated
+        localStorageHelper.saveAlertSettings(updated)
+        if (updated.enabled) {
+            val state = _uiState.value
+            localStorageHelper.saveLastNotifiedRates(
+                state.usdBcv?.rate ?: 0.0,
+                state.eurBcv?.rate ?: 0.0,
+                state.usdtParalelo?.rate ?: 0.0
+            )
+        }
+        RateAlertWorker.scheduleOrCancel(getApplication(), updated.enabled)
+    }
+
+    fun triggerTestAlertNotification(): Boolean {
+        val state = _uiState.value
+        val usd = state.usdBcv?.rate ?: 0.0
+        val eur = state.eurBcv?.rate ?: 0.0
+        val usdt = state.usdtParalelo?.rate ?: 0.0
+        return RateAlertWorker.sendAlertNotification(
+            context = getApplication(),
+            title = "Alerta Tasa VE Ultra",
+            body = "USD BCV: Bs. ${String.format(Locale.US, "%.2f", usd)} • EUR: Bs. ${String.format(Locale.US, "%.2f", eur)} • USDT: Bs. ${String.format(Locale.US, "%.2f", usdt)}"
+        )
+    }
+
+    // --- Ultra: Pago Móvil ---
+    fun savePagoMovilInfo(info: PagoMovilInfo) {
+        _pagoMovilInfo.value = info
+        localStorageHelper.savePagoMovilInfo(info)
     }
 
     fun saveConversionToHistory(): Boolean {
