@@ -791,6 +791,7 @@ fun PriceScannerDialog(
             }
         }
     }
+}
 
 private fun computeReticleRectInImage(
     previewBounds: Rect?,
