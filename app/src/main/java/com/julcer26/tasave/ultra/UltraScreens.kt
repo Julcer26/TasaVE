@@ -2027,8 +2027,8 @@ fun CheckoutTab(
                         paidUsd = result.paidForeignUsd,
                         paidVes = result.paidVes,
                         statusTitle = statusTitle,
-                        statusUsd = showUsd,
-                        statusVes = showVes,
+                        statusUsd = if (isChange) result.changeUsd else result.remainingUsd,
+                        statusVes = if (isChange) result.changeVes else result.remainingVes,
                         profile = selectedProfile
                     )
                 },
