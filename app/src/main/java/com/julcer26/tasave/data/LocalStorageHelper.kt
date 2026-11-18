@@ -45,11 +45,16 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_PM_BANK = "ultra_pm_bank"
         private const val KEY_PM_DOC = "ultra_pm_doc"
         private const val KEY_PM_PHONE = "ultra_pm_phone"
+        private const val KEY_PAYMENT_PROFILES_JSON = "ultra_payment_profiles_json"
+        private const val KEY_SELECTED_PAYMENT_PROFILE_ID = "ultra_selected_payment_profile_id"
+        private const val KEY_REMOTE_HISTORY_JSON = "ultra_remote_history_json"
+        private const val KEY_REMOTE_HISTORY_TS = "ultra_remote_history_ts"
         private const val KEY_DEBUG_TIER = "debug_tier_override"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
         private const val CACHE_EXPIRATION_MS = 4 * 60 * 60 * 1000L // 4 Hours
+        private const val HISTORY_CACHE_EXPIRATION_MS = 6 * 60 * 60 * 1000L // 6 Hours
 
         // Fallbacks logic in case of absolute empty first run and no network
         const val FALLBACK_USD = 850.00
@@ -202,7 +207,11 @@ class LocalStorageHelper(context: Context) {
 
     // --- Rate Snapshots for Local Chart ---
     fun getRateSnapshots(): List<RateSnapshot> {
-        val raw = prefs.getString(KEY_RATE_SNAPSHOTS_JSON, null) ?: return emptyList()
+        return parseSnapshotsJson(prefs.getString(KEY_RATE_SNAPSHOTS_JSON, null))
+    }
+
+    private fun parseSnapshotsJson(raw: String?): List<RateSnapshot> {
+        if (raw.isNullOrBlank()) return emptyList()
         return try {
             val arr = JSONArray(raw)
             buildList {
@@ -224,23 +233,9 @@ class LocalStorageHelper(context: Context) {
         }
     }
 
-    private fun appendRateSnapshot(usd: Double, eur: Double, usdt: Double) {
-        val existing = getRateSnapshots().toMutableList()
-        val now = System.currentTimeMillis()
-        val label = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(now))
-        val last = existing.lastOrNull()
-        val changed = last == null ||
-            kotlin.math.abs(last.usdBcv - usd) > 0.01 ||
-            kotlin.math.abs(last.eurBcv - eur) > 0.01 ||
-            kotlin.math.abs(last.usdt - usdt) > 0.01 ||
-            (now - last.timestampMs) > 6 * 60 * 60 * 1000L
-
-        if (!changed) return
-
-        existing.add(RateSnapshot(now, label, usd, eur, usdt))
-        val trimmed = if (existing.size > 14) existing.takeLast(14) else existing
+    private fun encodeSnapshotsJson(items: List<RateSnapshot>): String {
         val arr = JSONArray()
-        trimmed.forEach { snap ->
+        items.forEach { snap ->
             arr.put(
                 JSONObject().apply {
                     put("ts", snap.timestampMs)
@@ -251,7 +246,41 @@ class LocalStorageHelper(context: Context) {
                 }
             )
         }
-        prefs.edit().putString(KEY_RATE_SNAPSHOTS_JSON, arr.toString()).apply()
+        return arr.toString()
+    }
+
+    private fun appendRateSnapshot(usd: Double, eur: Double, usdt: Double) {
+        val existing = getRateSnapshots().toMutableList()
+        val now = System.currentTimeMillis()
+        val label = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(Date(now))
+        val last = existing.lastOrNull()
+        val changed = last == null ||
+            kotlin.math.abs(last.usdBcv - usd) > 0.01 ||
+            kotlin.math.abs(last.eurBcv - eur) > 0.01 ||
+            kotlin.math.abs(last.usdt - usdt) > 0.01 ||
+            (now - last.timestampMs) > 60 * 60 * 1000L
+
+        if (!changed) return
+
+        existing.add(RateSnapshot(now, label, usd, eur, usdt))
+        val trimmed = if (existing.size > 72) existing.takeLast(72) else existing
+        prefs.edit().putString(KEY_RATE_SNAPSHOTS_JSON, encodeSnapshotsJson(trimmed)).apply()
+    }
+
+    fun isRemoteHistoryExpired(): Boolean {
+        val last = prefs.getLong(KEY_REMOTE_HISTORY_TS, 0L)
+        return (System.currentTimeMillis() - last) > HISTORY_CACHE_EXPIRATION_MS
+    }
+
+    fun getRemoteHistorySnapshots(): List<RateSnapshot> {
+        return parseSnapshotsJson(prefs.getString(KEY_REMOTE_HISTORY_JSON, null))
+    }
+
+    fun saveRemoteHistorySnapshots(items: List<RateSnapshot>) {
+        prefs.edit()
+            .putString(KEY_REMOTE_HISTORY_JSON, encodeSnapshotsJson(items))
+            .putLong(KEY_REMOTE_HISTORY_TS, System.currentTimeMillis())
+            .apply()
     }
 
     // --- Rate Alert Preferences ---
@@ -289,7 +318,107 @@ class LocalStorageHelper(context: Context) {
             .apply()
     }
 
-    // --- Pago Móvil Local Merchant Details ---
+    // --- Pago Móvil & Bank Account Multi-Profile Storage ---
+    fun getPaymentProfiles(): List<PaymentMethodProfile> {
+        val raw = prefs.getString(KEY_PAYMENT_PROFILES_JSON, null)
+        if (!raw.isNullOrBlank()) {
+            return try {
+                val arr = JSONArray(raw)
+                buildList {
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        val typeStr = obj.optString("type", PaymentMethodType.PAGO_MOVIL.name)
+                        val type = runCatching { PaymentMethodType.valueOf(typeStr) }
+                            .getOrDefault(PaymentMethodType.PAGO_MOVIL)
+                        add(
+                            PaymentMethodProfile(
+                                id = obj.getLong("id"),
+                                alias = obj.optString("alias", ""),
+                                type = type,
+                                bankCode = obj.optString("bankCode", "0134"),
+                                bankName = obj.optString("bankName", "Banesco"),
+                                docPrefix = obj.optString("docPrefix", "V"),
+                                docNumber = obj.optString("docNumber", ""),
+                                phonePrefix = obj.optString("phonePrefix", "0414"),
+                                phoneNumber = obj.optString("phoneNumber", ""),
+                                accountNumber = obj.optString("accountNumber", ""),
+                                accountHolder = obj.optString("accountHolder", "")
+                            )
+                        )
+                    }
+                }
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
+
+        // Legacy migration from single PagoMovilInfo if any
+        val legacy = getPagoMovilInfo()
+        if (legacy.bank.isNotBlank() || legacy.documentId.isNotBlank() || legacy.phone.isNotBlank()) {
+            val matchedBank = VENEZUELAN_BANKS.firstOrNull {
+                it.name.contains(legacy.bank, ignoreCase = true) || legacy.bank.contains(it.code)
+            }
+            val cleanDoc = legacy.documentId.trim()
+            val docPrefix = if (cleanDoc.isNotEmpty() && cleanDoc[0].uppercaseChar() in listOf('V', 'E', 'J', 'G', 'P', 'C')) {
+                cleanDoc[0].uppercaseChar().toString()
+            } else "V"
+            val docNum = cleanDoc.filter { it.isDigit() }
+            val phoneDigits = legacy.phone.filter { it.isDigit() }
+            val phonePrefix = if (phoneDigits.length >= 4) phoneDigits.take(4) else "0414"
+            val phoneNum = if (phoneDigits.length > 4) phoneDigits.drop(4) else phoneDigits
+
+            val migrated = listOf(
+                PaymentMethodProfile(
+                    id = 1L,
+                    alias = "Principal",
+                    type = PaymentMethodType.PAGO_MOVIL,
+                    bankCode = matchedBank?.code ?: "0134",
+                    bankName = matchedBank?.name ?: legacy.bank.ifBlank { "Banesco" },
+                    docPrefix = docPrefix,
+                    docNumber = docNum,
+                    phonePrefix = phonePrefix,
+                    phoneNumber = phoneNum
+                )
+            )
+            savePaymentProfiles(migrated)
+            setSelectedPaymentProfileId(1L)
+            return migrated
+        }
+        return emptyList()
+    }
+
+    fun savePaymentProfiles(profiles: List<PaymentMethodProfile>) {
+        val arr = JSONArray()
+        profiles.forEach { p ->
+            arr.put(
+                JSONObject().apply {
+                    put("id", p.id)
+                    put("alias", p.alias)
+                    put("type", p.type.name)
+                    put("bankCode", p.bankCode)
+                    put("bankName", p.bankName)
+                    put("docPrefix", p.docPrefix)
+                    put("docNumber", p.docNumber)
+                    put("phonePrefix", p.phonePrefix)
+                    put("phoneNumber", p.phoneNumber)
+                    put("accountNumber", p.accountNumber)
+                    put("accountHolder", p.accountHolder)
+                }
+            )
+        }
+        prefs.edit().putString(KEY_PAYMENT_PROFILES_JSON, arr.toString()).apply()
+    }
+
+    fun getSelectedPaymentProfileId(): Long? {
+        val id = prefs.getLong(KEY_SELECTED_PAYMENT_PROFILE_ID, -1L)
+        return if (id <= 0L) null else id
+    }
+
+    fun setSelectedPaymentProfileId(id: Long?) {
+        prefs.edit().putLong(KEY_SELECTED_PAYMENT_PROFILE_ID, id ?: -1L).apply()
+    }
+
+    // Legacy single Pago Móvil support
     fun getPagoMovilInfo(): PagoMovilInfo = PagoMovilInfo(
         bank = prefs.getString(KEY_PM_BANK, "") ?: "",
         documentId = prefs.getString(KEY_PM_DOC, "") ?: "",

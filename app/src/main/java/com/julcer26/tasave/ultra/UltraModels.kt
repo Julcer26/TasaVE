@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 enum class AppTab(val label: String) {
     CONVERTER("Conversor"),
     CART("Carrito"),
-    MARKET("Mercado"),
+    MARKET("Brecha"),
     CHECKOUT("Cobros")
 }
 
@@ -13,6 +13,88 @@ enum class UserTier {
     FREE,
     PRO,
     ULTRA
+}
+
+enum class TrendCurrency(val key: String, val label: String) {
+    USD_BCV("USD_BCV", "USD BCV"),
+    EUR_BCV("EUR_BCV", "EUR BCV"),
+    USDT("USDT", "USDT"),
+    ALL("ALL", "Todas")
+}
+
+enum class TrendRange(val label: String, val days: Int?) {
+    D1("1D", 1),
+    W1("1S", 7),
+    D15("15D", 15),
+    M1("1M", 30),
+    M3("3M", 90),
+    ALL("Todo", null)
+}
+
+enum class PaymentMethodType(val label: String) {
+    PAGO_MOVIL("Pago Móvil"),
+    BANK_ACCOUNT("Cuenta Bancaria")
+}
+
+@Immutable
+data class VenezuelanBank(
+    val code: String,
+    val name: String
+) {
+    fun display(): String = "$code - $name"
+}
+
+val VENEZUELAN_BANKS = listOf(
+    VenezuelanBank("0102", "Banco de Venezuela (BDV)"),
+    VenezuelanBank("0134", "Banesco"),
+    VenezuelanBank("0105", "Banco Mercantil"),
+    VenezuelanBank("0108", "BBVA Provincial"),
+    VenezuelanBank("0191", "BNC - Banco Nacional de Crédito"),
+    VenezuelanBank("0172", "Bancamiga"),
+    VenezuelanBank("0114", "Bancaribe"),
+    VenezuelanBank("0115", "Banco Exterior"),
+    VenezuelanBank("0151", "BFC Banco Fondo Común"),
+    VenezuelanBank("0174", "Banplus"),
+    VenezuelanBank("0163", "Banco del Tesoro"),
+    VenezuelanBank("0175", "Banco Digital de los Trabajadores (Bicentenario)"),
+    VenezuelanBank("0138", "Banco Plaza"),
+    VenezuelanBank("0104", "Venezolano de Crédito"),
+    VenezuelanBank("0128", "Banco Caroní"),
+    VenezuelanBank("0137", "Banco Sofitasa"),
+    VenezuelanBank("0156", "100% Banco"),
+    VenezuelanBank("0157", "DelSur Banco Universal"),
+    VenezuelanBank("0168", "Bancrecer"),
+    VenezuelanBank("0169", "R4 Banco Microfinanciero (Mi Banco)"),
+    VenezuelanBank("0171", "Banco Activo"),
+    VenezuelanBank("0177", "BANFANB"),
+    VenezuelanBank("0146", "Bangente"),
+    VenezuelanBank("0166", "Banco Agrícola de Venezuela")
+)
+
+val DOC_PREFIXES = listOf("V", "E", "J", "G", "P", "C")
+val PHONE_PREFIXES = listOf("0412", "0414", "0424", "0416", "0426", "0422")
+
+@Immutable
+data class PaymentMethodProfile(
+    val id: Long,
+    val alias: String = "",
+    val type: PaymentMethodType = PaymentMethodType.PAGO_MOVIL,
+    val bankCode: String = "0134",
+    val bankName: String = "Banesco",
+    val docPrefix: String = "V",
+    val docNumber: String = "",
+    val phonePrefix: String = "0414",
+    val phoneNumber: String = "",
+    val accountNumber: String = "",
+    val accountHolder: String = ""
+) {
+    fun formattedBank(): String = if (bankCode.isNotBlank()) "$bankCode - $bankName" else bankName
+    fun formattedDoc(): String = if (docNumber.isNotBlank()) "$docPrefix-$docNumber" else ""
+    fun formattedPhone(): String = if (phoneNumber.isNotBlank()) "$phonePrefix-$phoneNumber" else ""
+    fun displayTitle(): String {
+        if (alias.isNotBlank()) return alias
+        return "${type.label} • $bankName"
+    }
 }
 
 @Immutable
@@ -75,6 +157,7 @@ object UltraMath {
 
     const val IVA_RATE = 0.16
     const val IGTF_RATE = 0.03
+    private const val DAY_MS = 24L * 60L * 60L * 1000L
 
     fun calculateCartSummary(
         items: List<CartItem>,
@@ -145,6 +228,23 @@ object UltraMath {
                 changeUsd = changeUsd,
                 changeVes = changeUsd * safeRate
             )
+        }
+    }
+
+    fun filterSnapshotsForRange(
+        snapshots: List<RateSnapshot>,
+        range: TrendRange,
+        nowMs: Long = System.currentTimeMillis()
+    ): List<RateSnapshot> {
+        val sorted = snapshots.sortedBy { it.timestampMs }
+        if (sorted.isEmpty()) return emptyList()
+        val days = range.days ?: return sorted
+        val cutoff = nowMs - days * DAY_MS
+        val filtered = sorted.filter { it.timestampMs >= cutoff }
+        return when {
+            filtered.size >= 2 -> filtered
+            sorted.size >= 2 -> sorted.takeLast(2)
+            else -> sorted
         }
     }
 }

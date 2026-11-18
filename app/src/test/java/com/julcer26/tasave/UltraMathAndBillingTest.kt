@@ -105,4 +105,63 @@ class UltraMathAndBillingTest {
         assertEquals(true to false, BillingManager.resolveEffectiveEntitlements(false, false, true, UserTier.PRO))
         assertEquals(true to true, BillingManager.resolveEffectiveEntitlements(false, false, true, UserTier.ULTRA))
     }
+
+    @Test
+    fun filterSnapshotsForRange_filtersByDaysAndHandlesSparsePoints() {
+        val dayMs = 24L * 60L * 60L * 1000L
+        val now = 1_700_000_000_000L
+        val snapshots = listOf(
+            RateSnapshot(now - 100 * dayMs, "D-100", 36.0, 39.0, 40.0),
+            RateSnapshot(now - 20 * dayMs, "D-20", 40.0, 43.0, 46.0),
+            RateSnapshot(now - 5 * dayMs, "D-5", 42.0, 45.0, 49.0),
+            RateSnapshot(now - 12L * 3600_000L, "12h", 44.0, 47.0, 51.0),
+            RateSnapshot(now, "Hoy", 45.0, 48.0, 52.0)
+        )
+
+        val d1 = UltraMath.filterSnapshotsForRange(snapshots, TrendRange.D1, now)
+        assertEquals(2, d1.size)
+        assertEquals("12h", d1.first().label)
+        assertEquals("Hoy", d1.last().label)
+
+        val w1 = UltraMath.filterSnapshotsForRange(snapshots, TrendRange.W1, now)
+        assertEquals(3, w1.size)
+        assertEquals("D-5", w1.first().label)
+
+        val all = UltraMath.filterSnapshotsForRange(snapshots, TrendRange.ALL, now)
+        assertEquals(5, all.size)
+
+        // Sparse points: if 1D only has 1 point within 24h, fallback keeps last 2 points so chart draws a segment
+        val sparse = listOf(
+            RateSnapshot(now - 10 * dayMs, "D-10", 40.0, 43.0, 45.0),
+            RateSnapshot(now, "Hoy", 45.0, 48.0, 52.0)
+        )
+        val d1Sparse = UltraMath.filterSnapshotsForRange(sparse, TrendRange.D1, now)
+        assertEquals(2, d1Sparse.size)
+    }
+
+    @Test
+    fun paymentProfileFormattingAndBanksCatalogAreValid() {
+        val codes = VENEZUELAN_BANKS.map { it.code }
+        assertEquals(codes.size, codes.distinct().size)
+        assertTrue(codes.all { it.length == 4 && it.all(Char::isDigit) })
+        assertTrue(VENEZUELAN_BANKS.any { it.code == "0134" && it.name.contains("Banesco") })
+
+        val profile = PaymentMethodProfile(
+            id = 1L,
+            alias = "Mi Comercio",
+            type = PaymentMethodType.PAGO_MOVIL,
+            bankCode = "0134",
+            bankName = "Banesco",
+            docPrefix = "J",
+            docNumber = "123456789",
+            phonePrefix = "0412",
+            phoneNumber = "5551234"
+        )
+        assertEquals("0134 - Banesco", profile.formattedBank())
+        assertEquals("J-123456789", profile.formattedDoc())
+        assertEquals("0412-5551234", profile.formattedPhone())
+        assertEquals("Mi Comercio", profile.displayTitle())
+        assertEquals("Brecha", AppTab.MARKET.label)
+    }
 }
+

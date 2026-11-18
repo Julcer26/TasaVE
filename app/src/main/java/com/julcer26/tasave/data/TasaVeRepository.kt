@@ -107,6 +107,107 @@ class TasaVeRepository(
         }
     }
 
+    suspend fun fetchHistoricalRates(forceRefresh: Boolean = false): List<RateSnapshot> = withContext(Dispatchers.IO) {
+        val localSnaps = cacheHelper.getRateSnapshots()
+        val cachedRemote = cacheHelper.getRemoteHistorySnapshots()
+
+        if (!forceRefresh && !cacheHelper.isRemoteHistoryExpired() && cachedRemote.isNotEmpty()) {
+            return@withContext mergeRemoteAndLocal(cachedRemote, localSnaps)
+        }
+
+        val remoteMerged = try {
+            coroutineScope {
+                val usdHistDeferred = async { runCatching { apiService.getHistoricalUsdOficial() }.getOrDefault(emptyList()) }
+                val usdtHistDeferred = async { runCatching { apiService.getHistoricalUsdtParalelo() }.getOrDefault(emptyList()) }
+                val eurHistDeferred = async { runCatching { apiService.getHistoricalEurOficial() }.getOrDefault(emptyList()) }
+
+                val usdList = usdHistDeferred.await()
+                val usdtList = usdtHistDeferred.await()
+                val eurList = eurHistDeferred.await()
+
+                buildDailySnapshots(usdList, eurList, usdtList)
+            }
+        } catch (e: Exception) {
+            Log.e("TasaVeRepository", "Error fetching historical rates", e)
+            emptyList()
+        }
+
+        if (remoteMerged.isNotEmpty()) {
+            cacheHelper.saveRemoteHistorySnapshots(remoteMerged)
+            mergeRemoteAndLocal(remoteMerged, localSnaps)
+        } else {
+            mergeRemoteAndLocal(cachedRemote, localSnaps)
+        }
+    }
+
+    private fun buildDailySnapshots(
+        usdList: List<HistoricalRateResponse>,
+        eurList: List<HistoricalRateResponse>,
+        usdtList: List<HistoricalRateResponse>
+    ): List<RateSnapshot> {
+        val usdByDay = usdList.mapNotNull { r ->
+            val dayKey = extractDayKey(r.fecha)
+            val rate = r.effectiveRate()
+            if (dayKey != null && rate > 0.0) dayKey to rate else null
+        }.toMap()
+
+        val eurByDay = eurList.mapNotNull { r ->
+            val dayKey = extractDayKey(r.fecha)
+            val rate = r.effectiveRate()
+            if (dayKey != null && rate > 0.0) dayKey to rate else null
+        }.toMap()
+
+        val usdtByDay = usdtList.mapNotNull { r ->
+            val dayKey = extractDayKey(r.fecha)
+            val rate = r.effectiveRate()
+            if (dayKey != null && rate > 0.0) dayKey to rate else null
+        }.toMap()
+
+        val allDays = (usdByDay.keys + eurByDay.keys + usdtByDay.keys).toSortedSet()
+        if (allDays.isEmpty()) return emptyList()
+
+        val dayParser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val labelFormatter = SimpleDateFormat("dd/MM", Locale.getDefault())
+
+        var lastUsd = usdByDay.values.firstOrNull() ?: 0.0
+        var lastEur = eurByDay.values.firstOrNull() ?: 0.0
+        var lastUsdt = usdtByDay.values.firstOrNull() ?: 0.0
+
+        return allDays.mapNotNull { dayKey ->
+            usdByDay[dayKey]?.let { lastUsd = it }
+            eurByDay[dayKey]?.let { lastEur = it }
+            usdtByDay[dayKey]?.let { lastUsdt = it }
+
+            val date = runCatching { dayParser.parse(dayKey) }.getOrNull() ?: return@mapNotNull null
+            // Anchor historical day point at noon local time
+            val ts = date.time + 12L * 60L * 60L * 1000L
+            RateSnapshot(
+                timestampMs = ts,
+                label = labelFormatter.format(date),
+                usdBcv = lastUsd,
+                eurBcv = lastEur,
+                usdt = lastUsdt
+            )
+        }
+    }
+
+    private fun mergeRemoteAndLocal(
+        remote: List<RateSnapshot>,
+        local: List<RateSnapshot>
+    ): List<RateSnapshot> {
+        val latestRemoteTs = remote.maxOfOrNull { it.timestampMs } ?: 0L
+        val recentLocal = local.filter { it.timestampMs > latestRemoteTs - 12L * 60L * 60L * 1000L }
+        return (remote + recentLocal).sortedBy { it.timestampMs }
+    }
+
+    private fun extractDayKey(raw: String): String? {
+        val trimmed = raw.trim()
+        if (trimmed.length >= 10 && trimmed[4] == '-' && trimmed[7] == '-') {
+            return trimmed.substring(0, 10)
+        }
+        return null
+    }
+
     private fun formatDate(dateStr: String?): String? {
         if (dateStr == null) return null
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {

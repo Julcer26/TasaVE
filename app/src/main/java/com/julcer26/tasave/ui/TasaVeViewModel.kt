@@ -72,16 +72,28 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _cartIgtfEnabled = MutableStateFlow(localStorageHelper.isCartIgtfEnabled())
     val cartIgtfEnabled: StateFlow<Boolean> = _cartIgtfEnabled.asStateFlow()
 
-    // Ultra: Market Snapshots & Alerts
+    // Ultra: Market / Brecha Snapshots & Alerts
     private val _rateSnapshots = MutableStateFlow(localStorageHelper.getRateSnapshots())
     val rateSnapshots: StateFlow<List<RateSnapshot>> = _rateSnapshots.asStateFlow()
+
+    private val _isHistoryLoading = MutableStateFlow(false)
+    val isHistoryLoading: StateFlow<Boolean> = _isHistoryLoading.asStateFlow()
 
     private val _alertSettings = MutableStateFlow(localStorageHelper.getAlertSettings())
     val alertSettings: StateFlow<AlertSettings> = _alertSettings.asStateFlow()
 
-    // Ultra: Checkout / Mixed Payment & Pago Móvil
+    // Ultra: Checkout / Mixed Payment & Multiple Payment Profiles (Pago Móvil + Bank Accounts)
     private val _pagoMovilInfo = MutableStateFlow(localStorageHelper.getPagoMovilInfo())
     val pagoMovilInfo: StateFlow<PagoMovilInfo> = _pagoMovilInfo.asStateFlow()
+
+    private val _paymentProfiles = MutableStateFlow(localStorageHelper.getPaymentProfiles())
+    val paymentProfiles: StateFlow<List<PaymentMethodProfile>> = _paymentProfiles.asStateFlow()
+
+    private val _selectedPaymentProfileId = MutableStateFlow(
+        localStorageHelper.getSelectedPaymentProfileId()
+            ?: _paymentProfiles.value.firstOrNull()?.id
+    )
+    val selectedPaymentProfileId: StateFlow<Long?> = _selectedPaymentProfileId.asStateFlow()
 
     // Selection & Dynamic Calculator state
     var selectedRateKey by mutableStateOf("USD_BCV")
@@ -109,6 +121,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         )
         recalculateVES()
         fetchRates()
+        fetchHistoricalRates()
     }
 
     val historyState: StateFlow<List<ConversionHistory>> = repository.history
@@ -157,14 +170,27 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                         isFromCache = result.isFromCache,
                         isOfflineError = result.isOfflineError
                     )
-                    _rateSnapshots.value = localStorageHelper.getRateSnapshots()
                     recalculateVES()
                     TasaVeRatesWidgetProvider.updateAllWidgets(getApplication())
+                    fetchHistoricalRates(forceRefresh = forceRefresh)
                 }
                 is TasaVeRatesResult.Error -> {
                     _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
                 }
             }
+        }
+    }
+
+    fun fetchHistoricalRates(forceRefresh: Boolean = false) {
+        viewModelScope.launch {
+            _isHistoryLoading.value = true
+            val merged = repository.fetchHistoricalRates(forceRefresh)
+            if (merged.isNotEmpty()) {
+                _rateSnapshots.value = merged
+            } else {
+                _rateSnapshots.value = localStorageHelper.getRateSnapshots()
+            }
+            _isHistoryLoading.value = false
         }
     }
 
@@ -294,6 +320,30 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         localStorageHelper.saveCartItems(nextList)
     }
 
+    fun editCartItem(id: Long, name: String, amount: Double, isVes: Boolean, quantity: Int) {
+        val usdBcvRate = _uiState.value.usdBcv?.rate ?: getSelectedRateValue().takeIf { it > 0 } ?: 1.0
+        val unitUsd = if (isVes) {
+            if (usdBcvRate > 0) amount / usdBcvRate else 0.0
+        } else {
+            amount
+        }
+        if (unitUsd <= 0.0) return
+
+        val nextList = _cartItems.value.map { item ->
+            if (item.id == id) {
+                item.copy(
+                    name = name.ifBlank { item.name },
+                    unitPriceUsd = unitUsd,
+                    quantity = quantity.coerceAtLeast(1)
+                )
+            } else {
+                item
+            }
+        }
+        _cartItems.value = nextList
+        localStorageHelper.saveCartItems(nextList)
+    }
+
     fun updateCartItemQuantity(id: Long, delta: Int) {
         val nextList = _cartItems.value.mapNotNull { item ->
             if (item.id != id) {
@@ -357,7 +407,39 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         )
     }
 
-    // --- Ultra: Pago Móvil ---
+    // --- Ultra: Payment Profiles (Multiple Pago Móvil & Bank Accounts) ---
+    fun savePaymentProfile(profile: PaymentMethodProfile) {
+        val current = _paymentProfiles.value.toMutableList()
+        val finalProfile = if (profile.id <= 0L) {
+            profile.copy(id = System.currentTimeMillis())
+        } else {
+            profile
+        }
+        val idx = current.indexOfFirst { it.id == finalProfile.id }
+        if (idx >= 0) {
+            current[idx] = finalProfile
+        } else {
+            current.add(0, finalProfile)
+        }
+        _paymentProfiles.value = current
+        localStorageHelper.savePaymentProfiles(current)
+        selectPaymentProfile(finalProfile.id)
+    }
+
+    fun deletePaymentProfile(id: Long) {
+        val next = _paymentProfiles.value.filterNot { it.id == id }
+        _paymentProfiles.value = next
+        localStorageHelper.savePaymentProfiles(next)
+        if (_selectedPaymentProfileId.value == id) {
+            selectPaymentProfile(next.firstOrNull()?.id)
+        }
+    }
+
+    fun selectPaymentProfile(id: Long?) {
+        _selectedPaymentProfileId.value = id
+        localStorageHelper.setSelectedPaymentProfileId(id)
+    }
+
     fun savePagoMovilInfo(info: PagoMovilInfo) {
         _pagoMovilInfo.value = info
         localStorageHelper.savePagoMovilInfo(info)

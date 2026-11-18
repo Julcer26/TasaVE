@@ -11,4 +11,13 @@ interface DolarApiService {
 
     @GET("v1/euros/oficial")
     suspend fun getEurOficial(): ExchangeRateResponse
+
+    @GET("v1/historicos/dolares/oficial")
+    suspend fun getHistoricalUsdOficial(): List<HistoricalRateResponse>
+
+    @GET("v1/historicos/dolares/paralelo")
+    suspend fun getHistoricalUsdtParalelo(): List<HistoricalRateResponse>
+
+    @GET("v1/historicos/euros/oficial")
+    suspend fun getHistoricalEurOficial(): List<HistoricalRateResponse>
 }

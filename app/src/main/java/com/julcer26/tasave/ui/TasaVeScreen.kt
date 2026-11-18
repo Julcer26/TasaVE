@@ -95,8 +95,10 @@ fun TasaVeScreen(
     val cartIvaEnabled by viewModel.cartIvaEnabled.collectAsStateWithLifecycle()
     val cartIgtfEnabled by viewModel.cartIgtfEnabled.collectAsStateWithLifecycle()
     val rateSnapshots by viewModel.rateSnapshots.collectAsStateWithLifecycle()
+    val isHistoryLoading by viewModel.isHistoryLoading.collectAsStateWithLifecycle()
     val alertSettings by viewModel.alertSettings.collectAsStateWithLifecycle()
-    val pagoMovilInfo by viewModel.pagoMovilInfo.collectAsStateWithLifecycle()
+    val paymentProfiles by viewModel.paymentProfiles.collectAsStateWithLifecycle()
+    val selectedPaymentProfileId by viewModel.selectedPaymentProfileId.collectAsStateWithLifecycle()
 
     val isDark = themeMode == "DARK"
 
@@ -168,16 +170,16 @@ fun TasaVeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Custom logo container displaying the beautiful internal app logo
+                        // Custom logo container displaying the internal app logo
                         Box(
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(11.dp))
                                 .background(if (isDark) Color(0x1F10B981) else Color(0x0F10B981))
                                 .border(
-                                    width = 1.6.dp,
+                                    width = 1.5.dp,
                                     color = if (isDark) Color(0x5910B981) else Color(0x4010B981),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(11.dp)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -185,95 +187,48 @@ fun TasaVeScreen(
                                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                                 contentDescription = "Tasa VE Logo",
                                 tint = Color.Unspecified,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(30.dp)
                             )
                         }
-                        Text(
-                            text = "Tasa VE",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary,
-                            letterSpacing = (-0.5).sp
-                        )
-
-                        if (isUltraUser) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            listOf(Color(0xFFF59E0B), Color(0xFFEA580C))
-                                        )
-                                    )
-                                    .clickable { showPlansDialog = true }
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "ULTRA",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.Black
-                                )
+                        Column(
+                            modifier = Modifier.clickable { showPlansDialog = true }
+                        ) {
+                            Text(
+                                text = "Tasa VE",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary,
+                                letterSpacing = (-0.4).sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            val tierLabel = when {
+                                isUltraUser -> "Ultra ★"
+                                isProUser -> "Pro ✓ • Ver Ultra"
+                                else -> "Plan Gratis • Planes"
                             }
-                        } else if (isProUser) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF10B981))
-                                    .clickable { showPlansDialog = true }
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "PRO",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.Black
-                                )
+                            val tierColor = when {
+                                isUltraUser -> Color(0xFFF59E0B)
+                                isProUser -> if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                                else -> Color(0xFFF59E0B)
                             }
+                            Text(
+                                text = tierLabel,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = tierColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 },
                 actions = {
-                    // Plans Trigger Button (if not already Ultra)
-                    if (!isUltraUser) {
-                        Box(
-                            modifier = Modifier
-                                .padding(end = 6.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(Color(0xFFF59E0B), Color(0xFFD97706))
-                                    )
-                                )
-                                .clickable { showPlansDialog = true }
-                                .padding(horizontal = 9.dp, vertical = 5.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.WorkspacePremium,
-                                    contentDescription = "Planes",
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Text(
-                                    text = if (isProUser) "ULTRA" else "PLANES",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
-                            }
-                        }
-                    }
-
                     // Camera Price Scanner Quick Trigger
                     Box(
                         modifier = Modifier
                             .padding(end = 4.dp)
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x2610B981) else Color(0x1F059669))
                             .clickable {
@@ -295,7 +250,7 @@ fun TasaVeScreen(
                     Box(
                         modifier = Modifier
                             .padding(end = 4.dp)
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
                             .clickable(onClick = { showHistory = true }),
@@ -313,7 +268,7 @@ fun TasaVeScreen(
                     Box(
                         modifier = Modifier
                             .padding(end = 4.dp)
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
                             .clickable(
@@ -336,12 +291,12 @@ fun TasaVeScreen(
                             )
                         }
                     }
-                    
+
                     // Modern Circle Settings Trigger
                     Box(
                         modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(38.dp)
+                            .padding(end = 10.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
                             .clickable(
@@ -369,10 +324,10 @@ fun TasaVeScreen(
                 tonalElevation = 0.dp
             ) {
                 val navItems = listOf(
-                    Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, "Conversor"),
-                    Triple(AppTab.CART, Icons.Default.ShoppingCart, "Carrito"),
-                    Triple(AppTab.MARKET, Icons.Default.ShowChart, "Mercado"),
-                    Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, "Cobros")
+                    Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, AppTab.CONVERTER.label),
+                    Triple(AppTab.CART, Icons.Default.ShoppingCart, AppTab.CART.label),
+                    Triple(AppTab.MARKET, Icons.Default.ShowChart, AppTab.MARKET.label),
+                    Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, AppTab.CHECKOUT.label)
                 )
                 navItems.forEach { (tab, icon, label) ->
                     val selected = currentTab == tab
@@ -432,8 +387,11 @@ fun TasaVeScreen(
                         cartItems = cartItems,
                         applyIva = cartIvaEnabled,
                         applyIgtf = cartIgtfEnabled,
-                        onAddManualItem = { name, amount, isVes ->
-                            viewModel.addCartItem(name, amount, isVes)
+                        onAddManualItem = { name, amount, isVes, quantity ->
+                            viewModel.addCartItem(name, amount, isVes, quantity = quantity)
+                        },
+                        onEditItem = { id, name, amount, isVes, quantity ->
+                            viewModel.editCartItem(id, name, amount, isVes, quantity)
                         },
                         onScanToCart = {
                             viewModel.refreshRemainingFreeScans()
@@ -455,7 +413,9 @@ fun TasaVeScreen(
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
                         snapshots = rateSnapshots,
+                        isHistoryLoading = isHistoryLoading,
                         alertSettings = alertSettings,
+                        onRefreshHistory = { viewModel.fetchHistoricalRates(forceRefresh = true) },
                         onUpdateAlerts = { viewModel.updateAlertSettings(it) },
                         onTestNotification = { viewModel.triggerTestAlertNotification() },
                         onOpenPlans = { showPlansDialog = true }
@@ -467,8 +427,11 @@ fun TasaVeScreen(
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
-                        pagoMovilInfo = pagoMovilInfo,
-                        onSavePagoMovil = { viewModel.savePagoMovilInfo(it) },
+                        paymentProfiles = paymentProfiles,
+                        selectedProfileId = selectedPaymentProfileId,
+                        onSelectProfile = { viewModel.selectPaymentProfile(it) },
+                        onSaveProfile = { viewModel.savePaymentProfile(it) },
+                        onDeleteProfile = { viewModel.deletePaymentProfile(it) },
                         onOpenPlans = { showPlansDialog = true }
                     )
                 }
@@ -481,11 +444,92 @@ fun TasaVeScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Non-intrusive Top Banner Ad (hidden for Pro users)
+            // Non-intrusive Top Banner Ad (hidden for Pro/Ultra users)
             TopBannerAd(
                 isDark = isDark,
                 isProUser = isProUser
             )
+
+            // Relocated sleek Plans banner (replaces TopAppBar PLANES pill so it never covers logo/title)
+            if (!isUltraUser) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            if (isDark) Color(0x1AF59E0B) else Color(0x1FF59E0B)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color(0x4DF59E0B),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .clickable { showPlansDialog = true }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x2EF59E0B)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.WorkspacePremium,
+                                contentDescription = "Planes",
+                                tint = Color(0xFFF59E0B),
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = if (isProUser) "Actualiza a Tasa VE Ultra" else "Planes Tasa VE • Pro y Ultra",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = if (isProUser) {
+                                    "Desbloquea Carrito, Brecha, Cobros y Alertas"
+                                } else {
+                                    "Cero anuncios, escáner ilimitado, carrito y cobros"
+                                },
+                                fontSize = 10.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFFF59E0B), Color(0xFFEA580C))
+                                )
+                            )
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = if (isProUser) "ULTRA" else "PLANES",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
 
             // Resilience & Offline alerts banner
             if (uiState.isOfflineError || (uiState.usdBcv?.isLocalOffline == true)) {

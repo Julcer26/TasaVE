@@ -12,14 +12,13 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -43,7 +42,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,9 +57,11 @@ import com.julcer26.tasave.ui.RateSelectorCard
 import com.julcer26.tasave.ui.TasaVeUiState
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import java.util.Locale
+import kotlin.math.roundToInt
 
 private val Emerald = Color(0xFF10B981)
 private val EmeraldLight = Color(0xFF34D399)
+private val BlueEuro = Color(0xFF60A5FA)
 private val AmberUltra = Color(0xFFF59E0B)
 
 @Composable
@@ -151,7 +152,7 @@ private fun UltraLockBanner(
 }
 
 // =========================================================================
-// TAB 2: CARRO DE COMPRAS CON ESCÁNER + IVA / IGTF
+// TAB 2: CARRO DE COMPRAS CON ESCÁNER, EDICIÓN + IVA / IGTF
 // =========================================================================
 @Composable
 fun CartTab(
@@ -162,7 +163,8 @@ fun CartTab(
     cartItems: List<CartItem>,
     applyIva: Boolean,
     applyIgtf: Boolean,
-    onAddManualItem: (name: String, amount: Double, isVes: Boolean) -> Unit,
+    onAddManualItem: (name: String, amount: Double, isVes: Boolean, quantity: Int) -> Unit,
+    onEditItem: (id: Long, name: String, amount: Double, isVes: Boolean, quantity: Int) -> Unit,
     onScanToCart: () -> Unit,
     onUpdateQuantity: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
@@ -175,7 +177,7 @@ fun CartTab(
         UltraLockBanner(
             isDark = isDark,
             featureTitle = "Carrito Inteligente de Supermercado",
-            featureDescription = "Escanea precios pasillo por pasillo, suma tus productos automáticamente y calcula IVA (16%) e IGTF (3%) en vivo. Además, Ultra incluye cero anuncios y escáner ilimitado.",
+            featureDescription = "Escanea precios pasillo por pasillo, edita productos y cantidades, y calcula IVA (16%) e IGTF (3%) en vivo. Ultra incluye cero anuncios y escáner ilimitado.",
             ultraPrice = ultraPrice,
             onOpenPlans = onOpenPlans
         )
@@ -195,7 +197,8 @@ fun CartTab(
         UltraMath.calculateCartSummary(cartItems, applyIva, applyIgtf, usdRate, eurRate, usdtRate)
     }
 
-    var showManualDialog by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    var editingItem by remember { mutableStateOf<CartItem?>(null) }
 
     Column(
         modifier = Modifier
@@ -256,7 +259,8 @@ fun CartTab(
             // IVA & IGTF Quick Toggles
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 FilterChip(
                     selected = applyIva,
@@ -337,7 +341,7 @@ fun CartTab(
             }
 
             OutlinedButton(
-                onClick = { showManualDialog = true },
+                onClick = { showAddDialog = true },
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 48.dp),
@@ -379,7 +383,7 @@ fun CartTab(
                         color = textPrimary
                     )
                     Text(
-                        text = "Apunta la cámara a las etiquetas del supermercado o agrega montos manualmente para llevar el control exacto de tu compra.",
+                        text = "Apunta la cámara a las etiquetas del supermercado o agrega productos manualmente. Toca cualquier producto para editar su nombre o precio.",
                         fontSize = 12.sp,
                         color = textSecondary,
                         textAlign = TextAlign.Center
@@ -406,18 +410,31 @@ fun CartTab(
                             .clip(RoundedCornerShape(16.dp))
                             .background(cardBg)
                             .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                            .clickable { editingItem = item }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = item.name,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textPrimary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = item.name,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Editar producto",
+                                    tint = EmeraldLight.copy(alpha = 0.85f),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
                             Text(
                                 text = "$${String.format(Locale.US, "%.2f", item.unitPriceUsd)} c/u • Total Bs. ${String.format(Locale.US, "%,.2f", lineVes)}",
                                 fontSize = 11.sp,
@@ -427,22 +444,22 @@ fun CartTab(
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             IconButton(
                                 onClick = { onUpdateQuantity(item.id, -1) },
-                                modifier = Modifier.size(34.dp)
+                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.RemoveCircleOutline,
                                     contentDescription = "Restar",
                                     tint = textSecondary,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(19.dp)
                                 )
                             }
                             Text(
                                 text = "${item.quantity}",
-                                fontSize = 14.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = textPrimary,
                                 modifier = Modifier.widthIn(min = 20.dp),
@@ -450,18 +467,18 @@ fun CartTab(
                             )
                             IconButton(
                                 onClick = { onUpdateQuantity(item.id, +1) },
-                                modifier = Modifier.size(34.dp)
+                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AddCircleOutline,
                                     contentDescription = "Sumar",
                                     tint = EmeraldLight,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(19.dp)
                                 )
                             }
                             IconButton(
                                 onClick = { onRemoveItem(item.id) },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(30.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -477,34 +494,57 @@ fun CartTab(
         }
     }
 
-    if (showManualDialog) {
-        ManualCartItemDialog(
+    if (showAddDialog) {
+        CartItemEditorDialog(
             isDark = isDark,
-            onDismiss = { showManualDialog = false },
-            onAdd = { name, amount, isVes ->
-                onAddManualItem(name, amount, isVes)
-                showManualDialog = false
+            initialItem = null,
+            usdRate = usdRate,
+            onDismiss = { showAddDialog = false },
+            onConfirm = { name, amount, isVes, qty ->
+                onAddManualItem(name, amount, isVes, qty)
+                showAddDialog = false
+            }
+        )
+    }
+
+    editingItem?.let { item ->
+        CartItemEditorDialog(
+            isDark = isDark,
+            initialItem = item,
+            usdRate = usdRate,
+            onDismiss = { editingItem = null },
+            onConfirm = { name, amount, isVes, qty ->
+                onEditItem(item.id, name, amount, isVes, qty)
+                editingItem = null
             }
         )
     }
 }
 
 @Composable
-private fun ManualCartItemDialog(
+private fun CartItemEditorDialog(
     isDark: Boolean,
+    initialItem: CartItem?,
+    usdRate: Double,
     onDismiss: () -> Unit,
-    onAdd: (name: String, amount: Double, isVes: Boolean) -> Unit
+    onConfirm: (name: String, amount: Double, isVes: Boolean, quantity: Int) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var amountStr by remember { mutableStateOf("") }
-    var isVes by remember { mutableStateOf(false) }
+    val isEdit = initialItem != null
+    var name by remember(initialItem) { mutableStateOf(initialItem?.name ?: "") }
+    var isVes by remember(initialItem) { mutableStateOf(false) }
+    var amountStr by remember(initialItem) {
+        mutableStateOf(
+            if (initialItem != null) String.format(Locale.US, "%.2f", initialItem.unitPriceUsd) else ""
+        )
+    }
+    var qty by remember(initialItem) { mutableStateOf(initialItem?.quantity ?: 1) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = if (isDark) Color(0xFF141418) else Color.White,
         title = {
             Text(
-                text = "Agregar producto",
+                text = if (isEdit) "Editar producto" else "Agregar producto",
                 fontWeight = FontWeight.Bold,
                 color = if (isDark) Color.White else Color(0xFF0F172A)
             )
@@ -514,7 +554,7 @@ private fun ManualCartItemDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Descripción (opcional)") },
+                    label = { Text("Nombre del producto") },
                     placeholder = { Text("Ej. Harina PAN") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -522,7 +562,7 @@ private fun ManualCartItemDialog(
                 OutlinedTextField(
                     value = amountStr,
                     onValueChange = { amountStr = it },
-                    label = { Text(if (isVes) "Precio en Bolívares (Bs.)" else "Precio en Dólares ($)") },
+                    label = { Text(if (isVes) "Precio unitario (Bs.)" else "Precio unitario ($)") },
                     placeholder = { Text("0.00") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -531,14 +571,65 @@ private fun ManualCartItemDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = !isVes,
-                        onClick = { isVes = false },
+                        onClick = {
+                            if (isVes && usdRate > 0.0) {
+                                val current = amountStr.replace(",", ".").toDoubleOrNull()
+                                if (current != null && current > 0) {
+                                    amountStr = String.format(Locale.US, "%.2f", current / usdRate)
+                                }
+                            }
+                            isVes = false
+                        },
                         label = { Text("En Dólares ($)") }
                     )
                     FilterChip(
                         selected = isVes,
-                        onClick = { isVes = true },
+                        onClick = {
+                            if (!isVes && usdRate > 0.0) {
+                                val current = amountStr.replace(",", ".").toDoubleOrNull()
+                                if (current != null && current > 0) {
+                                    amountStr = String.format(Locale.US, "%.2f", current * usdRate)
+                                }
+                            }
+                            isVes = true
+                        },
                         label = { Text("En Bolívares (Bs.)") }
                     )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Cantidad",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDark) Color.White else Color(0xFF0F172A)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedIconButton(
+                            onClick = { if (qty > 1) qty -= 1 },
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = "Menos", modifier = Modifier.size(16.dp))
+                        }
+                        Text(
+                            text = "$qty",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDark) Color.White else Color(0xFF0F172A)
+                        )
+                        OutlinedIconButton(
+                            onClick = { qty += 1 },
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Más", modifier = Modifier.size(16.dp))
+                        }
+                    }
                 }
             }
         },
@@ -547,12 +638,12 @@ private fun ManualCartItemDialog(
                 onClick = {
                     val value = amountStr.replace(",", ".").toDoubleOrNull()
                     if (value != null && value > 0.0) {
-                        onAdd(name, value, isVes)
+                        onConfirm(name, value, isVes, qty)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
             ) {
-                Text("Agregar", fontWeight = FontWeight.Bold)
+                Text(if (isEdit) "Guardar cambios" else "Agregar", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -564,7 +655,7 @@ private fun ManualCartItemDialog(
 }
 
 // =========================================================================
-// TAB 3: MERCADO (BRECHA CAMBIARIA, GRÁFICO LOCAL, ALERTAS Y WIDGET)
+// TAB 3: BRECHA CAMBIARIA Y TENDENCIA (GRÁFICOS POR MONEDA, ALERTAS Y WIDGET)
 // =========================================================================
 @Composable
 fun MarketTab(
@@ -573,7 +664,9 @@ fun MarketTab(
     ultraPrice: String,
     uiState: TasaVeUiState,
     snapshots: List<RateSnapshot>,
+    isHistoryLoading: Boolean,
     alertSettings: AlertSettings,
+    onRefreshHistory: () -> Unit,
     onUpdateAlerts: (AlertSettings) -> Unit,
     onTestNotification: () -> Boolean,
     onOpenPlans: () -> Unit
@@ -581,8 +674,8 @@ fun MarketTab(
     if (!isUltraUser) {
         UltraLockBanner(
             isDark = isDark,
-            featureTitle = "Monitor de Brecha, Alertas y Widget",
-            featureDescription = "Visualiza la brecha porcentual entre BCV y USDT, recibe notificaciones automáticas cuando suban o bajen las tasas y fija el Widget en tu pantalla de inicio.",
+            featureTitle = "Brecha Cambiaria, Tendencias y Alertas",
+            featureDescription = "Consulta la brecha porcentual en vivo, gráficos históricos por moneda (1D, 1S, 15D, 1M, 3M), recibe alertas locales y fija el Widget en tu inicio.",
             ultraPrice = ultraPrice,
             onOpenPlans = onOpenPlans
         )
@@ -602,6 +695,27 @@ fun MarketTab(
     val spreadUsdtVsBcv = UltraMath.calculateSpreadPercent(usdtRate, usdRate)
     val diffBsUsdtBcv = usdtRate - usdRate
     val spreadEurVsUsd = UltraMath.calculateSpreadPercent(eurRate, usdRate)
+
+    var selectedCurrency by remember { mutableStateOf(TrendCurrency.USD_BCV) }
+    var selectedRange by remember { mutableStateOf(TrendRange.M1) }
+    var touchedIndex by remember { mutableStateOf<Int?>(null) }
+
+    val filteredPoints = remember(snapshots, selectedRange, usdRate, eurRate, usdtRate) {
+        val base = UltraMath.filterSnapshotsForRange(snapshots, selectedRange)
+        if (base.size >= 2) {
+            base
+        } else {
+            val now = System.currentTimeMillis()
+            listOf(
+                RateSnapshot(now - 3600_000L, "Prev.", usdRate, eurRate, usdtRate),
+                RateSnapshot(now, "Hoy", usdRate, eurRate, usdtRate)
+            )
+        }
+    }
+
+    LaunchedEffect(selectedCurrency, selectedRange) {
+        touchedIndex = null
+    }
 
     val notifPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -691,21 +805,14 @@ fun MarketTab(
                         text = "+${String.format(Locale.US, "%.2f", spreadEurVsUsd)}%",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF60A5FA)
+                        color = BlueEuro
                     )
                     Text("Bs. ${String.format(Locale.US, "%.2f", eurRate - usdRate)} dif.", fontSize = 9.5.sp, color = textSecondary)
                 }
             }
         }
 
-        // 2. Local Rate History Chart (Canvas with drawWithCache)
-        val chartPoints = remember(snapshots, usdRate, usdtRate) {
-            if (snapshots.size >= 2) snapshots else listOf(
-                RateSnapshot(0L, "Base", usdRate * 0.99, eurRate * 0.99, usdtRate * 0.99),
-                RateSnapshot(1L, "Hoy", usdRate, eurRate, usdtRate)
-            )
-        }
-
+        // 2. Per-Currency Historical Trend Chart with 1D / 1S / 15D / 1M / 3M / Todo
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -720,69 +827,348 @@ fun MarketTab(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "TENDENCIA REGISTRADA (${snapshots.size.coerceAtLeast(1)} lecturas)",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = EmeraldLight,
-                    letterSpacing = 0.6.sp
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("● BCV", fontSize = 10.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
-                    Text("● USDT", fontSize = 10.sp, color = AmberUltra, fontWeight = FontWeight.Bold)
+                Column {
+                    Text(
+                        text = "TENDENCIA POR MONEDA",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldLight,
+                        letterSpacing = 0.6.sp
+                    )
+                    Text(
+                        text = "Toca o desliza sobre el gráfico para ver el valor",
+                        fontSize = 10.sp,
+                        color = textSecondary
+                    )
                 }
+                IconButton(
+                    onClick = onRefreshHistory,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    if (isHistoryLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = EmeraldLight
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar histórico",
+                            tint = textSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+
+            // Currency Selector Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                TrendCurrency.entries.forEach { currency ->
+                    val chipColor = when (currency) {
+                        TrendCurrency.USD_BCV -> EmeraldLight
+                        TrendCurrency.EUR_BCV -> BlueEuro
+                        TrendCurrency.USDT -> AmberUltra
+                        TrendCurrency.ALL -> textPrimary
+                    }
+                    FilterChip(
+                        selected = selectedCurrency == currency,
+                        onClick = { selectedCurrency = currency },
+                        label = { Text(currency.label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = chipColor.copy(alpha = 0.2f),
+                            selectedLabelColor = chipColor
+                        )
+                    )
+                }
+            }
+
+            // Timeframe Selector Chips (1D, 1S, 15D, 1M, 3M, Todo)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                TrendRange.entries.forEach { range ->
+                    FilterChip(
+                        selected = selectedRange == range,
+                        onClick = { selectedRange = range },
+                        label = { Text(range.label, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = EmeraldLight
+                        )
+                    )
+                }
+            }
+
+            // Stats for selected series / point
+            val inspectedPoint = touchedIndex?.let { idx -> filteredPoints.getOrNull(idx) }
+            val activeSingleSeries = when (selectedCurrency) {
+                TrendCurrency.USD_BCV -> filteredPoints.map { it.usdBcv }
+                TrendCurrency.EUR_BCV -> filteredPoints.map { it.eurBcv }
+                TrendCurrency.USDT -> filteredPoints.map { it.usdt }
+                TrendCurrency.ALL -> null
+            }
+
+            if (activeSingleSeries != null) {
+                val valid = activeSingleSeries.filter { it > 0.0 }
+                val firstVal = valid.firstOrNull() ?: 0.0
+                val lastVal = valid.lastOrNull() ?: 0.0
+                val minVal = valid.minOrNull() ?: 0.0
+                val maxVal = valid.maxOrNull() ?: 0.0
+                val deltaBs = lastVal - firstVal
+                val deltaPct = if (firstVal > 0.0) (deltaBs / firstVal) * 100.0 else 0.0
+                val displayVal = inspectedPoint?.let {
+                    when (selectedCurrency) {
+                        TrendCurrency.USD_BCV -> it.usdBcv
+                        TrendCurrency.EUR_BCV -> it.eurBcv
+                        TrendCurrency.USDT -> it.usdt
+                        TrendCurrency.ALL -> lastVal
+                    }
+                } ?: lastVal
+                val displayLabel = inspectedPoint?.label ?: "Actual"
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(displayLabel, fontSize = 10.sp, color = textSecondary)
+                        Text(
+                            text = "Bs. ${String.format(Locale.US, "%.2f", displayVal)}",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        val deltaColor = if (deltaBs >= 0) EmeraldLight else Color(0xFFF87171)
+                        val sign = if (deltaBs >= 0) "+" else ""
+                        Text(
+                            text = "$sign${String.format(Locale.US, "%.2f", deltaBs)} Bs. ($sign${String.format(Locale.US, "%.2f", deltaPct)}%)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = deltaColor
+                        )
+                        Text(
+                            text = "Mín ${String.format(Locale.US, "%.2f", minVal)} • Máx ${String.format(Locale.US, "%.2f", maxVal)}",
+                            fontSize = 9.5.sp,
+                            color = textSecondary
+                        )
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val p = inspectedPoint ?: filteredPoints.lastOrNull()
+                    Text("● USD: ${String.format(Locale.US, "%.2f", p?.usdBcv ?: usdRate)}", fontSize = 10.5.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
+                    Text("● EUR: ${String.format(Locale.US, "%.2f", p?.eurBcv ?: eurRate)}", fontSize = 10.5.sp, color = BlueEuro, fontWeight = FontWeight.Bold)
+                    Text("● USDT: ${String.format(Locale.US, "%.2f", p?.usdt ?: usdtRate)}", fontSize = 10.5.sp, color = AmberUltra, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Interactive Line Chart Box
+            val singleLineColor = when (selectedCurrency) {
+                TrendCurrency.USD_BCV -> EmeraldLight
+                TrendCurrency.EUR_BCV -> BlueEuro
+                TrendCurrency.USDT -> AmberUltra
+                TrendCurrency.ALL -> EmeraldLight
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp)
+                    .height(160.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(if (isDark) Color(0xFF0E0E12) else Color(0xFFF1F5F9))
-                    .padding(12.dp)
+                    .pointerInput(filteredPoints) {
+                        detectTapGestures { offset ->
+                            if (filteredPoints.size >= 2 && size.width > 0) {
+                                val ratio = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                                touchedIndex = (ratio * (filteredPoints.size - 1)).roundToInt()
+                                    .coerceIn(0, filteredPoints.lastIndex)
+                            }
+                        }
+                    }
+                    .pointerInput(filteredPoints) {
+                        detectHorizontalDragGestures(
+                            onDragEnd = { },
+                            onHorizontalDrag = { change, _ ->
+                                change.consume()
+                                if (filteredPoints.size >= 2 && size.width > 0) {
+                                    val ratio = (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                                    touchedIndex = (ratio * (filteredPoints.size - 1)).roundToInt()
+                                        .coerceIn(0, filteredPoints.lastIndex)
+                                }
+                            }
+                        )
+                    }
+                    .padding(14.dp)
                     .drawWithCache {
-                        val allValues = chartPoints.flatMap { listOf(it.usdBcv, it.usdt) }.filter { it > 0 }
-                        val minVal = (allValues.minOrNull() ?: 0.0) * 0.995
-                        val maxVal = ((allValues.maxOrNull() ?: 1.0) * 1.005).coerceAtLeast(minVal + 1.0)
-                        val range = maxVal - minVal
+                        val allVals = when (selectedCurrency) {
+                            TrendCurrency.USD_BCV -> filteredPoints.map { it.usdBcv }
+                            TrendCurrency.EUR_BCV -> filteredPoints.map { it.eurBcv }
+                            TrendCurrency.USDT -> filteredPoints.map { it.usdt }
+                            TrendCurrency.ALL -> filteredPoints.flatMap { listOf(it.usdBcv, it.eurBcv, it.usdt) }
+                        }.filter { it > 0.0 }
+
+                        val rawMin = allVals.minOrNull() ?: 0.0
+                        val rawMax = allVals.maxOrNull() ?: 1.0
+                        val pad = ((rawMax - rawMin) * 0.12).coerceAtLeast(rawMax * 0.004).coerceAtLeast(0.5)
+                        val minVal = rawMin - pad
+                        val maxVal = rawMax + pad
+                        val range = (maxVal - minVal).coerceAtLeast(0.01)
+                        val count = filteredPoints.size.coerceAtLeast(2)
+
+                        fun yFor(value: Double): Float {
+                            return size.height - (((value - minVal) / range).toFloat() * size.height)
+                        }
 
                         val bcvPath = Path()
+                        val eurPath = Path()
                         val usdtPath = Path()
-                        val count = chartPoints.size.coerceAtLeast(2)
+                        val singleFillPath = Path()
 
-                        chartPoints.forEachIndexed { index, snap ->
+                        filteredPoints.forEachIndexed { index, snap ->
                             val x = (index.toFloat() / (count - 1).toFloat()) * size.width
-                            val yBcv = size.height - (((snap.usdBcv - minVal) / range).toFloat() * size.height)
-                            val yUsdt = size.height - (((snap.usdt - minVal) / range).toFloat() * size.height)
+                            val yBcv = yFor(snap.usdBcv)
+                            val yEur = yFor(snap.eurBcv)
+                            val yUsdt = yFor(snap.usdt)
+
                             if (index == 0) {
                                 bcvPath.moveTo(x, yBcv)
+                                eurPath.moveTo(x, yEur)
                                 usdtPath.moveTo(x, yUsdt)
+                                val activeY = when (selectedCurrency) {
+                                    TrendCurrency.USD_BCV -> yBcv
+                                    TrendCurrency.EUR_BCV -> yEur
+                                    TrendCurrency.USDT -> yUsdt
+                                    TrendCurrency.ALL -> yBcv
+                                }
+                                singleFillPath.moveTo(x, size.height)
+                                singleFillPath.lineTo(x, activeY)
                             } else {
                                 bcvPath.lineTo(x, yBcv)
+                                eurPath.lineTo(x, yEur)
                                 usdtPath.lineTo(x, yUsdt)
+                                val activeY = when (selectedCurrency) {
+                                    TrendCurrency.USD_BCV -> yBcv
+                                    TrendCurrency.EUR_BCV -> yEur
+                                    TrendCurrency.USDT -> yUsdt
+                                    TrendCurrency.ALL -> yBcv
+                                }
+                                singleFillPath.lineTo(x, activeY)
+                            }
+                            if (index == filteredPoints.lastIndex) {
+                                singleFillPath.lineTo(x, size.height)
+                                singleFillPath.close()
                             }
                         }
 
                         onDrawBehind {
-                            drawLine(
-                                color = Color(0x18FFFFFF),
-                                start = Offset(0f, size.height / 2f),
-                                end = Offset(size.width, size.height / 2f),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                            drawPath(
-                                path = usdtPath,
-                                color = AmberUltra,
-                                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-                            )
-                            drawPath(
-                                path = bcvPath,
-                                color = EmeraldLight,
-                                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                            // Grid lines
+                            listOf(0.25f, 0.5f, 0.75f).forEach { frac ->
+                                drawLine(
+                                    color = Color(0x18FFFFFF),
+                                    start = Offset(0f, size.height * frac),
+                                    end = Offset(size.width, size.height * frac),
+                                    strokeWidth = 1.dp.toPx()
+                                )
+                            }
+
+                            if (selectedCurrency == TrendCurrency.ALL) {
+                                drawPath(
+                                    path = usdtPath,
+                                    color = AmberUltra,
+                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                )
+                                drawPath(
+                                    path = eurPath,
+                                    color = BlueEuro,
+                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                )
+                                drawPath(
+                                    path = bcvPath,
+                                    color = EmeraldLight,
+                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                )
+                            } else {
+                                val activePath = when (selectedCurrency) {
+                                    TrendCurrency.USD_BCV -> bcvPath
+                                    TrendCurrency.EUR_BCV -> eurPath
+                                    TrendCurrency.USDT -> usdtPath
+                                    TrendCurrency.ALL -> bcvPath
+                                }
+                                drawPath(
+                                    path = singleFillPath,
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(singleLineColor.copy(alpha = 0.28f), Color.Transparent)
+                                    )
+                                )
+                                drawPath(
+                                    path = activePath,
+                                    color = singleLineColor,
+                                    style = Stroke(width = 2.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                )
+                            }
+
+                            // Highlighted cursor / last point
+                            val highlightIdx = (touchedIndex ?: filteredPoints.lastIndex).coerceIn(0, filteredPoints.lastIndex)
+                            val hlX = (highlightIdx.toFloat() / (count - 1).toFloat()) * size.width
+                            val hlSnap = filteredPoints[highlightIdx]
+                            val hlVal = when (selectedCurrency) {
+                                TrendCurrency.USD_BCV -> hlSnap.usdBcv
+                                TrendCurrency.EUR_BCV -> hlSnap.eurBcv
+                                TrendCurrency.USDT -> hlSnap.usdt
+                                TrendCurrency.ALL -> hlSnap.usdBcv
+                            }
+                            val hlY = yFor(hlVal)
+
+                            if (touchedIndex != null) {
+                                drawLine(
+                                    color = singleLineColor.copy(alpha = 0.45f),
+                                    start = Offset(hlX, 0f),
+                                    end = Offset(hlX, size.height),
+                                    strokeWidth = 1.2.dp.toPx()
+                                )
+                            }
+                            drawCircle(
+                                color = singleLineColor,
+                                radius = 4.5.dp.toPx(),
+                                center = Offset(hlX, hlY)
                             )
                         }
                     }
             )
+
+            // X-Axis Date Labels
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val firstLbl = filteredPoints.firstOrNull()?.label ?: ""
+                val midLbl = filteredPoints.getOrNull(filteredPoints.size / 2)?.label ?: ""
+                val lastLbl = filteredPoints.lastOrNull()?.label ?: ""
+                Text(firstLbl, fontSize = 9.5.sp, color = textSecondary)
+                if (filteredPoints.size >= 3) {
+                    Text(midLbl, fontSize = 9.5.sp, color = textSecondary)
+                }
+                Text(lastLbl, fontSize = 9.5.sp, color = textSecondary)
+            }
         }
 
         // 3. Rate Alerts Card
@@ -945,7 +1331,7 @@ fun MarketTab(
 }
 
 // =========================================================================
-// TAB 4: COBROS (PAGO MIXTO, VUELTO Y RESUMEN WHATSAPP)
+// TAB 4: COBROS (PAGO MIXTO, MÚLTIPLES PAGO MÓVIL / CUENTAS Y WHATSAPP)
 // =========================================================================
 @Composable
 fun CheckoutTab(
@@ -953,15 +1339,18 @@ fun CheckoutTab(
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
-    pagoMovilInfo: PagoMovilInfo,
-    onSavePagoMovil: (PagoMovilInfo) -> Unit,
+    paymentProfiles: List<PaymentMethodProfile>,
+    selectedProfileId: Long?,
+    onSelectProfile: (Long?) -> Unit,
+    onSaveProfile: (PaymentMethodProfile) -> Unit,
+    onDeleteProfile: (Long) -> Unit,
     onOpenPlans: () -> Unit
 ) {
     if (!isUltraUser) {
         UltraLockBanner(
             isDark = isDark,
-            featureTitle = "Pago Mixto y Cobros por WhatsApp",
-            featureDescription = "Calcula en segundos cuánto falta en Bs. o cuánto vuelto dar cuando pagan parte en efectivo ($) y parte en Pago Móvil, y comparte el resumen en 1 toque.",
+            featureTitle = "Pago Mixto, Cuentas y Cobros por WhatsApp",
+            featureDescription = "Calcula cuánto falta en Bs. o cuánto vuelto dar en pagos mixtos, guarda varios Pago Móvil o cuentas bancarias y comparte el cobro en 1 toque.",
             ultraPrice = ultraPrice,
             onOpenPlans = onOpenPlans
         )
@@ -978,7 +1367,13 @@ fun CheckoutTab(
     var totalUsdStr by remember { mutableStateOf("") }
     var cashUsdStr by remember { mutableStateOf("") }
     var paidVesStr by remember { mutableStateOf("") }
-    var showPagoMovilEditor by remember { mutableStateOf(false) }
+
+    var editingProfile by remember { mutableStateOf<PaymentMethodProfile?>(null) }
+    var showProfileDialog by remember { mutableStateOf(false) }
+
+    val selectedProfile = remember(paymentProfiles, selectedProfileId) {
+        paymentProfiles.firstOrNull { it.id == selectedProfileId }
+    }
 
     val activeRate = when (selectedRateKey) {
         "EUR_BCV" -> uiState.eurBcv?.rate ?: 1.0
@@ -999,7 +1394,7 @@ fun CheckoutTab(
         UltraMath.calculateMixedPayment(totalUsd, cashUsd, paidVes, activeRate)
     }
 
-    val shareSummaryText = remember(result, rateLabel, activeRate, pagoMovilInfo) {
+    val shareSummaryText = remember(result, rateLabel, activeRate, selectedProfile) {
         buildString {
             appendLine("*Resumen de Cobro — Tasa VE*")
             appendLine("Total: $${String.format(Locale.US, "%.2f", result.totalUsd)} (Bs. ${String.format(Locale.US, "%,.2f", result.totalVes)})")
@@ -1014,12 +1409,20 @@ fun CheckoutTab(
             } else if (result.totalUsd > 0) {
                 appendLine("Estado: Pagado completo ✅")
             }
-            if (pagoMovilInfo.bank.isNotBlank() || pagoMovilInfo.phone.isNotBlank()) {
+            selectedProfile?.let { profile ->
                 appendLine()
-                appendLine("*Datos Pago Móvil:*")
-                if (pagoMovilInfo.bank.isNotBlank()) appendLine("Banco: ${pagoMovilInfo.bank}")
-                if (pagoMovilInfo.documentId.isNotBlank()) appendLine("CI/RIF: ${pagoMovilInfo.documentId}")
-                if (pagoMovilInfo.phone.isNotBlank()) appendLine("Teléfono: ${pagoMovilInfo.phone}")
+                if (profile.type == PaymentMethodType.PAGO_MOVIL) {
+                    appendLine("*Datos Pago Móvil${if (profile.alias.isNotBlank()) " (${profile.alias})" else ""}:*")
+                    appendLine("Banco: ${profile.formattedBank()}")
+                    if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
+                    if (profile.phoneNumber.isNotBlank()) appendLine("Teléfono: ${profile.formattedPhone()}")
+                } else {
+                    appendLine("*Datos Cuenta Bancaria${if (profile.alias.isNotBlank()) " (${profile.alias})" else ""}:*")
+                    appendLine("Banco: ${profile.formattedBank()}")
+                    if (profile.accountNumber.isNotBlank()) appendLine("Cuenta: ${profile.accountNumber}")
+                    if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
+                    if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
+                }
             }
         }.trim()
     }
@@ -1161,90 +1564,168 @@ fun CheckoutTab(
             }
         }
 
-        // Local Pago Móvil Accordion
-        val pmArrow by animateFloatAsState(
-            targetValue = if (showPagoMovilEditor) 180f else 0f,
-            animationSpec = tween(200, easing = FastOutSlowInEasing),
-            label = "pmArrow"
-        )
-        var bank by remember(pagoMovilInfo) { mutableStateOf(pagoMovilInfo.bank) }
-        var docId by remember(pagoMovilInfo) { mutableStateOf(pagoMovilInfo.documentId) }
-        var phone by remember(pagoMovilInfo) { mutableStateOf(pagoMovilInfo.phone) }
-
+        // Multi-Profile Pago Móvil & Bank Accounts Section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(16.dp))
-                .animateContentSize(tween(220, easing = FastOutSlowInEasing))
-                .padding(14.dp)
+                .border(1.dp, borderCol, RoundedCornerShape(18.dp))
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showPagoMovilEditor = !showPagoMovilEditor },
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Mis datos de Pago Móvil (locales)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimary)
                     Text(
-                        text = if (pagoMovilInfo.phone.isNotBlank()) "${pagoMovilInfo.bank} • ${pagoMovilInfo.phone}" else "Opcional: inclúyelos al enviar por WhatsApp",
+                        text = "Mis Pago Móvil y Cuentas (${paymentProfiles.size})",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    Text(
+                        text = "Toca una para incluirla al compartir el cobro",
                         fontSize = 10.5.sp,
                         color = textSecondary
                     )
                 }
-                Icon(
-                    imageVector = Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = textSecondary,
-                    modifier = Modifier.graphicsLayer { rotationZ = pmArrow }
-                )
+                FilledTonalButton(
+                    onClick = {
+                        editingProfile = null
+                        showProfileDialog = true
+                    },
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Nueva", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                }
             }
 
-            if (showPagoMovilEditor) {
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = bank,
-                    onValueChange = { bank = it },
-                    label = { Text("Banco") },
-                    placeholder = { Text("Ej. Banesco / BDV") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = docId,
-                        onValueChange = { docId = it },
-                        label = { Text("CI / RIF") },
-                        placeholder = { Text("V-12345678") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
-                        label = { Text("Teléfono") },
-                        placeholder = { Text("0414-0000000") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
+            if (paymentProfiles.isEmpty()) {
+                OutlinedButton(
                     onClick = {
-                        onSavePagoMovil(PagoMovilInfo(bank, docId, phone))
-                        showPagoMovilEditor = false
-                        Toast.makeText(context, "Datos guardados localmente", Toast.LENGTH_SHORT).show()
+                        editingProfile = null
+                        showProfileDialog = true
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                    border = BorderStroke(1.dp, borderCol)
                 ) {
-                    Text("Guardar datos", fontWeight = FontWeight.Bold)
+                    Icon(Icons.Default.AccountBalance, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Agregar Pago Móvil o Cuenta Bancaria", fontSize = 12.sp, color = textPrimary)
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    paymentProfiles.forEach { profile ->
+                        val isSelected = profile.id == selectedProfile?.id
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    if (isSelected) {
+                                        if (isDark) Color(0x1F10B981) else Color(0x1410B981)
+                                    } else {
+                                        if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC)
+                                    }
+                                )
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) Emerald else borderCol,
+                                    shape = RoundedCornerShape(14.dp)
+                                )
+                                .clickable {
+                                    onSelectProfile(if (isSelected) null else profile.id)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                contentDescription = null,
+                                tint = if (isSelected) EmeraldLight else textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(
+                                                if (profile.type == PaymentMethodType.PAGO_MOVIL) {
+                                                    Color(0x2610B981)
+                                                } else {
+                                                    Color(0x2660A5FA)
+                                                }
+                                            )
+                                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = if (profile.type == PaymentMethodType.PAGO_MOVIL) "PAGO MÓVIL" else "CUENTA",
+                                            fontSize = 8.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (profile.type == PaymentMethodType.PAGO_MOVIL) EmeraldLight else BlueEuro
+                                        )
+                                    }
+                                    Text(
+                                        text = profile.displayTitle(),
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                val sub = if (profile.type == PaymentMethodType.PAGO_MOVIL) {
+                                    "${profile.formattedBank()} • ${profile.formattedDoc()} • ${profile.formattedPhone()}"
+                                } else {
+                                    "${profile.formattedBank()} • ${profile.accountNumber}"
+                                }
+                                Text(
+                                    text = sub,
+                                    fontSize = 10.5.sp,
+                                    color = textSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    editingProfile = profile
+                                    showProfileDialog = true
+                                },
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Editar",
+                                    tint = textSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = { onDeleteProfile(profile.id) },
+                                modifier = Modifier.size(30.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = "Eliminar",
+                                    tint = Color(0xFFEF4444),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1288,6 +1769,433 @@ fun CheckoutTab(
                 Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Enviar por WhatsApp", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+            }
+        }
+    }
+
+    if (showProfileDialog) {
+        PaymentProfileEditorDialog(
+            isDark = isDark,
+            initial = editingProfile,
+            onDismiss = { showProfileDialog = false },
+            onSave = { profile ->
+                onSaveProfile(profile)
+                showProfileDialog = false
+                Toast.makeText(context, "Método de cobro guardado", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+}
+
+@Composable
+private fun PaymentProfileEditorDialog(
+    isDark: Boolean,
+    initial: PaymentMethodProfile?,
+    onDismiss: () -> Unit,
+    onSave: (PaymentMethodProfile) -> Unit
+) {
+    val dialogBg = if (isDark) Color(0xFF141418) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    var methodType by remember(initial) { mutableStateOf(initial?.type ?: PaymentMethodType.PAGO_MOVIL) }
+    var alias by remember(initial) { mutableStateOf(initial?.alias ?: "") }
+    var selectedBank by remember(initial) {
+        mutableStateOf(
+            VENEZUELAN_BANKS.firstOrNull { it.code == initial?.bankCode }
+                ?: VENEZUELAN_BANKS.first { it.code == "0134" }
+        )
+    }
+    var docPrefix by remember(initial) { mutableStateOf(initial?.docPrefix ?: "V") }
+    var docNumber by remember(initial) { mutableStateOf(initial?.docNumber ?: "") }
+    var phonePrefix by remember(initial) { mutableStateOf(initial?.phonePrefix ?: "0414") }
+    var phoneNumber by remember(initial) { mutableStateOf(initial?.phoneNumber ?: "") }
+    var accountNumber by remember(initial) { mutableStateOf(initial?.accountNumber ?: "") }
+    var accountHolder by remember(initial) { mutableStateOf(initial?.accountHolder ?: "") }
+
+    var showBankPicker by remember { mutableStateOf(false) }
+    var expandDocMenu by remember { mutableStateOf(false) }
+    var expandPhoneMenu by remember { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .wrapContentHeight()
+                .border(1.dp, Color(0x2694A3B8), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (initial == null) "Nuevo Método de Cobro" else "Editar Método de Cobro",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Type Toggle: Pago Móvil / Cuenta Bancaria
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PaymentMethodType.entries.forEach { t ->
+                        FilterChip(
+                            selected = methodType == t,
+                            onClick = {
+                                methodType = t
+                                if (t == PaymentMethodType.BANK_ACCOUNT && accountNumber.isBlank()) {
+                                    accountNumber = selectedBank.code
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            label = {
+                                Text(
+                                    text = t.label,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0x2610B981),
+                                selectedLabelColor = EmeraldLight
+                            )
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = alias,
+                    onValueChange = { alias = it },
+                    label = { Text("Nombre o Alias (opcional)") },
+                    placeholder = { Text("Ej. Personal Banesco / Tienda") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Venezuelan Bank Dropdown Selector (0134 - Banesco, etc.)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Banco (Código + Nombre)", fontSize = 11.sp, color = textSecondary)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(12.dp))
+                            .clickable { showBankPicker = true }
+                            .padding(horizontal = 14.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = selectedBank.display(),
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Elegir banco",
+                            tint = EmeraldLight
+                        )
+                    }
+                }
+
+                // Fixed Document Prefix (V / E / J / G / P / C) + Number
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box {
+                        OutlinedButton(
+                            onClick = { expandDocMenu = true },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp)
+                        ) {
+                            Text(docPrefix, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = EmeraldLight)
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
+                        }
+                        DropdownMenu(
+                            expanded = expandDocMenu,
+                            onDismissRequest = { expandDocMenu = false }
+                        ) {
+                            DOC_PREFIXES.forEach { prefix ->
+                                DropdownMenuItem(
+                                    text = { Text(prefix, fontWeight = FontWeight.Bold) },
+                                    onClick = {
+                                        docPrefix = prefix
+                                        expandDocMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = docNumber,
+                        onValueChange = { input -> docNumber = input.filter { it.isDigit() }.take(12) },
+                        label = { Text("Cédula / RIF") },
+                        placeholder = { Text("12345678") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                if (methodType == PaymentMethodType.PAGO_MOVIL) {
+                    // Fixed Phone Prefix (0412 / 0414 / 0424 / 0416 / 0426 / 0422) + 7 digits
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box {
+                            OutlinedButton(
+                                onClick = { expandPhoneMenu = true },
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 14.dp)
+                            ) {
+                                Text(phonePrefix, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp, color = EmeraldLight)
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
+                            }
+                            DropdownMenu(
+                                expanded = expandPhoneMenu,
+                                onDismissRequest = { expandPhoneMenu = false }
+                            ) {
+                                PHONE_PREFIXES.forEach { prefix ->
+                                    DropdownMenuItem(
+                                        text = { Text(prefix, fontWeight = FontWeight.Bold) },
+                                        onClick = {
+                                            phonePrefix = prefix
+                                            expandPhoneMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = phoneNumber,
+                            onValueChange = { input -> phoneNumber = input.filter { it.isDigit() }.take(7) },
+                            label = { Text("Teléfono (7 dígitos)") },
+                            placeholder = { Text("1234567") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = accountNumber,
+                        onValueChange = { input -> accountNumber = input.filter { it.isDigit() }.take(20) },
+                        label = { Text("Número de Cuenta (20 dígitos)") },
+                        placeholder = { Text("${selectedBank.code}0000000000000000") },
+                        supportingText = { Text("${accountNumber.length}/20 dígitos") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = accountHolder,
+                        onValueChange = { accountHolder = it },
+                        label = { Text("Titular de la cuenta (opcional)") },
+                        placeholder = { Text("Nombre o razón social") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Cancelar")
+                    }
+                    Button(
+                        onClick = {
+                            onSave(
+                                PaymentMethodProfile(
+                                    id = initial?.id ?: 0L,
+                                    alias = alias.trim(),
+                                    type = methodType,
+                                    bankCode = selectedBank.code,
+                                    bankName = selectedBank.name,
+                                    docPrefix = docPrefix,
+                                    docNumber = docNumber.trim(),
+                                    phonePrefix = phonePrefix,
+                                    phoneNumber = phoneNumber.trim(),
+                                    accountNumber = accountNumber.trim(),
+                                    accountHolder = accountHolder.trim()
+                                )
+                            )
+                        },
+                        modifier = Modifier.weight(1.3f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                    ) {
+                        Text("Guardar", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+
+    if (showBankPicker) {
+        BankPickerDialog(
+            isDark = isDark,
+            selectedCode = selectedBank.code,
+            onSelect = { bank ->
+                val oldCode = selectedBank.code
+                selectedBank = bank
+                if (methodType == PaymentMethodType.BANK_ACCOUNT) {
+                    accountNumber = if (accountNumber.isBlank() || accountNumber == oldCode) {
+                        bank.code
+                    } else if (accountNumber.startsWith(oldCode)) {
+                        bank.code + accountNumber.removePrefix(oldCode)
+                    } else {
+                        accountNumber
+                    }
+                }
+                showBankPicker = false
+            },
+            onDismiss = { showBankPicker = false }
+        )
+    }
+}
+
+@Composable
+private fun BankPickerDialog(
+    isDark: Boolean,
+    selectedCode: String,
+    onSelect: (VenezuelanBank) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+    val dialogBg = if (isDark) Color(0xFF141418) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    val filteredBanks = remember(query) {
+        val q = query.trim()
+        if (q.isEmpty()) VENEZUELAN_BANKS
+        else VENEZUELAN_BANKS.filter {
+            it.code.contains(q, ignoreCase = true) || it.name.contains(q, ignoreCase = true)
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .fillMaxHeight(0.75f)
+                .border(1.dp, Color(0x2694A3B8), RoundedCornerShape(22.dp)),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Selecciona el Banco",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text("Buscar por código (0134) o nombre...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filteredBanks, key = { it.code }) { bank ->
+                        val selected = bank.code == selectedCode
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (selected) Color(0x2610B981)
+                                    else if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC)
+                                )
+                                .clickable { onSelect(bank) }
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0x2610B981))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = bank.code,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = EmeraldLight
+                                )
+                            }
+                            Text(
+                                text = bank.name,
+                                fontSize = 13.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = textPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (selected) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = EmeraldLight, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1380,9 +2288,9 @@ fun PlansComparisonDialog(
                         listOf("Sin publicidad", "—", "✓", "✓"),
                         listOf("Escáner cámara", "3/día", "∞", "∞"),
                         listOf("Carrito + IVA/IGTF", "—", "—", "✓"),
-                        listOf("Brecha + Alertas", "—", "—", "✓"),
-                        listOf("Widget de inicio", "—", "—", "✓"),
-                        listOf("Pago Mixto/WhatsApp", "—", "—", "✓")
+                        listOf("Brecha + Tendencias", "—", "—", "✓"),
+                        listOf("Alertas + Widget", "—", "—", "✓"),
+                        listOf("Cobros y Cuentas", "—", "—", "✓")
                     )
                     rows.forEach { cols ->
                         Row(
@@ -1418,7 +2326,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Incluye cero anuncios + escáner ilimitado (no pagas Pro aparte) + Carrito, Alertas, Brecha, Widget y Pago Mixto. Cancela cuando quieras.",
+                        text = "Incluye cero anuncios + escáner ilimitado (no pagas Pro aparte) + Carrito, Brecha y Tendencias, Alertas, Widget y Cobros. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp
