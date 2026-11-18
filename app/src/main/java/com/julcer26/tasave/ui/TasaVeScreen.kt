@@ -168,18 +168,19 @@ fun TasaVeScreen(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.clickable { showPlansDialog = true }
                     ) {
                         // Custom logo container displaying the internal app logo
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
-                                .clip(RoundedCornerShape(11.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(if (isDark) Color(0x1F10B981) else Color(0x0F10B981))
                                 .border(
                                     width = 1.5.dp,
                                     color = if (isDark) Color(0x5910B981) else Color(0x4010B981),
-                                    shape = RoundedCornerShape(11.dp)
+                                    shape = RoundedCornerShape(10.dp)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -190,36 +191,50 @@ fun TasaVeScreen(
                                 modifier = Modifier.size(30.dp)
                             )
                         }
-                        Column(
-                            modifier = Modifier.clickable { showPlansDialog = true }
-                        ) {
-                            Text(
-                                text = "Tasa VE",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textPrimary,
-                                letterSpacing = (-0.4).sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            val tierLabel = when {
-                                isUltraUser -> "Ultra ★"
-                                isProUser -> "Pro ✓ • Ver Ultra"
-                                else -> "Plan Gratis • Planes"
+                        Text(
+                            text = "Tasa VE",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary,
+                            letterSpacing = (-0.4).sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        if (isUltraUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFFF59E0B), Color(0xFFEA580C))
+                                        )
+                                    )
+                                    .padding(horizontal = 7.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "ULTRA",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Black,
+                                    maxLines = 1
+                                )
                             }
-                            val tierColor = when {
-                                isUltraUser -> Color(0xFFF59E0B)
-                                isProUser -> if (isDark) Color(0xFF34D399) else Color(0xFF047857)
-                                else -> Color(0xFFF59E0B)
+                        } else if (isProUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF10B981))
+                                    .padding(horizontal = 7.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "PRO",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.Black,
+                                    maxLines = 1
+                                )
                             }
-                            Text(
-                                text = tierLabel,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = tierColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
                         }
                     }
                 },
@@ -455,17 +470,17 @@ fun TasaVeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(
                             if (isDark) Color(0x1AF59E0B) else Color(0x1FF59E0B)
                         )
                         .border(
                             width = 1.dp,
                             color = Color(0x4DF59E0B),
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(20.dp)
                         )
                         .clickable { showPlansDialog = true }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -668,7 +683,7 @@ fun TasaVeScreen(
                         currentRateInfo?.let {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(
                                         if (isDark) Color(0x2610B981) else Color(0x1F059669)
                                     )
@@ -731,7 +746,7 @@ fun TasaVeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(
                                     if (topFocused) {
                                         if (isDark) Color(0x1F10B981) else Color(0x0F10B981)
@@ -746,7 +761,7 @@ fun TasaVeScreen(
                                     } else {
                                         if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000)
                                     },
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -879,7 +894,7 @@ fun TasaVeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(
                                     if (bottomFocused) {
                                         if (isDark) Color(0x1F10B981) else Color(0x0F10B981)
@@ -894,7 +909,7 @@ fun TasaVeScreen(
                                     } else {
                                         if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000)
                                     },
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -1058,12 +1073,12 @@ fun TasaVeScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(if (isDark) Color(0x0F222226) else Color(0x0C000000))
                                 .border(
                                     width = 1.dp,
                                     color = if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000),
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -1630,12 +1645,12 @@ fun HistoryDialog(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(14.dp))
                                     .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
                                     .border(
                                         width = 1.dp,
                                         color = if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000),
-                                        shape = RoundedCornerShape(16.dp)
+                                        shape = RoundedCornerShape(14.dp)
                                     )
                                     .clickable { onLoadItem(item) }
                                     .padding(12.dp)
@@ -1779,7 +1794,7 @@ fun SleekSettingsDialog(
                 if (BuildConfig.DEBUG) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isDark) Color(0x1F3B82F6) else Color(0x142563EB)
                         ),
@@ -1844,7 +1859,7 @@ fun SleekSettingsDialog(
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = planContainerColor),
                     border = BorderStroke(width = 1.dp, color = planBorderColor)
                 ) {
@@ -1892,7 +1907,7 @@ fun SleekSettingsDialog(
                         Button(
                             onClick = onOpenPlans,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
                                 contentColor = Color.Black
@@ -1911,7 +1926,7 @@ fun SleekSettingsDialog(
                             OutlinedButton(
                                 onClick = onPurchasePro,
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 border = BorderStroke(1.dp, Color(0xFF10B981))
                             ) {
                                 Text(
@@ -1944,7 +1959,7 @@ fun SleekSettingsDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
                         .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -2015,12 +2030,12 @@ fun SleekSettingsDialog(
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(14.dp))
                             .background(if (isDark) Color(0x1410B981) else Color(0x0A10B981))
                             .border(
                                 width = 1.dp,
                                 color = if (isDark) Color(0x2610B981) else Color(0x1F10B981),
-                                shape = RoundedCornerShape(16.dp)
+                                shape = RoundedCornerShape(14.dp)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -2072,7 +2087,7 @@ fun SleekDisclosurePanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
             .clickable { onToggle() }
             .animateContentSize(
@@ -2131,9 +2146,9 @@ fun GlassCard(
             .border(
                 width = 1.dp,
                 color = if (glowColor != Color.Transparent) glowColor.copy(alpha = 0.35f) else borderStroke,
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(20.dp)
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = cardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {

@@ -86,9 +86,9 @@ private fun UltraLockBanner(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(cardBg)
-                .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(24.dp))
+                .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(20.dp))
                 .padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -407,9 +407,9 @@ fun CartTab(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(14.dp))
                             .background(cardBg)
-                            .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                            .border(1.dp, borderCol, RoundedCornerShape(14.dp))
                             .clickable { editingItem = item }
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -541,6 +541,7 @@ private fun CartItemEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
         containerColor = if (isDark) Color(0xFF141418) else Color.White,
         title = {
             Text(
@@ -938,7 +939,7 @@ fun MarketTab(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1268,7 +1269,7 @@ fun MarketTab(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(1.dp, borderCol)
             ) {
                 Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
@@ -1319,7 +1320,7 @@ fun MarketTab(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 48.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
             ) {
                 Icon(Icons.Default.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -1568,9 +1569,9 @@ fun CheckoutTab(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(18.dp))
+                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1598,7 +1599,7 @@ fun CheckoutTab(
                         showProfileDialog = true
                     },
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
@@ -1613,7 +1614,7 @@ fun CheckoutTab(
                         showProfileDialog = true
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, borderCol)
                 ) {
                     Icon(Icons.Default.AccountBalance, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
@@ -1660,7 +1661,7 @@ fun CheckoutTab(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .clip(RoundedCornerShape(10.dp))
                                             .background(
                                                 if (profile.type == PaymentMethodType.PAGO_MOVIL) {
                                                     Color(0x2610B981)
@@ -1668,7 +1669,7 @@ fun CheckoutTab(
                                                     Color(0x2660A5FA)
                                                 }
                                             )
-                                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
                                             text = if (profile.type == PaymentMethodType.PAGO_MOVIL) "PAGO MÓVIL" else "CUENTA",
@@ -1895,8 +1896,8 @@ private fun PaymentProfileEditorDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
                             .clickable { showBankPicker = true }
                             .padding(horizontal = 14.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -1928,7 +1929,7 @@ private fun PaymentProfileEditorDialog(
                     Box {
                         OutlinedButton(
                             onClick = { expandDocMenu = true },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(14.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp)
                         ) {
                             Text(docPrefix, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = EmeraldLight)
@@ -1971,7 +1972,7 @@ private fun PaymentProfileEditorDialog(
                         Box {
                             OutlinedButton(
                                 onClick = { expandPhoneMenu = true },
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 14.dp)
                             ) {
                                 Text(phonePrefix, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp, color = EmeraldLight)
@@ -2032,7 +2033,7 @@ private fun PaymentProfileEditorDialog(
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(14.dp)
                     ) {
                         Text("Cancelar")
                     }
@@ -2055,7 +2056,7 @@ private fun PaymentProfileEditorDialog(
                             )
                         },
                         modifier = Modifier.weight(1.3f),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
                     ) {
                         Text("Guardar", fontWeight = FontWeight.Bold)
@@ -2116,8 +2117,8 @@ private fun BankPickerDialog(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
                 .fillMaxHeight(0.75f)
-                .border(1.dp, Color(0x2694A3B8), RoundedCornerShape(22.dp)),
-            shape = RoundedCornerShape(22.dp),
+                .border(1.dp, Color(0x2694A3B8), RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = dialogBg)
         ) {
             Column(
@@ -2160,7 +2161,7 @@ private fun BankPickerDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(
                                     if (selected) Color(0x2610B981)
                                     else if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC)
@@ -2172,7 +2173,7 @@ private fun BankPickerDialog(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(Color(0x2610B981))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
@@ -2269,9 +2270,9 @@ fun PlansComparisonDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(cardBg)
-                        .border(1.dp, Color(0x1F94A3B8), RoundedCornerShape(16.dp))
+                        .border(1.dp, Color(0x1F94A3B8), RoundedCornerShape(20.dp))
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -2309,13 +2310,13 @@ fun PlansComparisonDialog(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(
                             Brush.verticalGradient(
                                 listOf(Color(0x2AF59E0B), Color(0x12F59E0B))
                             )
                         )
-                        .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(18.dp))
+                        .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(20.dp))
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -2338,7 +2339,7 @@ fun PlansComparisonDialog(
                                 modifier = Modifier
                                     .weight(1f)
                                     .heightIn(min = 46.dp),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black)
                             ) {
                                 Text(ultraMonthlyPrice, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
@@ -2348,7 +2349,7 @@ fun PlansComparisonDialog(
                                 modifier = Modifier
                                     .weight(1f)
                                     .heightIn(min = 46.dp),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 border = BorderStroke(1.dp, AmberUltra)
                             ) {
                                 Text(ultraYearlyPrice, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = AmberUltra)

@@ -77,14 +77,14 @@ fun TopBannerAd(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(
                         if (isDark) Color(0x0F222226) else Color(0x0A000000)
                     )
                     .border(
                         width = 1.dp,
                         color = if (isDark) Color(0x14FFFFFF) else Color(0x14000000),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(20.dp)
                     )
                     .padding(vertical = 4.dp),
                 contentAlignment = Alignment.Center
