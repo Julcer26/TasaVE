@@ -2003,22 +2003,22 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Privacy Disclosure: Camera on-device, local notifications, local Cart/Pago Móvil & Billing
+                // Privacy Disclosure: Camera on-device, local notifications, local Cart/Pago Móvil & Bank profiles, Billing
                 SleekDisclosurePanel(
                     title = "Política de Privacidad, Cámara y Notificaciones",
                     isExpanded = expandPrivacy,
                     isDark = isDark,
                     onToggle = { expandPrivacy = !expandPrivacy },
-                    content = "Tasa VE protege tu privacidad. Tus preferencias, historial de conversiones, carrito de compras, datos opcionales de Pago Móvil y caché de tasas se almacenan exclusivamente de forma local en tu dispositivo.\n\n• Cámara y Escáner: El permiso de cámara se usa únicamente para leer precios en tiempo real dentro del propio dispositivo (ML Kit). No grabamos video ni enviamos fotografías a servidores.\n• Alertas y Widget: Las notificaciones de cambio de tasa se evalúan localmente en tu teléfono mediante WorkManager sin envío de datos personales.\n• Publicidad y Suscripciones: Google Mobile Ads (AdMob) y Google Play Billing gestionan los anuncios de la versión gratuita, el pago único Pro y la suscripción Ultra conforme a las políticas de Google Play. Ultra incluye automáticamente todos los beneficios Pro mientras esté activa."
+                    content = "Tasa VE protege tu privacidad. No solicitamos registro ni enviamos datos personales a servidores propios. Tu historial, carrito, preferencias fiscales y perfiles opcionales de Pago Móvil o Cuentas Bancarias (alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos y titular) se guardan únicamente en tu dispositivo y están excluidos del respaldo en la nube de Android.\n\n• Cámara (OCR local): Se usa solo en primer plano con Google ML Kit dentro del teléfono; no grabamos video ni almacenamos ni enviamos fotos.\n• Notificaciones: Las alertas de tasa se evalúan localmente mediante WorkManager.\n• Terceros y Pagos: AdMob (banners gratuitos), Google Play Billing (Pro/Ultra) y DolarAPI (cotizaciones públicas) operan bajo sus respectivas políticas. Ultra incluye automáticamente todos los beneficios Pro mientras esté activa."
                 )
 
-                // Terms and Conditions Disclosure (Data, Subscriptions, IVA/IGTF & Scanner Disclaimer)
+                // Terms and Conditions Disclosure (Non-affiliation, Subscriptions, IVA/IGTF, Bank Catalog & Scanner Disclaimer)
                 SleekDisclosurePanel(
                     title = "Términos de Uso y Descargo de Responsabilidad",
                     isExpanded = expandTerms,
                     isDark = isDark,
                     onToggle = { expandTerms = !expandTerms },
-                    content = "Tasa VE es una herramienta estrictamente informativa y de cálculo matemático. Las cotizaciones mostradas provienen de fuentes públicas de referencia (DolarAPI y Banco Central de Venezuela — BCV).\n\n• Planes Pro y Ultra: Tasa VE Pro es un pago único vitalicio (cero anuncios y escáner ilimitado). Tasa VE Ultra es una suscripción mensual o anual renovable desde Google Play que incluye todo lo de Pro sin costo adicional mientras permanezca activa, más Carrito, Monitor de Brecha, Alertas, Widget y Pago Mixto.\n• Descargo: El desarrollador no fija tasas de cambio ni presta servicios financieros o fiscales. Los cálculos de IVA (16%), IGTF (3%), brecha cambiaria, vuelto y lectura por cámara son asistencias referenciales; verifica siempre los montos antes de pagar o facturar."
+                    content = "Tasa VE es una herramienta estrictamente informativa y matemática. No está afiliada, autorizada ni vinculada con el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna.\n\n• Planes Pro y Ultra: Tasa VE Pro ($2.99 pago único vitalicio) elimina anuncios y desbloquea el escáner ilimitado. Tasa VE Ultra (suscripción mensual/anual) se renueva automáticamente vía Google Play salvo cancelación con al menos 24 h de antelación desde Google Play > Suscripciones; incluye todo lo de Pro mientras permanezca activa (si ya compraste Pro antes, lo conservas si cancelas Ultra).\n• Descargo: El catálogo de bancos es solo una guía de formato (no validamos cuentas ni procesamos pagos). Los cálculos de IVA (16%), IGTF (3%), brecha, vuelto y lectura por cámara son referenciales; verifica siempre los montos antes de pagar o facturar."
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))

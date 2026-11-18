@@ -2516,6 +2516,15 @@ fun PlansComparisonDialog(
                 ) {
                     Text("Restaurar compras y suscripciones", fontSize = 11.sp, color = textSecondary)
                 }
+
+                Text(
+                    text = "La suscripción Ultra se renueva automáticamente por el período elegido a través de Google Play salvo cancelación al menos 24 h antes del vencimiento desde Google Play > Suscripciones. Reembolsos sujetos a las políticas de Google Play.",
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp,
+                    color = textSecondary.copy(alpha = 0.85f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
