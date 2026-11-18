@@ -1829,6 +1829,7 @@ fun SleekSettingsDialog(
                                         selected = debugTier == tier,
                                         onClick = { onSelectDebugTier(tier) },
                                         modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(14.dp),
                                         label = {
                                             Text(
                                                 text = label,

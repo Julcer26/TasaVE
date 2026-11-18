@@ -265,6 +265,7 @@ fun CartTab(
                 FilterChip(
                     selected = applyIva,
                     onClick = onToggleIva,
+                    shape = RoundedCornerShape(14.dp),
                     label = { Text("IVA 16%", fontSize = 11.5.sp, fontWeight = FontWeight.Bold) },
                     leadingIcon = {
                         Icon(
@@ -282,6 +283,7 @@ fun CartTab(
                 FilterChip(
                     selected = applyIgtf,
                     onClick = onToggleIgtf,
+                    shape = RoundedCornerShape(14.dp),
                     label = { Text("IGTF 3%", fontSize = 11.5.sp, fontWeight = FontWeight.Bold) },
                     leadingIcon = {
                         Icon(
@@ -539,37 +541,70 @@ private fun CartItemEditorDialog(
     }
     var qty by remember(initialItem) { mutableStateOf(initialItem?.quantity ?: 1) }
 
-    AlertDialog(
+    val dialogBg = if (isDark) Color(0xFF141418) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val borderCol = if (isDark) Color(0x2694A3B8) else Color(0x1F475569)
+
+    Dialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(24.dp),
-        containerColor = if (isDark) Color(0xFF141418) else Color.White,
-        title = {
-            Text(
-                text = if (isEdit) "Editar producto" else "Agregar producto",
-                fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color(0xFF0F172A)
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .wrapContentHeight()
+                .border(1.dp, borderCol, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isEdit) "Editar producto" else "Agregar producto",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nombre del producto") },
                     placeholder = { Text("Ej. Harina PAN") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 OutlinedTextField(
                     value = amountStr,
                     onValueChange = { amountStr = it },
                     label = { Text(if (isVes) "Precio unitario (Bs.)" else "Precio unitario ($)") },
                     placeholder = { Text("0.00") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     FilterChip(
                         selected = !isVes,
                         onClick = {
@@ -581,7 +616,21 @@ private fun CartItemEditorDialog(
                             }
                             isVes = false
                         },
-                        label = { Text("En Dólares ($)") }
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = EmeraldLight
+                        ),
+                        label = {
+                            Text(
+                                text = "En Dólares ($)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     )
                     FilterChip(
                         selected = isVes,
@@ -594,11 +643,31 @@ private fun CartItemEditorDialog(
                             }
                             isVes = true
                         },
-                        label = { Text("En Bolívares (Bs.)") }
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = EmeraldLight
+                        ),
+                        label = {
+                            Text(
+                                text = "En Bolívares (Bs.)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     )
                 }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC))
+                        .border(1.dp, borderCol, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -606,53 +675,76 @@ private fun CartItemEditorDialog(
                         text = "Cantidad",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (isDark) Color.White else Color(0xFF0F172A)
+                        color = textPrimary
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        OutlinedIconButton(
-                            onClick = { if (qty > 1) qty -= 1 },
-                            modifier = Modifier.size(34.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isDark) Color(0x1F94A3B8) else Color(0x14475569))
+                                .clickable { if (qty > 1) qty -= 1 },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Remove, contentDescription = "Menos", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Remove, contentDescription = "Menos", tint = textPrimary, modifier = Modifier.size(16.dp))
                         }
                         Text(
                             text = "$qty",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isDark) Color.White else Color(0xFF0F172A)
+                            color = textPrimary,
+                            modifier = Modifier.widthIn(min = 20.dp),
+                            textAlign = TextAlign.Center
                         )
-                        OutlinedIconButton(
-                            onClick = { qty += 1 },
-                            modifier = Modifier.size(34.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0x2610B981))
+                                .clickable { qty += 1 },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Más", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Add, contentDescription = "Más", tint = EmeraldLight, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val value = amountStr.replace(",", ".").toDoubleOrNull()
-                    if (value != null && value > 0.0) {
-                        onConfirm(name, value, isVes, qty)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 46.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, borderCol)
+                    ) {
+                        Text("Cancelar", fontWeight = FontWeight.SemiBold, color = textPrimary)
                     }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-            ) {
-                Text(if (isEdit) "Guardar cambios" else "Agregar", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                    Button(
+                        onClick = {
+                            val value = amountStr.replace(",", ".").toDoubleOrNull()
+                            if (value != null && value > 0.0) {
+                                onConfirm(name, value, isVes, qty)
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .heightIn(min = 46.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                    ) {
+                        Text(if (isEdit) "Guardar cambios" else "Agregar", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 // =========================================================================
@@ -880,6 +972,7 @@ fun MarketTab(
                     FilterChip(
                         selected = selectedCurrency == currency,
                         onClick = { selectedCurrency = currency },
+                        shape = RoundedCornerShape(14.dp),
                         label = { Text(currency.label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = chipColor.copy(alpha = 0.2f),
@@ -900,6 +993,7 @@ fun MarketTab(
                     FilterChip(
                         selected = selectedRange == range,
                         onClick = { selectedRange = range },
+                        shape = RoundedCornerShape(14.dp),
                         label = { Text(range.label, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Color(0x2610B981),
@@ -1223,16 +1317,19 @@ fun MarketTab(
                 FilterChip(
                     selected = alertSettings.watchUsdBcv,
                     onClick = { onUpdateAlerts(alertSettings.copy(watchUsdBcv = !alertSettings.watchUsdBcv)) },
+                    shape = RoundedCornerShape(14.dp),
                     label = { Text("USD BCV", fontSize = 11.sp) }
                 )
                 FilterChip(
                     selected = alertSettings.watchEurBcv,
                     onClick = { onUpdateAlerts(alertSettings.copy(watchEurBcv = !alertSettings.watchEurBcv)) },
+                    shape = RoundedCornerShape(14.dp),
                     label = { Text("EUR BCV", fontSize = 11.sp) }
                 )
                 FilterChip(
                     selected = alertSettings.watchUsdt,
                     onClick = { onUpdateAlerts(alertSettings.copy(watchUsdt = !alertSettings.watchUsdt)) },
+                    shape = RoundedCornerShape(14.dp),
                     label = { Text("USDT", fontSize = 11.sp) }
                 )
             }
@@ -1247,6 +1344,7 @@ fun MarketTab(
                     FilterChip(
                         selected = alertSettings.thresholdPercent == pct,
                         onClick = { onUpdateAlerts(alertSettings.copy(thresholdPercent = pct)) },
+                        shape = RoundedCornerShape(14.dp),
                         label = { Text("${pct}%", fontSize = 11.sp) }
                     )
                 }
@@ -1483,6 +1581,7 @@ fun CheckoutTab(
                 label = { Text("Total de la cuenta ($)") },
                 placeholder = { Text("Ej. 25.00") },
                 singleLine = true,
+                shape = RoundedCornerShape(14.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -1497,6 +1596,7 @@ fun CheckoutTab(
                     label = { Text("Paga en $") },
                     placeholder = { Text("0.00") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
@@ -1506,6 +1606,7 @@ fun CheckoutTab(
                     label = { Text("Paga en Bs.") },
                     placeholder = { Text("0.00") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
@@ -1853,7 +1954,10 @@ private fun PaymentProfileEditorDialog(
                 }
 
                 // Type Toggle: Pago Móvil / Cuenta Bancaria
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     PaymentMethodType.entries.forEach { t ->
                         FilterChip(
                             selected = methodType == t,
@@ -1864,6 +1968,7 @@ private fun PaymentProfileEditorDialog(
                                 }
                             },
                             modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(14.dp),
                             label = {
                                 Text(
                                     text = t.label,
@@ -1887,6 +1992,7 @@ private fun PaymentProfileEditorDialog(
                     label = { Text("Nombre o Alias (opcional)") },
                     placeholder = { Text("Ej. Personal Banesco / Tienda") },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -1896,6 +2002,7 @@ private fun PaymentProfileEditorDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 56.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
                             .clickable { showBankPicker = true }
@@ -1921,73 +2028,38 @@ private fun PaymentProfileEditorDialog(
                 }
 
                 // Fixed Document Prefix (V / E / J / G / P / C) + Number
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box {
-                        OutlinedButton(
-                            onClick = { expandDocMenu = true },
-                            shape = RoundedCornerShape(14.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 14.dp)
-                        ) {
-                            Text(docPrefix, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = EmeraldLight)
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
-                        }
-                        DropdownMenu(
-                            expanded = expandDocMenu,
-                            onDismissRequest = { expandDocMenu = false }
-                        ) {
-                            DOC_PREFIXES.forEach { prefix ->
-                                DropdownMenuItem(
-                                    text = { Text(prefix, fontWeight = FontWeight.Bold) },
-                                    onClick = {
-                                        docPrefix = prefix
-                                        expandDocMenu = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    OutlinedTextField(
-                        value = docNumber,
-                        onValueChange = { input -> docNumber = input.filter { it.isDigit() }.take(12) },
-                        label = { Text("Cédula / RIF") },
-                        placeholder = { Text("12345678") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                if (methodType == PaymentMethodType.PAGO_MOVIL) {
-                    // Fixed Phone Prefix (0412 / 0414 / 0424 / 0416 / 0426 / 0422) + 7 digits
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Cédula / RIF", fontSize = 11.sp, color = textSecondary)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box {
-                            OutlinedButton(
-                                onClick = { expandPhoneMenu = true },
-                                shape = RoundedCornerShape(14.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 14.dp)
+                            Row(
+                                modifier = Modifier
+                                    .width(76.dp)
+                                    .height(56.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
+                                    .clickable { expandDocMenu = true }
+                                    .padding(horizontal = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(phonePrefix, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp, color = EmeraldLight)
+                                Text(docPrefix, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = EmeraldLight)
                                 Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
                             }
                             DropdownMenu(
-                                expanded = expandPhoneMenu,
-                                onDismissRequest = { expandPhoneMenu = false }
+                                expanded = expandDocMenu,
+                                onDismissRequest = { expandDocMenu = false }
                             ) {
-                                PHONE_PREFIXES.forEach { prefix ->
+                                DOC_PREFIXES.forEach { prefix ->
                                     DropdownMenuItem(
                                         text = { Text(prefix, fontWeight = FontWeight.Bold) },
                                         onClick = {
-                                            phonePrefix = prefix
-                                            expandPhoneMenu = false
+                                            docPrefix = prefix
+                                            expandDocMenu = false
                                         }
                                     )
                                 }
@@ -1995,14 +2067,67 @@ private fun PaymentProfileEditorDialog(
                         }
 
                         OutlinedTextField(
-                            value = phoneNumber,
-                            onValueChange = { input -> phoneNumber = input.filter { it.isDigit() }.take(7) },
-                            label = { Text("Teléfono (7 dígitos)") },
-                            placeholder = { Text("1234567") },
+                            value = docNumber,
+                            onValueChange = { input -> docNumber = input.filter { it.isDigit() }.take(12) },
+                            placeholder = { Text("12345678") },
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            shape = RoundedCornerShape(14.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.weight(1f)
                         )
+                    }
+                }
+
+                if (methodType == PaymentMethodType.PAGO_MOVIL) {
+                    // Fixed Phone Prefix (0412 / 0414 / 0424 / 0416 / 0426 / 0422) + 7 digits
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Teléfono (7 dígitos)", fontSize = 11.sp, color = textSecondary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box {
+                                Row(
+                                    modifier = Modifier
+                                        .width(96.dp)
+                                        .height(56.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
+                                        .clickable { expandPhoneMenu = true }
+                                        .padding(horizontal = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(phonePrefix, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp, color = EmeraldLight)
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
+                                }
+                                DropdownMenu(
+                                    expanded = expandPhoneMenu,
+                                    onDismissRequest = { expandPhoneMenu = false }
+                                ) {
+                                    PHONE_PREFIXES.forEach { prefix ->
+                                        DropdownMenuItem(
+                                            text = { Text(prefix, fontWeight = FontWeight.Bold) },
+                                            onClick = {
+                                                phonePrefix = prefix
+                                                expandPhoneMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            OutlinedTextField(
+                                value = phoneNumber,
+                                onValueChange = { input -> phoneNumber = input.filter { it.isDigit() }.take(7) },
+                                placeholder = { Text("1234567") },
+                                singleLine = true,
+                                shape = RoundedCornerShape(14.dp),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 } else {
                     OutlinedTextField(
@@ -2012,6 +2137,7 @@ private fun PaymentProfileEditorDialog(
                         placeholder = { Text("${selectedBank.code}0000000000000000") },
                         supportingText = { Text("${accountNumber.length}/20 dígitos") },
                         singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -2022,6 +2148,7 @@ private fun PaymentProfileEditorDialog(
                         label = { Text("Titular de la cuenta (opcional)") },
                         placeholder = { Text("Nombre o razón social") },
                         singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -2032,10 +2159,13 @@ private fun PaymentProfileEditorDialog(
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 46.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color(0x2694A3B8))
                     ) {
-                        Text("Cancelar")
+                        Text("Cancelar", fontWeight = FontWeight.SemiBold, color = textPrimary)
                     }
                     Button(
                         onClick = {
@@ -2055,7 +2185,9 @@ private fun PaymentProfileEditorDialog(
                                 )
                             )
                         },
-                        modifier = Modifier.weight(1.3f),
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .heightIn(min = 46.dp),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
                     ) {
@@ -2149,6 +2281,7 @@ private fun BankPickerDialog(
                     placeholder = { Text("Buscar por código (0134) o nombre...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
