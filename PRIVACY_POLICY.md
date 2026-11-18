@@ -1,7 +1,7 @@
 # Política de Privacidad — Tasa VE
 
 **Última actualización:** 18 de noviembre de 2026 (Versión 1.2.0)  
-**Aplicación:** Tasa VE (`com.julcer26.tasave`) • **Desarrollador:** Julcer26
+**Aplicación:** Tasa VE • **Sitio oficial:** https://tasave.net • **Contacto:** soporte@tasave.net
 
 La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuarios. Esta Política de Privacidad describe de forma transparente cómo se obtienen los datos de referencia, qué información se procesa localmente en su dispositivo, qué tecnologías de terceros intervienen y cuáles son sus derechos conforme a las políticas de Google Play.
 

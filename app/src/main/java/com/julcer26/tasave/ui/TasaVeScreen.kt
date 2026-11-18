@@ -2223,7 +2223,7 @@ private fun LegalCenterDialog(
             "9. Cambios en esta política" to
                 "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
-                "Responsable: Tasa VE (com.julcer26.tasave)\nCorreo de privacidad y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
+                "Responsable: Tasa VE\nCorreo de privacidad y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
         )
     }
 

@@ -2,13 +2,13 @@
 
 **Última actualización:** 18 de noviembre de 2026 (Versión 1.2.0)
 
-Bienvenido a **Tasa VE** (`com.julcer26.tasave`). Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de ellos, por favor no utilice la aplicación.
+Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de ellos, por favor no utilice la aplicación.
 
 ---
 
 ## 1. Naturaleza del Servicio y Ausencia de Afiliación
 - **Herramienta Matemática e Informativa:** Tasa VE es una calculadora y herramienta de consulta matemática para fines estrictamente referenciales, educativos e informativos.
-- **Sin Afiliación Institucional:** Tasa VE y su desarrollador (`Julcer26`) **NO son una institución financiera, banco, casa de cambio, procesador de pagos, autoridad tributaria ni intermediario cambiario**, y **NO están afiliados, patrocinados ni autorizados** por el Banco Central de Venezuela (BCV), el SENIAT, la SUDEBAN ni ninguna entidad bancaria pública o privada.
+- **Sin Afiliación Institucional:** Tasa VE y su equipo responsable **NO son una institución financiera, banco, casa de cambio, procesador de pagos, autoridad tributaria ni intermediario cambiario**, y **NO están afiliados, patrocinados ni autorizados** por el Banco Central de Venezuela (BCV), el SENIAT, la SUDEBAN ni ninguna entidad bancaria pública o privada.
 - **Directorio Bancario Referencial:** El listado de códigos y nombres de bancos venezolanos incluido en el módulo Cobros (p. ej., `0134 Banesco`, etc.) es únicamente un catálogo informativo estándar para ayudar al usuario a redactar su propio texto de cobro. Tasa VE **no valida cuentas bancarias, no consulta saldos ni ejecuta transferencias**.
 - **Uso Referencial de Cálculos Auxiliares y Escáner:** La lectura óptica de precios mediante cámara (OCR local), el Carrito Inteligente, las estimaciones de **IVA (16 %)** e **IGTF (3 %)**, la **Brecha cambiaria**, los gráficos de tendencia y la calculadora de pago mixto o vuelto son asistencias prácticas referenciales. **No constituyen asesoría financiera, contable ni tributaria, ni sustituyen sistemas de facturación fiscal homologados.** El usuario es el único responsable de verificar los montos finales y cotizaciones oficiales antes de pagar, cobrar o facturar.
 
@@ -48,7 +48,7 @@ Bienvenido a **Tasa VE** (`com.julcer26.tasave`). Al descargar, instalar o utili
 ---
 
 ## 4. Propiedad Intelectual
-El código fuente, diseño de interfaz, logotipos y elementos visuales originales de Tasa VE pertenecen a su desarrollador (`Julcer26`). Queda prohibida su reproducción, redistribución o explotación comercial no autorizada.
+El código fuente, diseño de interfaz, logotipos y elementos visuales originales de Tasa VE pertenecen a **Tasa VE**. Queda prohibida su reproducción, redistribución o explotación comercial no autorizada.
 
 ---
 
