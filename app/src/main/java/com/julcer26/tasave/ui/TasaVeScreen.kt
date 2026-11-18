@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import com.julcer26.tasave.ads.TopBannerAd
 import com.julcer26.tasave.scanner.PriceScannerDialog
@@ -1727,8 +1729,8 @@ fun SleekSettingsDialog(
     onPurchasePro: () -> Unit,
     onRestorePurchases: () -> Unit
 ) {
-    var expandPrivacy by remember { mutableStateOf(false) }
-    var expandTerms by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var legalDialogTab by remember { mutableStateOf<Int?>(null) }
 
     val dialogBg = if (isDark) Color(0xFF0E0E10) else Color(0xFFF1F5F9)
     val dividerColor = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569)
@@ -2003,25 +2005,60 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Privacy Disclosure: Camera on-device, local notifications, local Cart/Pago Móvil & Bank profiles, Billing
-                SleekDisclosurePanel(
-                    title = "Política de Privacidad, Cámara y Notificaciones",
-                    isExpanded = expandPrivacy,
-                    isDark = isDark,
-                    onToggle = { expandPrivacy = !expandPrivacy },
-                    content = "Tasa VE protege tu privacidad. No solicitamos registro ni enviamos datos personales a servidores propios. Tu historial, carrito, preferencias fiscales y perfiles opcionales de Pago Móvil o Cuentas Bancarias (alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos y titular) se guardan únicamente en tu dispositivo y están excluidos del respaldo en la nube de Android.\n\n• Cámara (OCR local): Se usa solo en primer plano con Google ML Kit dentro del teléfono; no grabamos video ni almacenamos ni enviamos fotos.\n• Notificaciones: Las alertas de tasa se evalúan localmente mediante WorkManager.\n• Terceros y Pagos: AdMob (banners gratuitos), Google Play Billing (Pro/Ultra) y DolarAPI (cotizaciones públicas) operan bajo sus respectivas políticas. Ultra incluye automáticamente todos los beneficios Pro mientras esté activa."
-                )
+                // Legal & Privacy Section (3 clear separated entries)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
+                        .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "LEGAL Y PRIVACIDAD",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        letterSpacing = 0.7.sp
+                    )
 
-                // Terms and Conditions Disclosure (Non-affiliation, Subscriptions, IVA/IGTF, Bank Catalog & Scanner Disclaimer)
-                SleekDisclosurePanel(
-                    title = "Términos de Uso y Descargo de Responsabilidad",
-                    isExpanded = expandTerms,
-                    isDark = isDark,
-                    onToggle = { expandTerms = !expandTerms },
-                    content = "Tasa VE es una herramienta estrictamente informativa y matemática. No está afiliada, autorizada ni vinculada con el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna.\n\n• Planes Pro y Ultra: Tasa VE Pro ($2.99 pago único vitalicio) elimina anuncios y desbloquea el escáner ilimitado. Tasa VE Ultra (suscripción mensual/anual) se renueva automáticamente vía Google Play salvo cancelación con al menos 24 h de antelación desde Google Play > Suscripciones; incluye todo lo de Pro mientras permanezca activa (si ya compraste Pro antes, lo conservas si cancelas Ultra).\n• Descargo: El catálogo de bancos es solo una guía de formato (no validamos cuentas ni procesamos pagos). Los cálculos de IVA (16%), IGTF (3%), brecha, vuelto y lectura por cámara son referenciales; verifica siempre los montos antes de pagar o facturar."
-                )
+                    LegalMenuRow(
+                        icon = Icons.Default.PrivacyTip,
+                        title = "Política de Privacidad",
+                        subtitle = "10 puntos • Datos locales, Cámara OCR y Permisos",
+                        isDark = isDark,
+                        onClick = { legalDialogTab = 0 }
+                    )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    LegalMenuRow(
+                        icon = Icons.Default.Gavel,
+                        title = "Términos de Uso y Descargo",
+                        subtitle = "BCV, SENIAT, SUDEBAN, Pro y Suscripción Ultra",
+                        isDark = isDark,
+                        onClick = { legalDialogTab = 1 }
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.OpenInBrowser,
+                        title = "Ver Política Web Completa",
+                        subtitle = "Abrir documento oficial en el navegador",
+                        isDark = isDark,
+                        onClick = {
+                            runCatching {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://julcer26.github.io/TasaVE/privacy-policy.html")
+                                )
+                                context.startActivity(intent)
+                            }.onFailure {
+                                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 // Sleek Footer version detail
                 Column(
@@ -2069,6 +2106,280 @@ fun SleekSettingsDialog(
             }
         }
     }
+
+    legalDialogTab?.let { initialTab ->
+        LegalCenterDialog(
+            isDark = isDark,
+            initialTab = initialTab,
+            onOpenWeb = {
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://julcer26.github.io/TasaVE/privacy-policy.html"))
+                    )
+                }.onFailure {
+                    Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onDismiss = { legalDialogTab = null }
+        )
+    }
+}
+
+@Composable
+private fun LegalMenuRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    isDark: Boolean,
+    onClick: () -> Unit
+) {
+    val rowBg = if (isDark) Color(0x12FFFFFF) else Color(0xFFF8FAFC)
+    val rowBorder = if (isDark) Color(0x1F94A3B8) else Color(0x19475569)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(rowBg)
+            .border(1.dp, rowBorder, RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0x1F10B981)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color(0xFF10B981),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = textPrimary
+            )
+            Text(
+                text = subtitle,
+                fontSize = 10.5.sp,
+                color = textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = textSecondary,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@Composable
+private fun LegalCenterDialog(
+    isDark: Boolean,
+    initialTab: Int,
+    onOpenWeb: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selectedTab by remember(initialTab) { mutableStateOf(initialTab) }
+    var expandedIndex by remember(selectedTab) { mutableStateOf(0) }
+
+    val dialogBg = if (isDark) Color(0xFF0E0E11) else Color(0xFFF8FAFC)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val borderCol = if (isDark) Color(0x2694A3B8) else Color(0x1F475569)
+
+    val privacySections = remember {
+        listOf(
+            "1. Origen y actualización de los datos" to
+                "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT paralelo e históricos para gráficos) provienen de APIs públicas (ve.dolarapi.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
+            "2. Información que recopilamos" to
+                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de Pago Móvil o Cuentas Bancarias (alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos y titular) se guardan únicamente de forma local en tu dispositivo.",
+            "3. Uso de la información" to
+                "Los datos locales se usan exclusivamente para calcular conversiones, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, Widget y resúmenes de cobro que tú eliges copiar o compartir.",
+            "4. Enlaces externos" to
+                "Al pulsar 'Enviar por WhatsApp' en Cobros o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las consultas a ve.dolarapi.com solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
+            "5. Seguridad de los datos" to
+                "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil y cuentas bancarias están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
+            "6. Publicidad y suscripciones" to
+                "La versión gratuita muestra banners de Google AdMob. Tasa VE Pro ($2.99 USD pago único vitalicio) quita anuncios y da escáner ilimitado. Tasa VE Ultra (suscripción mensual/anual) incluye automáticamente todo lo de Pro mientras esté activa, además de Carrito, Brecha, Alertas, Widget y Cobros. Se renueva automáticamente en Google Play salvo cancelación 24 h antes.",
+            "7. Permisos del sistema" to
+                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos y compras/suscripciones en Google Play.",
+            "8. Uso de tecnologías de terceros" to
+                "Integramos SDKs certificados: Google Mobile Ads (AdMob), Google Play Billing (compras mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y DolarAPI (cotizaciones públicas).",
+            "9. Cambios en esta política" to
+                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
+            "10. Contacto" to
+                "Responsable: Julcer26 (com.julcer26.tasave)\nCorreo de privacidad y soporte: julioingdlop@gmail.com\nRepositorio oficial: https://github.com/Julcer26/TasaVE"
+        )
+    }
+
+    val termsSections = remember {
+        listOf(
+            "1. Naturaleza y No Afiliación Oficial" to
+                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN ni entidad financiera alguna.",
+            "2. Catálogo de Bancos, Escáner e Impuestos" to
+                "La lista de códigos bancarios (0134 Banesco, etc.) es solo una guía de formato para tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
+            "3. Fuentes de Datos y Descargo" to
+                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
+            "4. Planes Pro y Suscripción Ultra" to
+                "Tasa VE Pro ($2.99 USD pago único) es vitalicio. Tasa VE Ultra es una suscripción mensual o anual renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones. Ultra incluye todo lo de Pro mientras permanezca activa (si ya compraste Pro antes, lo conservas si cancelas Ultra).",
+            "5. Reembolsos, Restauración y Contacto" to
+                "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: julioingdlop@gmail.com."
+        )
+    }
+
+    val activeSections = if (selectedTab == 0) privacySections else termsSections
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.84f)
+                .border(1.dp, borderCol, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Centro Legal — Tasa VE",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Actualizado: 18 nov 2026 • Versión 1.2.0",
+                            fontSize = 10.5.sp,
+                            color = Color(0xFF10B981),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Segmented Selector: Privacidad (10) / Términos (5)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = Color(0xFF10B981)
+                        ),
+                        label = {
+                            Text(
+                                text = "Privacidad (10)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    )
+                    FilterChip(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = Color(0xFF10B981)
+                        ),
+                        label = {
+                            Text(
+                                text = "Términos y Descargo",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    activeSections.forEachIndexed { index, (title, body) ->
+                        SleekDisclosurePanel(
+                            title = title,
+                            isExpanded = expandedIndex == index,
+                            isDark = isDark,
+                            onToggle = {
+                                expandedIndex = if (expandedIndex == index) -1 else index
+                            },
+                            content = body
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onOpenWeb,
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .heightIn(min = 44.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, borderCol)
+                    ) {
+                        Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF10B981))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Ver en Web", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                    }
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 44.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981), contentColor = Color.Black)
+                    ) {
+                        Text("Cerrar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -2085,11 +2396,23 @@ fun SleekDisclosurePanel(
         label = "chevronRotation"
     )
 
+    val containerBg = if (isExpanded) {
+        if (isDark) Color(0x1610B981) else Color(0x1210B981)
+    } else {
+        if (isDark) Color(0x0FFFFFFF) else Color.White
+    }
+    val borderColor = if (isExpanded) {
+        Color(0x6610B981)
+    } else {
+        if (isDark) Color(0x1A94A3B8) else Color(0x19475569)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
+            .background(containerBg)
+            .border(1.dp, borderColor, RoundedCornerShape(14.dp))
             .clickable { onToggle() }
             .animateContentSize(
                 animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)
@@ -2101,17 +2424,27 @@ fun SleekDisclosurePanel(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isExpanded) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF10B981))
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(
                 text = title,
-                fontSize = 12.sp,
+                fontSize = 12.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color(0xFF0F172A),
+                color = if (isExpanded) Color(0xFF10B981) else if (isDark) Color.White else Color(0xFF0F172A),
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Default.ExpandMore,
                 contentDescription = if (isExpanded) "Cerrar" else "Abrir",
-                tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                tint = if (isExpanded) Color(0xFF10B981) else if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
                 modifier = Modifier
                     .size(18.dp)
                     .graphicsLayer { rotationZ = chevronRotation }
@@ -2122,9 +2455,9 @@ fun SleekDisclosurePanel(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = content,
-                fontSize = 11.sp,
-                lineHeight = 16.sp,
-                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                fontSize = 11.5.sp,
+                lineHeight = 17.sp,
+                color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155),
                 textAlign = TextAlign.Start
             )
         }
