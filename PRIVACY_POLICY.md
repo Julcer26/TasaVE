@@ -88,6 +88,6 @@ Podemos actualizar esta Política de Privacidad para reflejar mejoras técnicas,
 ---
 
 ## 10. Contacto
-Si tiene preguntas, solicitudes de privacidad o soporte técnico, puede comunicarse directamente con el desarrollador:
-- **Correo electrónico:** julioingdlop@gmail.com
-- **Repositorio oficial:** https://github.com/Julcer26/TasaVE
+Si tiene preguntas, solicitudes de privacidad o soporte técnico, puede comunicarse directamente con el equipo de Tasa VE:
+- **Correo electrónico:** soporte@tasave.net
+- **Sitio web oficial:** https://tasave.net

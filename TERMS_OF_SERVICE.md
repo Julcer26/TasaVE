@@ -54,6 +54,5 @@ El código fuente, diseño de interfaz, logotipos y elementos visuales originale
 
 ## 5. Contacto
 Para dudas, aclaraciones legales o soporte técnico:
-- **Correo electrónico:** julioingdlop@gmail.com
-- **Desarrollador:** Julcer26
-- **Repositorio oficial:** https://github.com/Julcer26/TasaVE
+- **Correo electrónico:** soporte@tasave.net
+- **Sitio web oficial:** https://tasave.net

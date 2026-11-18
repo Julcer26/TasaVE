@@ -2048,7 +2048,7 @@ fun SleekSettingsDialog(
                             runCatching {
                                 val intent = Intent(
                                     Intent.ACTION_VIEW,
-                                    Uri.parse("https://julcer26.github.io/TasaVE/privacy-policy.html")
+                                    Uri.parse("https://tasave.net/privacy-policy.html")
                                 )
                                 context.startActivity(intent)
                             }.onFailure {
@@ -2114,7 +2114,7 @@ fun SleekSettingsDialog(
             onOpenWeb = {
                 runCatching {
                     context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse("https://julcer26.github.io/TasaVE/privacy-policy.html"))
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://tasave.net/privacy-policy.html"))
                     )
                 }.onFailure {
                     Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
@@ -2223,7 +2223,7 @@ private fun LegalCenterDialog(
             "9. Cambios en esta política" to
                 "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
-                "Responsable: Julcer26 (com.julcer26.tasave)\nCorreo de privacidad y soporte: julioingdlop@gmail.com\nRepositorio oficial: https://github.com/Julcer26/TasaVE"
+                "Responsable: Tasa VE (com.julcer26.tasave)\nCorreo de privacidad y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
         )
     }
 
@@ -2238,7 +2238,7 @@ private fun LegalCenterDialog(
             "4. Planes Pro y Suscripción Ultra" to
                 "Tasa VE Pro ($2.99 USD pago único) es vitalicio. Tasa VE Ultra es una suscripción mensual o anual renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones. Ultra incluye todo lo de Pro mientras permanezca activa (si ya compraste Pro antes, lo conservas si cancelas Ultra).",
             "5. Reembolsos, Restauración y Contacto" to
-                "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: julioingdlop@gmail.com."
+                "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: soporte@tasave.net."
         )
     }
 
