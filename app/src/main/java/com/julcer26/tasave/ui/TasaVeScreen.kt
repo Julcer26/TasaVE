@@ -7,8 +7,11 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import com.julcer26.tasave.ads.RewardedAdManager
 import com.julcer26.tasave.ads.TopBannerAd
+import com.julcer26.tasave.data.TasaVeRepository
 import com.julcer26.tasave.scanner.PriceScannerDialog
+import com.julcer26.tasave.share.ShareCardGenerator
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -66,6 +69,7 @@ import com.julcer26.tasave.ultra.CartTab
 import com.julcer26.tasave.ultra.CheckoutTab
 import com.julcer26.tasave.ultra.MarketTab
 import com.julcer26.tasave.ultra.PlansComparisonDialog
+import com.julcer26.tasave.ultra.UltraMath
 import com.julcer26.tasave.ultra.UserTier
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -101,6 +105,15 @@ fun TasaVeScreen(
     val alertSettings by viewModel.alertSettings.collectAsStateWithLifecycle()
     val paymentProfiles by viewModel.paymentProfiles.collectAsStateWithLifecycle()
     val selectedPaymentProfileId by viewModel.selectedPaymentProfileId.collectAsStateWithLifecycle()
+
+    val rewardedAdManager = remember { RewardedAdManager() }
+    val isRewardedAdLoading by rewardedAdManager.isLoading.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isProUser) {
+        if (!isProUser) {
+            rewardedAdManager.preload(context)
+        }
+    }
 
     val isDark = themeMode == "DARK"
 
@@ -398,6 +411,7 @@ fun TasaVeScreen(
                 AppTab.CART -> {
                     CartTab(
                         isDark = isDark,
+                        isProUser = isProUser,
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
@@ -426,6 +440,7 @@ fun TasaVeScreen(
                 AppTab.MARKET -> {
                     MarketTab(
                         isDark = isDark,
+                        isProUser = isProUser,
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
@@ -441,9 +456,12 @@ fun TasaVeScreen(
                 AppTab.CHECKOUT -> {
                     CheckoutTab(
                         isDark = isDark,
+                        isProUser = isProUser,
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
+                        effectiveUsdBcv = viewModel.getEffectiveUsdBcv(),
+                        effectiveEurBcv = viewModel.getEffectiveEurBcv(),
                         paymentProfiles = paymentProfiles,
                         selectedProfileId = selectedPaymentProfileId,
                         onSelectProfile = { viewModel.selectPaymentProfile(it) },
@@ -516,9 +534,9 @@ fun TasaVeScreen(
                             )
                             Text(
                                 text = if (isProUser) {
-                                    "Desbloquea Carrito, Brecha, Cobros y Alertas"
+                                    "Desbloquea Carrito ∞ + IVA/IGTF, Alertas, Widget y Perfiles ∞"
                                 } else {
-                                    "Cero anuncios, escáner ilimitado, carrito y cobros"
+                                    "Cero anuncios, escáner ∞, carrito ∞ + IVA/IGTF, alertas y perfiles ∞"
                                 },
                                 fontSize = 10.sp,
                                 color = textSecondary,
@@ -594,8 +612,11 @@ fun TasaVeScreen(
             }
 
             // 1. DATE HEADER & RATE SELECTOR
-            val representativeDate = uiState.usdBcv?.dateUpdated 
-                ?: uiState.eurBcv?.dateUpdated 
+            val effectiveUsdBcv = viewModel.getEffectiveUsdBcv()
+            val effectiveEurBcv = viewModel.getEffectiveEurBcv()
+            val copInfo = viewModel.getCopRateInfo()
+            val representativeDate = effectiveUsdBcv?.dateUpdated
+                ?: effectiveEurBcv?.dateUpdated
                 ?: uiState.usdtParalelo?.dateUpdated
 
             Column(
@@ -623,16 +644,70 @@ fun TasaVeScreen(
                     }
                 }
 
+                // BCV Hoy vs Mañana segmented selector when BCV has published tomorrow's rate
+                val nextUsd = uiState.nextUsdBcv
+                val nextDateIso = uiState.nextBcvDateIso
+                if (nextUsd != null && nextDateIso != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilterChip(
+                            selected = !viewModel.previewTomorrowBcv,
+                            onClick = { viewModel.setTomorrowBcvPreview(false) },
+                            shape = RoundedCornerShape(14.dp),
+                            label = {
+                                Text(
+                                    text = "BCV Hoy",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        )
+                        FilterChip(
+                            selected = viewModel.previewTomorrowBcv,
+                            onClick = { viewModel.setTomorrowBcvPreview(true) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0x33F59E0B),
+                                selectedLabelColor = Color(0xFFF59E0B)
+                            ),
+                            label = {
+                                Text(
+                                    text = "Mañana (${TasaVeRepository.formatIsoShortDate(nextDateIso)})",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0x26F59E0B))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Próx: Bs. ${String.format(Locale.US, "%.4f", nextUsd.rate)}",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF59E0B)
+                            )
+                        }
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val ratesList = listOf(
-                        Triple("USD_BCV", uiState.usdBcv, "USD - BCV"),
-                        Triple("EUR_BCV", uiState.eurBcv, "EUR - BCV"),
+                        Triple("USD_BCV", effectiveUsdBcv, "USD - BCV"),
+                        Triple("EUR_BCV", effectiveEurBcv, "EUR - BCV"),
                         Triple("USDT", uiState.usdtParalelo, "USDT Binance")
                     )
-                    
+
                     ratesList.forEach { (key, rateInfo, customLabel) ->
                         val isSelected = viewModel.selectedRateKey == key
                         RateSelectorCard(
@@ -644,9 +719,85 @@ fun TasaVeScreen(
                             isSelected = isSelected,
                             onSelect = { viewModel.selectRate(key) },
                             onCopy = { rateValue ->
-                                copyToClipboard(context, rateValue.toString())
-                                Toast.makeText(context, "$customLabel copiado: Bs. $rateValue", Toast.LENGTH_SHORT).show()
+                                val decimals = if (key == "USDT") "%.2f" else "%.4f"
+                                val formatted = String.format(Locale.US, decimals, rateValue)
+                                copyToClipboard(context, formatted)
+                                Toast.makeText(context, "$customLabel copiado: Bs. $formatted", Toast.LENGTH_SHORT).show()
                             }
+                        )
+                    }
+                }
+
+                // Full-width Colombian Peso (COP) cross-rate card
+                val isCopSelected = viewModel.selectedRateKey == "COP"
+                val copAccent = Color(0xFF8B5CF6)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            if (isCopSelected) {
+                                if (isDark) Color(0x1F8B5CF6) else Color(0x148B5CF6)
+                            } else {
+                                if (isDark) Color(0x0F222226) else Color(0x1FFFFFFF)
+                            }
+                        )
+                        .border(
+                            width = if (isCopSelected) 1.6.dp else 1.dp,
+                            color = if (isCopSelected) copAccent else if (isDark) Color(0x1AFFFFFF) else Color(0x1F000000),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .clickable {
+                            viewModel.selectRate("COP")
+                            copInfo?.let {
+                                val formatted = String.format(Locale.US, "%.4f", it.rate)
+                                copyToClipboard(context, formatted)
+                                Toast.makeText(context, "COP copiado: Bs. $formatted", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = "🇨🇴 Peso Colombiano (COP)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "TRM ${String.format(Locale.US, "%,.2f", uiState.copPerUsd)}/$ • ${uiState.copDate}",
+                            fontSize = 10.sp,
+                            color = textSecondary
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0x268B5CF6))
+                                .clickable { viewModel.toggleCopBaseRate() }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (viewModel.copUseUsdtBase) "Base USDT" else "Base BCV",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color(0xFFC4B5FD) else Color(0xFF6D28D9)
+                            )
+                        }
+                        Text(
+                            text = "Bs. ${String.format(Locale.US, "%.4f", copInfo?.rate ?: 0.0)}/COP",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary
                         )
                     }
                 }
@@ -655,7 +806,7 @@ fun TasaVeScreen(
             val currentRateInfo = viewModel.getSelectedRateInfo()
 
             // 2. STUNNING DIGITAL CONVERSION CONVERTER (GLASSMORPHIC BACKDROP)
-            
+
             GlassCard(
                 isDark = isDark,
                 modifier = Modifier
@@ -667,7 +818,7 @@ fun TasaVeScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    
+
                     // Head of Calculator
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -681,8 +832,9 @@ fun TasaVeScreen(
                             color = textPrimary,
                             letterSpacing = (-0.3).sp
                         )
-                        
+
                         currentRateInfo?.let {
+                            val decimals = if (it.key == "USDT") "%.2f" else "%.4f"
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
@@ -692,7 +844,7 @@ fun TasaVeScreen(
                                     .padding(horizontal = 10.dp, vertical = 3.dp)
                             ) {
                                 Text(
-                                    text = "Tasa actual: Bs. ${String.format(Locale.US, "%.2f", it.rate)}",
+                                    text = "Tasa actual: Bs. ${String.format(Locale.US, decimals, it.rate)}",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
@@ -1024,6 +1176,113 @@ fun TasaVeScreen(
                         }
                     }
 
+                    // Quick Percent Modifier Pills (-10%, -20%, +IVA 16%, +IGTF 3%, +10%, 0%)
+                    val modifierPills = listOf(
+                        -10.0 to "-10%",
+                        -20.0 to "-20%",
+                        16.0 to "+IVA 16%",
+                        3.0 to "+IGTF 3%",
+                        10.0 to "+10%"
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        modifierPills.forEach { (pct, label) ->
+                            val selected = viewModel.activePercentModifier == pct
+                            FilterChip(
+                                selected = selected,
+                                onClick = { viewModel.selectPercentModifier(pct) },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0x2EF59E0B),
+                                    selectedLabelColor = Color(0xFFF59E0B)
+                                ),
+                                label = {
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            )
+                        }
+                        if (viewModel.activePercentModifier != 0.0) {
+                            FilterChip(
+                                selected = false,
+                                onClick = { viewModel.selectPercentModifier(viewModel.activePercentModifier) },
+                                shape = RoundedCornerShape(14.dp),
+                                label = {
+                                    Text(
+                                        text = "0% (Limpiar)",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    val parsedVes = viewModel.vesAmount.toDoubleOrNull() ?: 0.0
+                    val parsedForeign = viewModel.foreignAmount.toDoubleOrNull() ?: 0.0
+                    val activeMod = viewModel.activePercentModifier
+
+                    // Adjusted Summary Banner when a % modifier is active
+                    if (activeMod != 0.0 && parsedVes > 0.0) {
+                        val adjVes = UltraMath.applyPercentModifier(parsedVes, activeMod)
+                        val adjForeign = UltraMath.applyPercentModifier(parsedForeign, activeMod)
+                        val sign = if (activeMod > 0) "+" else ""
+                        val modFmt = if (activeMod % 1.0 == 0.0) "${activeMod.toInt()}%" else String.format(Locale.US, "%.1f%%", activeMod)
+                        val sym = currentRateInfo?.symbol ?: "$"
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0x24F59E0B))
+                                .border(1.dp, Color(0x55F59E0B), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(
+                                    text = "Ajuste ($sign$modFmt) • Base: $sym${String.format(Locale.US, "%.2f", parsedForeign)}",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFF59E0B)
+                                )
+                                Text(
+                                    text = "Total Final: $sym${String.format(Locale.US, "%.2f", adjForeign)} • Bs. ${String.format(Locale.US, "%,.2f", adjVes)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = textPrimary
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    val copyVal = "$sym${String.format(Locale.US, "%.2f", adjForeign)} / Bs. ${String.format(Locale.US, "%.2f", adjVes)}"
+                                    copyToClipboard(context, copyVal)
+                                    Toast.makeText(context, "Total ajustado copiado", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copiar total ajustado",
+                                    tint = Color(0xFFF59E0B),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+
                     // Actions: Guardar en Historial y Ver Historial
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1067,10 +1326,72 @@ fun TasaVeScreen(
                         }
                     }
 
+                    val bcvUsdRate = effectiveUsdBcv?.rate ?: 0.0
+                    val bcvEurRate = effectiveEurBcv?.rate ?: 0.0
+                    val parallelUsdtRate = uiState.usdtParalelo?.rate ?: 0.0
+                    val baseUsdForCop = if (viewModel.copUseUsdtBase && parallelUsdtRate > 0.0) {
+                        parallelUsdtRate
+                    } else {
+                        bcvUsdRate
+                    }
+                    val copEquivVal = UltraMath.calculateCopFromVes(parsedVes, baseUsdForCop, uiState.copPerUsd)
+
+                    // Visual PNG Share Card Button
+                    if (parsedVes > 0.0) {
+                        OutlinedButton(
+                            onClick = {
+                                val rateDecimals = if (currentRateInfo?.key == "USDT") "%.2f" else "%.4f"
+                                val sym = currentRateInfo?.symbol ?: "$"
+                                val foreignStr = "$sym ${String.format(Locale.US, "%,.2f", parsedForeign)}"
+                                val vesStr = "Bs. ${String.format(Locale.US, "%,.2f", parsedVes)}"
+                                val modSign = if (activeMod > 0) "+" else ""
+                                val modLabel = if (activeMod != 0.0) {
+                                    "$modSign" + (if (activeMod % 1.0 == 0.0) "${activeMod.toInt()}%" else String.format(Locale.US, "%.1f%%", activeMod))
+                                } else null
+                                val adjTotalStr = if (activeMod != 0.0) {
+                                    val adjF = UltraMath.applyPercentModifier(parsedForeign, activeMod)
+                                    val adjV = UltraMath.applyPercentModifier(parsedVes, activeMod)
+                                    "$sym ${String.format(Locale.US, "%,.2f", adjF)} • Bs. ${String.format(Locale.US, "%,.2f", adjV)}"
+                                } else null
+
+                                val eqList = buildList {
+                                    if (bcvUsdRate > 0) add("Dólar BCV" to "$${String.format(Locale.US, "%.2f", parsedVes / bcvUsdRate)}")
+                                    if (bcvEurRate > 0) add("Euro BCV" to "€${String.format(Locale.US, "%.2f", parsedVes / bcvEurRate)}")
+                                    if (parallelUsdtRate > 0) add("USDT Binance" to "₮${String.format(Locale.US, "%.2f", parsedVes / parallelUsdtRate)}")
+                                    if (copEquivVal > 0) add("Peso Col. (COP)" to "${String.format(Locale.US, "%,.0f", copEquivVal)} COP")
+                                }
+
+                                ShareCardGenerator.shareCalculationCard(
+                                    context = context,
+                                    isDark = isDark,
+                                    inputLabel = if (viewModel.isVesAsInput) "Bolívares (VES)" else (currentRateInfo?.label ?: "Divisa"),
+                                    inputDisplay = if (viewModel.isVesAsInput) vesStr else foreignStr,
+                                    outputLabel = if (viewModel.isVesAsInput) (currentRateInfo?.label ?: "Divisa") else "Bolívares (VES)",
+                                    outputDisplay = if (viewModel.isVesAsInput) foreignStr else vesStr,
+                                    rateLabel = currentRateInfo?.label ?: "Tasa BCV",
+                                    rateDisplay = "Bs. ${String.format(Locale.US, rateDecimals, currentRateInfo?.rate ?: 0.0)}",
+                                    updatedAt = currentRateInfo?.dateUpdated,
+                                    modifierText = modLabel,
+                                    adjustedTotalText = adjTotalStr,
+                                    equivalences = eqList,
+                                    isTomorrowBcv = viewModel.previewTomorrowBcv
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0x4D10B981)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                            ),
+                            contentPadding = PaddingValues(vertical = 10.dp)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Compartir Tarjeta (IMG)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     // Live Multi-Rate Comparison Panel
-                    val parsedVes = viewModel.vesAmount.toDoubleOrNull() ?: 0.0
-                    val parsedForeign = viewModel.foreignAmount.toDoubleOrNull() ?: 0.0
-                    
                     if (parsedVes > 0.0) {
                         Column(
                             modifier = Modifier
@@ -1104,18 +1425,14 @@ fun TasaVeScreen(
                                     color = textPrimary
                                 )
                             }
-                            
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(1.dp)
                                     .background(if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000))
                             )
-                            
-                            val bcvUsdRate = uiState.usdBcv?.rate ?: 0.0
-                            val bcvEurRate = uiState.eurBcv?.rate ?: 0.0
-                            val parallelUsdtRate = uiState.usdtParalelo?.rate ?: 0.0
-                            
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1140,12 +1457,12 @@ fun TasaVeScreen(
                                         color = textPrimary
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.2f", bcvUsdRate)}",
+                                        text = "Tasa: ${String.format(Locale.US, "%.4f", bcvUsdRate)}",
                                         fontSize = 8.sp,
                                         color = textSecondary.copy(alpha = 0.7f)
                                     )
                                 }
-                                
+
                                 // Divider vertical
                                 Box(
                                     modifier = Modifier
@@ -1153,7 +1470,7 @@ fun TasaVeScreen(
                                         .height(36.dp)
                                         .background(if (isDark) Color(0x14FFFFFF) else Color(0x14000000))
                                 )
-                                
+
                                 // 2. EUR Equivalent
                                 Column(
                                     modifier = Modifier.weight(1f),
@@ -1174,12 +1491,12 @@ fun TasaVeScreen(
                                         color = textPrimary
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.2f", bcvEurRate)}",
+                                        text = "Tasa: ${String.format(Locale.US, "%.4f", bcvEurRate)}",
                                         fontSize = 8.sp,
                                         color = textSecondary.copy(alpha = 0.7f)
                                     )
                                 }
-                                
+
                                 // Divider vertical
                                 Box(
                                     modifier = Modifier
@@ -1187,7 +1504,7 @@ fun TasaVeScreen(
                                         .height(36.dp)
                                         .background(if (isDark) Color(0x14FFFFFF) else Color(0x14000000))
                                 )
-                                
+
                                 // 3. USDT Equivalent
                                 Column(
                                     modifier = Modifier.weight(1f),
@@ -1214,7 +1531,33 @@ fun TasaVeScreen(
                                     )
                                 }
                             }
-                            
+
+                            // 4. Colombian Peso (COP) Equivalence Pill
+                            if (copEquivVal > 0.0) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0x1F8B5CF6))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "🇨🇴 Peso Colombiano (${if (viewModel.copUseUsdtBase) "Base USDT" else "Base BCV"})",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = textSecondary
+                                    )
+                                    Text(
+                                        text = "${String.format(Locale.US, "%,.0f", copEquivVal)} COP",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = textPrimary
+                                    )
+                                }
+                            }
+
                             if (parsedForeign > 0.0) {
                                 Box(
                                     modifier = Modifier
@@ -1222,7 +1565,7 @@ fun TasaVeScreen(
                                         .height(1.dp)
                                         .background(if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000))
                                 )
-                                
+
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -1235,7 +1578,7 @@ fun TasaVeScreen(
                                         color = textSecondary,
                                         letterSpacing = 0.5.sp
                                     )
-                                    
+
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
@@ -1407,14 +1750,37 @@ fun TasaVeScreen(
             remainingFreeScans = remainingFreeScans,
             proPrice = proPrice,
             selectedRateKey = viewModel.selectedRateKey,
-            usdBcv = uiState.usdBcv,
-            eurBcv = uiState.eurBcv,
+            usdBcv = viewModel.getEffectiveUsdBcv(),
+            eurBcv = viewModel.getEffectiveEurBcv(),
             usdtParalelo = uiState.usdtParalelo,
+            isRewardedAdLoading = isRewardedAdLoading,
+            onWatchRewardedAd = {
+                rewardedAdManager.showOrLoad(
+                    activity = activity,
+                    onRewarded = {
+                        val next = viewModel.grantRewardedScans(UltraMath.REWARDED_SCAN_BONUS)
+                        Toast.makeText(
+                            context,
+                            "¡+5 escaneos desbloqueados! ($next disponibles)",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    },
+                    onError = { msg ->
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
             onSelectRate = { key -> viewModel.selectRate(key) },
             onApplyPrice = { amount, isVes, rateKey ->
                 if (scannerForCart) {
-                    viewModel.addCartItem("Producto escaneado", amount, isVes, rateKey)
-                    Toast.makeText(context, "Producto agregado al carrito", Toast.LENGTH_SHORT).show()
+                    val added = viewModel.addCartItem("Producto escaneado", amount, isVes, rateKey, fromScanner = true)
+                    if (added) {
+                        Toast.makeText(context, "Producto agregado al carrito", Toast.LENGTH_SHORT).show()
+                    } else {
+                        showScanner = false
+                        Toast.makeText(context, "Límite de 5 productos gratis en el carrito", Toast.LENGTH_SHORT).show()
+                        showPlansDialog = true
+                    }
                 } else {
                     viewModel.applyScannedPrice(amount, isVes, rateKey)
                     Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
@@ -1487,10 +1853,10 @@ fun RateSelectorCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            
+
             // Custom label formatted uppercase text
             Text(
                 text = customLabel.uppercase(Locale.getDefault()),
@@ -1514,13 +1880,35 @@ fun RateSelectorCard(
                     )
                 }
             } else {
+                val decimals = if (key == "USDT") "%.2f" else "%.4f"
                 Text(
-                    text = String.format(Locale.US, "%.2f", rateInfo.rate),
-                    fontSize = 17.sp,
+                    text = String.format(Locale.US, decimals, rateInfo.rate),
+                    fontSize = if (key == "USDT") 17.sp else 15.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) Color.White else Color(0xFF0F172A),
-                    letterSpacing = (-0.5).sp
+                    letterSpacing = (-0.5).sp,
+                    maxLines = 1
                 )
+
+                val pct = rateInfo.changePercent
+                if (pct != null && kotlin.math.abs(pct) >= 0.005) {
+                    val isUp = pct > 0.0
+                    val pctColor = if (isUp) Color(0xFF10B981) else Color(0xFFEF4444)
+                    val pctSign = if (isUp) "+" else ""
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(pctColor.copy(alpha = 0.16f))
+                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = "$pctSign${String.format(Locale.US, "%.2f", pct)}%",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = pctColor
+                        )
+                    }
+                }
             }
         }
     }
@@ -2205,21 +2593,21 @@ private fun LegalCenterDialog(
     val privacySections = remember {
         listOf(
             "1. Origen y actualización de los datos" to
-                "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT paralelo e históricos para gráficos) provienen de APIs públicas (ve.dolarapi.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
+                "Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM e históricos para gráficos) provienen de APIs públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN, Banco de la República ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
             "2. Información que recopilamos" to
-                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de Pago Móvil o Cuentas Bancarias (alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos y titular) se guardan únicamente de forma local en tu dispositivo.",
+                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay: alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos, titular y correo/ID digital) se guardan únicamente de forma local en tu dispositivo.",
             "3. Uso de la información" to
-                "Los datos locales se usan exclusivamente para calcular conversiones, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, Widget y resúmenes de cobro que tú eliges copiar o compartir.",
-            "4. Enlaces externos" to
-                "Al pulsar 'Enviar por WhatsApp' en Cobros o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las consultas a ve.dolarapi.com solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
+                "Los datos locales se usan exclusivamente para calcular conversiones, ajustes porcentuales, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, Widget, tarjetas visuales PNG generadas temporalmente en caché (shared_cards) y resúmenes de cobro que tú eliges copiar o compartir.",
+            "4. Enlaces externos y compartición" to
+                "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en el caché local compartido por FileProvider sin subirse a servidores externos. Las consultas a las APIs de tasas solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
             "5. Seguridad de los datos" to
-                "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil y cuentas bancarias están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
-            "6. Publicidad y suscripciones" to
-                "La versión gratuita muestra banners de Google AdMob. Tasa VE Pro ($2.99 USD pago único vitalicio) quita anuncios y da escáner ilimitado. Tasa VE Ultra (suscripción mensual/anual) incluye automáticamente todo lo de Pro mientras esté activa, además de Carrito, Brecha, Alertas, Widget y Cobros. Se renueva automáticamente en Google Play salvo cancelación 24 h antes.",
+                "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
+            "6. Publicidad, anuncios bonificados y suscripciones" to
+                "El Plan Gratuito incluye calculadora, 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en el carrito, 1 perfil de cobro y 3 escaneos diarios (con opción voluntaria de ver un anuncio bonificado de Google AdMob para obtener +5 escaneos extra). Tasa VE Pro ($2.99 USD pago único vitalicio) quita todos los anuncios y ofrece escáner ilimitado. Tasa VE Ultra (suscripción mensual/anual) incluye todo lo de Pro más Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
             "7. Permisos del sistema" to
-                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos y compras/suscripciones en Google Play.",
+                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y compras/suscripciones en Google Play.",
             "8. Uso de tecnologías de terceros" to
-                "Integramos SDKs certificados: Google Mobile Ads (AdMob), Google Play Billing (compras mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y DolarAPI (cotizaciones públicas).",
+                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners y anuncios bonificados opcionales), Google Play Billing (compras mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI, DolarVzla, Open ER-API).",
             "9. Cambios en esta política" to
                 "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
@@ -2230,13 +2618,13 @@ private fun LegalCenterDialog(
     val termsSections = remember {
         listOf(
             "1. Naturaleza y No Afiliación Oficial" to
-                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN ni entidad financiera alguna.",
-            "2. Catálogo de Bancos, Escáner e Impuestos" to
-                "La lista de códigos bancarios (0134 Banesco, etc.) es solo una guía de formato para tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
+                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad financiera alguna.",
+            "2. Catálogo de Bancos, Cobros, Escáner e Impuestos" to
+                "La lista de códigos bancarios (0134 Banesco, etc.) y los perfiles de Pago Móvil, Cuenta Bancaria, Zelle y Binance Pay son solo plantillas de texto/imagen para facilitar tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha, COP y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
             "3. Fuentes de Datos y Descargo" to
-                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
-            "4. Planes Pro y Suscripción Ultra" to
-                "Tasa VE Pro ($2.99 USD pago único) es vitalicio. Tasa VE Ultra es una suscripción mensual o anual renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones. Ultra incluye todo lo de Pro mientras permanezca activa (si ya compraste Pro antes, lo conservas si cancelas Ultra).",
+                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
+            "4. Planes Gratis, Pro y Suscripción Ultra" to
+                "El Plan Gratuito ofrece funciones principales con anuncios y límites diarios en escáner (ampliables voluntariamente con anuncio bonificado), 5 productos en carrito y 1 perfil de cobro. Tasa VE Pro ($2.99 USD pago único) es vitalicio (cero anuncios y escáner ilimitado). Tasa VE Ultra es una suscripción mensual o anual renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; incluye todo lo de Pro más Carrito ilimitado + IVA/IGTF, perfiles ilimitados, Alertas y Widget.",
             "5. Reembolsos, Restauración y Contacto" to
                 "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: soporte@tasave.net."
         )

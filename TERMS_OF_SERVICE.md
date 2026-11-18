@@ -8,14 +8,14 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 
 ## 1. Naturaleza del Servicio y Ausencia de Afiliación
 - **Herramienta Matemática e Informativa:** Tasa VE es una calculadora y herramienta de consulta matemática para fines estrictamente referenciales, educativos e informativos.
-- **Sin Afiliación Institucional:** Tasa VE y su equipo responsable **NO son una institución financiera, banco, casa de cambio, procesador de pagos, autoridad tributaria ni intermediario cambiario**, y **NO están afiliados, patrocinados ni autorizados** por el Banco Central de Venezuela (BCV), el SENIAT, la SUDEBAN ni ninguna entidad bancaria pública o privada.
-- **Directorio Bancario Referencial:** El listado de códigos y nombres de bancos venezolanos incluido en el módulo Cobros (p. ej., `0134 Banesco`, etc.) es únicamente un catálogo informativo estándar para ayudar al usuario a redactar su propio texto de cobro. Tasa VE **no valida cuentas bancarias, no consulta saldos ni ejecuta transferencias**.
-- **Uso Referencial de Cálculos Auxiliares y Escáner:** La lectura óptica de precios mediante cámara (OCR local), el Carrito Inteligente, las estimaciones de **IVA (16 %)** e **IGTF (3 %)**, la **Brecha cambiaria**, los gráficos de tendencia y la calculadora de pago mixto o vuelto son asistencias prácticas referenciales. **No constituyen asesoría financiera, contable ni tributaria, ni sustituyen sistemas de facturación fiscal homologados.** El usuario es el único responsable de verificar los montos finales y cotizaciones oficiales antes de pagar, cobrar o facturar.
+- **Sin Afiliación Institucional:** Tasa VE y su equipo responsable **NO son una institución financiera, banco, casa de cambio, procesador de pagos, billetera digital, autoridad tributaria ni intermediario cambiario**, y **NO están afiliados, patrocinados ni autorizados** por el Banco Central de Venezuela (BCV), el SENIAT, la SUDEBAN, el Banco de la República de Colombia, Zelle, Binance ni ninguna entidad financiera pública o privada.
+- **Directorio Bancario y Plantillas de Cobro:** El listado de códigos y nombres de bancos venezolanos incluido en el módulo Cobros (p. ej., `0134 Banesco`, etc.) y las plantillas de **Pago Móvil**, **Cuenta Bancaria**, **Zelle** y **Binance Pay** son únicamente guías de formato para ayudar al usuario a redactar su propio resumen de cobro o tarjeta visual. Tasa VE **no valida cuentas ni identificadores digitales, no consulta saldos ni ejecuta transferencias**.
+- **Uso Referencial de Cálculos Auxiliares y Escáner:** La lectura óptica de precios mediante cámara (OCR local), el Carrito Inteligente, las estimaciones de **IVA (16 %)** e **IGTF (3 %)**, los ajustes porcentuales rápidos, la conversión a **Peso Colombiano (COP)**, la **Brecha cambiaria**, los gráficos de tendencia y la calculadora de pago mixto o vuelto son asistencias prácticas referenciales. **No constituyen asesoría financiera, contable ni tributaria, ni sustituyen sistemas de facturación fiscal homologados.** El usuario es el único responsable de verificar los montos finales y cotizaciones oficiales antes de pagar, cobrar o facturar.
 
 ---
 
 ## 2. Fuentes de Datos y Descargo de Responsabilidad Cambiario
-- **Origen de las Tasas:** Las cotizaciones mostradas (Dólar oficial BCV, Euro oficial BCV, USDT paralelo e históricos) se obtienen mediante consultas automatizadas a APIs públicas (`ve.dolarapi.com`).
+- **Origen de las Tasas:** Las cotizaciones mostradas (Dólar oficial BCV hoy/mañana, Euro oficial BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM e históricos) se obtienen mediante consultas automatizadas a APIs públicas (`ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com` y `open.er-api.com`).
 - **Ausencia de Control:** Tasa VE no fija, altera, manipula ni garantiza la exactitud, vigencia continua o disponibilidad de ninguna tasa de cambio.
 - **Posibles Desfases:** Pueden existir demoras temporales entre la publicación oficial/mercado y la actualización de las APIs públicas, así como errores de lectura OCR por iluminación o enfoque. Coteje siempre los montos con su banco o fuente oficial antes de concretar operaciones.
 - **Limitación de Responsabilidad:** El desarrollador no será responsable por pérdidas económicas, lucro cesante, diferencias cambiarias, errores de cálculo fiscal o decisiones comerciales derivadas directa o indirectamente del uso de la aplicación.
@@ -25,19 +25,19 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 ## 3. Modelo de Monetización, Compras In-App y Suscripciones
 
 ### A. Versión Gratuita con Publicidad
-- Incluye la calculadora conversora multi-tasa, historial local y hasta **3 escaneos diarios** con cámara.
-- Muestra banners publicitarios gestionados a través de **Google Mobile Ads (AdMob)**.
+- Incluye la calculadora conversora multi-tasa con **4 decimales en BCV**, **BCV Mañana**, **Peso Colombiano (COP)**, **ajustes porcentuales**, historial local, **Brecha y Tendencias**, **Pago Mixto**, **Tarjeta visual PNG**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** en el día).
+- Muestra banners y anuncios bonificados opcionales gestionados a través de **Google Mobile Ads (AdMob)**.
 
 ### B. Tasa VE Pro (Pago Único Vitalicio — $2.99 USD)
 - Compra única voluntaria (o equivalente en moneda local en Google Play) sin cargos recurrentes.
-- **Beneficios:** Eliminación permanente de todos los banners publicitarios y acceso ilimitado al escáner de precios con cámara.
+- **Beneficios:** Eliminación permanente de todos los anuncios y acceso ilimitado al escáner de precios con cámara.
 
 ### C. Tasa VE Ultra (Suscripción Mensual $1.49 USD / Anual $9.99 USD)
 - **Beneficios Pro incluidos:** Mientras la suscripción **Tasa VE Ultra** esté activa, incluye automáticamente **todos los beneficios de Pro** (cero anuncios y escáner ilimitado) sin pagar Pro por separado. Si el usuario ya había comprado Pro previamente y luego cancela Ultra, conservará intacta su licencia Pro vitalicia.
 - **Funciones exclusivas Ultra:**
-  - **Carrito Inteligente** con escaneo directo, edición de productos y cálculos referenciales de IVA (16 %) e IGTF (3 %).
-  - **Monitor de Brecha y Tendencias:** Brecha porcentual, gráficos históricos por moneda (`1D`, `1S`, `15D`, `1M`, `3M`, `Todo`), **Alertas locales de cambio de tasa** y **Widget de pantalla de inicio**.
-  - **Módulo Cobros y Pago Mixto:** Calculadora de monto restante/vuelto en pagos combinados (`$` + `Bs.`), guardado local opcional de múltiples perfiles de Pago Móvil y cuentas bancarias, y resumen para copiar o compartir por WhatsApp.
+  - **Carrito Inteligente ilimitado** con escaneo directo, edición de productos y cálculos referenciales de **IVA (16 %)** e **IGTF (3 %)**.
+  - **Alertas locales de cambio de tasa** y **Widget de pantalla de inicio**.
+  - **Módulo Cobros avanzado:** Guardado local opcional de **múltiples perfiles ilimitados** (Pago Móvil, Cuentas Bancarias, Zelle y Binance Pay).
 - **Renovación Automática y Cancelación:** La suscripción se renueva automáticamente a través de **Google Play Billing** por el período seleccionado salvo cancelación con al menos **24 horas de antelación** al vencimiento desde *Google Play Store > Suscripciones*. La desinstalación de la app no cancela la suscripción.
 
 ### D. Procesamiento, Restauración y Reembolsos

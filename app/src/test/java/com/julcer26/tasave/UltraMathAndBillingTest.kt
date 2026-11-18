@@ -1,8 +1,14 @@
 package com.julcer26.tasave.ultra
 
 import com.julcer26.tasave.billing.BillingManager
+import com.julcer26.tasave.data.DolarVzlaBcvResponse
+import com.julcer26.tasave.data.DolarVzlaBcvSnapshot
+import com.julcer26.tasave.data.DolarVzlaChangePct
+import com.julcer26.tasave.data.TasaVeRepository
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -162,6 +168,87 @@ class UltraMathAndBillingTest {
         assertEquals("0412-5551234", profile.formattedPhone())
         assertEquals("Mi Comercio", profile.displayTitle())
         assertEquals("Brecha", AppTab.MARKET.label)
+
+        val zelleProfile = PaymentMethodProfile(
+            id = 2L,
+            type = PaymentMethodType.ZELLE,
+            accountHolder = "Comercio VE",
+            digitalIdentifier = "pagos@ejemplo.com"
+        )
+        assertEquals("Zelle • Comercio VE", zelleProfile.displayTitle())
+
+        val binanceProfile = PaymentMethodProfile(
+            id = 3L,
+            type = PaymentMethodType.BINANCE,
+            digitalIdentifier = "987654321"
+        )
+        assertEquals("Binance Pay • 987654321", binanceProfile.displayTitle())
+    }
+
+    @Test
+    fun percentModifierAndCopCrossRatesComputeAccurately() {
+        assertEquals(90.0, UltraMath.applyPercentModifier(100.0, -10.0), 0.0001)
+        assertEquals(116.0, UltraMath.applyPercentModifier(100.0, 16.0), 0.0001)
+        assertEquals(103.0, UltraMath.applyPercentModifier(100.0, 3.0), 0.0001)
+        assertEquals(0.0, UltraMath.applyPercentModifier(0.0, 16.0), 0.0001)
+
+        // 48.00 Bs/$ and 4000 COP/$ => 0.012 Bs/COP
+        val vesPerCop = UltraMath.calculateVesPerCop(vesPerUsd = 48.0, copPerUsd = 4000.0)
+        assertEquals(0.012, vesPerCop, 0.00001)
+        assertEquals(4000.0, UltraMath.calculateCopFromVes(vesAmount = 48.0, vesPerUsd = 48.0, copPerUsd = 4000.0), 0.01)
+        assertEquals(0.0, UltraMath.calculateVesPerCop(vesPerUsd = 48.0, copPerUsd = 0.0), 0.0001)
+    }
+
+    @Test
+    fun freemiumCartAndProfileGatesEnforceFreeLimitsAndAllowUltraUnlimited() {
+        assertTrue(UltraMath.canAddCartItem(currentDistinctCount = 0, isUltraUser = false))
+        assertTrue(UltraMath.canAddCartItem(currentDistinctCount = 4, isUltraUser = false))
+        assertFalse(UltraMath.canAddCartItem(currentDistinctCount = 5, isUltraUser = false))
+        assertTrue(UltraMath.canAddCartItem(currentDistinctCount = 25, isUltraUser = true))
+
+        assertTrue(UltraMath.canAddPaymentProfile(currentCount = 0, isUltraUser = false))
+        assertFalse(UltraMath.canAddPaymentProfile(currentCount = 1, isUltraUser = false))
+        assertTrue(UltraMath.canAddPaymentProfile(currentCount = 10, isUltraUser = true))
+    }
+
+    @Test
+    fun resolveBcvTodayAndNext_splitsFutureRateAndCurrentTodayRate() {
+        val futureResponse = DolarVzlaBcvResponse(
+            current = DolarVzlaBcvSnapshot(date = "2026-11-19", usd = 49.1234, eur = 53.5678),
+            previous = DolarVzlaBcvSnapshot(date = "2026-11-18", usd = 48.5000, eur = 52.8000),
+            changePercentage = DolarVzlaChangePct(usd = 1.28, eur = 1.45)
+        )
+        val split = TasaVeRepository.resolveBcvTodayAndNext(
+            bcvResp = futureResponse,
+            fallbackUsd = 48.0,
+            fallbackEur = 52.0,
+            todayIso = "2026-11-18"
+        )
+        assertEquals(48.5000, split.todayUsd, 0.0001)
+        assertEquals(52.8000, split.todayEur, 0.0001)
+        assertEquals("2026-11-18", split.todayEffectiveIso)
+        assertNotNull(split.nextUsd)
+        assertEquals(49.1234, split.nextUsd!!, 0.0001)
+        assertEquals(53.5678, split.nextEur!!, 0.0001)
+        assertEquals("2026-11-19", split.nextEffectiveIso)
+        assertEquals(1.28, split.usdChangePct!!, 0.001)
+
+        val currentResponse = DolarVzlaBcvResponse(
+            current = DolarVzlaBcvSnapshot(date = "2026-11-18", usd = 48.5000, eur = 52.8000),
+            previous = DolarVzlaBcvSnapshot(date = "2026-11-17", usd = 48.1000, eur = 52.4000),
+            changePercentage = DolarVzlaChangePct(usd = 0.83, eur = 0.76)
+        )
+        val sameDay = TasaVeRepository.resolveBcvTodayAndNext(
+            bcvResp = currentResponse,
+            fallbackUsd = 48.0,
+            fallbackEur = 52.0,
+            todayIso = "2026-11-18"
+        )
+        assertEquals(48.5000, sameDay.todayUsd, 0.0001)
+        assertEquals(52.8000, sameDay.todayEur, 0.0001)
+        assertNull(sameDay.nextUsd)
+        assertNull(sameDay.nextEur)
+        assertNull(sameDay.nextEffectiveIso)
     }
 }
 

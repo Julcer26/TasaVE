@@ -33,7 +33,9 @@ enum class TrendRange(val label: String, val days: Int?) {
 
 enum class PaymentMethodType(val label: String) {
     PAGO_MOVIL("Pago Móvil"),
-    BANK_ACCOUNT("Cuenta Bancaria")
+    BANK_ACCOUNT("Cuenta Bancaria"),
+    ZELLE("Zelle"),
+    BINANCE("Binance Pay")
 }
 
 @Immutable
@@ -86,14 +88,19 @@ data class PaymentMethodProfile(
     val phonePrefix: String = "0414",
     val phoneNumber: String = "",
     val accountNumber: String = "",
-    val accountHolder: String = ""
+    val accountHolder: String = "",
+    val digitalIdentifier: String = ""
 ) {
     fun formattedBank(): String = if (bankCode.isNotBlank()) "$bankCode - $bankName" else bankName
     fun formattedDoc(): String = if (docNumber.isNotBlank()) "$docPrefix-$docNumber" else ""
     fun formattedPhone(): String = if (phoneNumber.isNotBlank()) "$phonePrefix-$phoneNumber" else ""
     fun displayTitle(): String {
         if (alias.isNotBlank()) return alias
-        return "${type.label} • $bankName"
+        return when (type) {
+            PaymentMethodType.ZELLE -> "Zelle • ${accountHolder.ifBlank { digitalIdentifier.ifBlank { "Cuenta" } }}"
+            PaymentMethodType.BINANCE -> "Binance Pay • ${digitalIdentifier.ifBlank { accountHolder.ifBlank { "Pay" } }}"
+            PaymentMethodType.PAGO_MOVIL, PaymentMethodType.BANK_ACCOUNT -> "${type.label} • $bankName"
+        }
     }
 }
 
@@ -157,6 +164,9 @@ object UltraMath {
 
     const val IVA_RATE = 0.16
     const val IGTF_RATE = 0.03
+    const val FREE_CART_MAX_ITEMS = 5
+    const val FREE_PAYMENT_PROFILES_MAX = 1
+    const val REWARDED_SCAN_BONUS = 5
     private const val DAY_MS = 24L * 60L * 60L * 1000L
 
     fun calculateCartSummary(
@@ -191,6 +201,30 @@ object UltraMath {
     fun calculateSpreadPercent(higherRate: Double, baseRate: Double): Double {
         if (baseRate <= 0.0) return 0.0
         return ((higherRate - baseRate) / baseRate) * 100.0
+    }
+
+    fun applyPercentModifier(amount: Double, percentModifier: Double): Double {
+        if (amount <= 0.0) return 0.0
+        return (amount * (1.0 + percentModifier / 100.0)).coerceAtLeast(0.0)
+    }
+
+    fun calculateVesPerCop(vesPerUsd: Double, copPerUsd: Double): Double {
+        if (vesPerUsd <= 0.0 || copPerUsd <= 0.0) return 0.0
+        return vesPerUsd / copPerUsd
+    }
+
+    fun calculateCopFromVes(vesAmount: Double, vesPerUsd: Double, copPerUsd: Double): Double {
+        val vesPerCop = calculateVesPerCop(vesPerUsd, copPerUsd)
+        if (vesPerCop <= 0.0 || vesAmount <= 0.0) return 0.0
+        return vesAmount / vesPerCop
+    }
+
+    fun canAddCartItem(currentDistinctCount: Int, isUltraUser: Boolean): Boolean {
+        return isUltraUser || currentDistinctCount < FREE_CART_MAX_ITEMS
+    }
+
+    fun canAddPaymentProfile(currentCount: Int, isUltraUser: Boolean): Boolean {
+        return isUltraUser || currentCount < FREE_PAYMENT_PROFILES_MAX
     }
 
     fun calculateMixedPayment(

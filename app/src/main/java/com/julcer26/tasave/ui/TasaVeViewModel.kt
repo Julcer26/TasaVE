@@ -3,6 +3,7 @@ package com.julcer26.tasave.ui
 import android.app.Activity
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -25,6 +26,11 @@ data class TasaVeUiState(
     val usdBcv: RateInfo? = null,
     val eurBcv: RateInfo? = null,
     val usdtParalelo: RateInfo? = null,
+    val copPerUsd: Double = LocalStorageHelper.FALLBACK_COP_PER_USD,
+    val copDate: String = "TRM",
+    val nextUsdBcv: RateInfo? = null,
+    val nextEurBcv: RateInfo? = null,
+    val nextBcvDateIso: String? = null,
     val isFromCache: Boolean = false,
     val isOfflineError: Boolean = false,
     val errorMessage: String? = null
@@ -62,7 +68,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _remainingFreeScans = MutableStateFlow(localStorageHelper.getRemainingFreeScans())
     val remainingFreeScans: StateFlow<Int> = _remainingFreeScans.asStateFlow()
 
-    // Ultra: Shopping Cart State
+    // Shopping Cart State
     private val _cartItems = MutableStateFlow(localStorageHelper.getCartItems())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
 
@@ -72,7 +78,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _cartIgtfEnabled = MutableStateFlow(localStorageHelper.isCartIgtfEnabled())
     val cartIgtfEnabled: StateFlow<Boolean> = _cartIgtfEnabled.asStateFlow()
 
-    // Ultra: Market / Brecha Snapshots & Alerts
+    // Market / Brecha Snapshots & Alerts
     private val _rateSnapshots = MutableStateFlow(localStorageHelper.getRateSnapshots())
     val rateSnapshots: StateFlow<List<RateSnapshot>> = _rateSnapshots.asStateFlow()
 
@@ -82,7 +88,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _alertSettings = MutableStateFlow(localStorageHelper.getAlertSettings())
     val alertSettings: StateFlow<AlertSettings> = _alertSettings.asStateFlow()
 
-    // Ultra: Checkout / Mixed Payment & Multiple Payment Profiles (Pago Móvil + Bank Accounts)
+    // Checkout / Mixed Payment & Payment Profiles (Pago Móvil, Cuentas, Zelle, Binance Pay)
     private val _pagoMovilInfo = MutableStateFlow(localStorageHelper.getPagoMovilInfo())
     val pagoMovilInfo: StateFlow<PagoMovilInfo> = _pagoMovilInfo.asStateFlow()
 
@@ -108,15 +114,29 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     var vesAmount by mutableStateOf("")
         private set
 
+    var previewTomorrowBcv by mutableStateOf(false)
+        private set
+
+    var activePercentModifier by mutableDoubleStateOf(0.0)
+        private set
+
+    var copUseUsdtBase by mutableStateOf(false)
+        private set
+
     init {
         _themeMode.value = repository.getLocalTheme()
 
-        val cached = repository.getCachedRates()
+        val cached = repository.getCachedRatesBundle()
         _uiState.value = TasaVeUiState(
             isLoading = false,
-            usdBcv = cached.first,
-            eurBcv = cached.second,
-            usdtParalelo = cached.third,
+            usdBcv = cached.usdBcv,
+            eurBcv = cached.eurBcv,
+            usdtParalelo = cached.usdtParalelo,
+            copPerUsd = cached.copPerUsd,
+            copDate = cached.copDate,
+            nextUsdBcv = cached.nextUsdBcv,
+            nextEurBcv = cached.nextEurBcv,
+            nextBcvDateIso = cached.nextBcvDateIso,
             isFromCache = true
         )
         recalculateVES()
@@ -162,11 +182,19 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             when (val result = repository.fetchRates(forceRefresh)) {
                 is TasaVeRatesResult.Success -> {
+                    if (result.nextUsdBcv == null) {
+                        previewTomorrowBcv = false
+                    }
                     _uiState.value = TasaVeUiState(
                         isLoading = false,
                         usdBcv = result.usdBcv,
                         eurBcv = result.eurBcv,
                         usdtParalelo = result.usdtParalelo,
+                        copPerUsd = result.copPerUsd,
+                        copDate = result.copDate,
+                        nextUsdBcv = result.nextUsdBcv,
+                        nextEurBcv = result.nextEurBcv,
+                        nextBcvDateIso = result.nextBcvDateIso,
                         isFromCache = result.isFromCache,
                         isOfflineError = result.isOfflineError
                     )
@@ -197,6 +225,52 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     fun selectRate(key: String) {
         selectedRateKey = key
         recalculateVES()
+    }
+
+    fun setTomorrowBcvPreview(useTomorrow: Boolean) {
+        if (useTomorrow && _uiState.value.nextUsdBcv == null) return
+        previewTomorrowBcv = useTomorrow
+        recalculateVES()
+    }
+
+    fun selectPercentModifier(percent: Double) {
+        activePercentModifier = if (activePercentModifier == percent) 0.0 else percent
+    }
+
+    fun toggleCopBaseRate() {
+        copUseUsdtBase = !copUseUsdtBase
+        if (selectedRateKey == "COP") {
+            recalculateVES()
+        }
+    }
+
+    fun getEffectiveUsdBcv(): RateInfo? {
+        val state = _uiState.value
+        return if (previewTomorrowBcv && state.nextUsdBcv != null) state.nextUsdBcv else state.usdBcv
+    }
+
+    fun getEffectiveEurBcv(): RateInfo? {
+        val state = _uiState.value
+        return if (previewTomorrowBcv && state.nextEurBcv != null) state.nextEurBcv else state.eurBcv
+    }
+
+    fun getCopRateInfo(): RateInfo? {
+        val state = _uiState.value
+        val baseVesPerUsd = if (copUseUsdtBase) {
+            state.usdtParalelo?.rate ?: getEffectiveUsdBcv()?.rate ?: 0.0
+        } else {
+            getEffectiveUsdBcv()?.rate ?: 0.0
+        }
+        val vesPerCop = UltraMath.calculateVesPerCop(baseVesPerUsd, state.copPerUsd)
+        if (vesPerCop <= 0.0) return null
+        return RateInfo(
+            key = "COP",
+            label = if (copUseUsdtBase) "COP (Base USDT)" else "COP (Base BCV)",
+            symbol = "COP",
+            rate = vesPerCop,
+            dateUpdated = state.copDate,
+            isLocalOffline = state.isOfflineError
+        )
     }
 
     fun updateForeignAmount(input: String) {
@@ -273,6 +347,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         _remainingFreeScans.value = localStorageHelper.getRemainingFreeScans()
     }
 
+    fun grantRewardedScans(extra: Int = UltraMath.REWARDED_SCAN_BONUS): Int {
+        val nextRemaining = localStorageHelper.grantRewardedScanBonus(extra)
+        _remainingFreeScans.value = nextRemaining
+        return nextRemaining
+    }
+
     fun applyScannedPrice(amount: Double, isVes: Boolean, targetRateKey: String? = null) {
         if (targetRateKey != null) {
             selectedRateKey = targetRateKey
@@ -289,21 +369,33 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // --- Ultra: Shopping Cart Actions ---
-    fun addCartItem(name: String, amount: Double, isVes: Boolean, rateKey: String = "USD_BCV", quantity: Int = 1) {
+    // --- Shopping Cart Actions (Free up to 5 items; Ultra unlimited + IVA/IGTF) ---
+    fun addCartItem(
+        name: String,
+        amount: Double,
+        isVes: Boolean,
+        rateKey: String = "USD_BCV",
+        quantity: Int = 1,
+        fromScanner: Boolean = false
+    ): Boolean {
+        if (!UltraMath.canAddCartItem(_cartItems.value.size, isUltraUser.value)) {
+            return false
+        }
+
+        val usdBcvRate = getEffectiveUsdBcv()?.rate ?: 1.0
         val rate = when (rateKey) {
-            "EUR_BCV" -> _uiState.value.eurBcv?.rate
+            "EUR_BCV" -> getEffectiveEurBcv()?.rate
             "USDT" -> _uiState.value.usdtParalelo?.rate
-            else -> _uiState.value.usdBcv?.rate
+            "COP" -> getCopRateInfo()?.rate
+            else -> usdBcvRate
         } ?: getSelectedRateValue().takeIf { it > 0 } ?: 1.0
 
-        val usdBcvRate = _uiState.value.usdBcv?.rate ?: rate
         val unitUsd = if (isVes) {
             if (usdBcvRate > 0) amount / usdBcvRate else 0.0
         } else {
             if (rateKey == "USD_BCV" || usdBcvRate <= 0.0) amount else (amount * rate) / usdBcvRate
         }
-        if (unitUsd <= 0.0) return
+        if (unitUsd <= 0.0) return false
 
         val nextList = _cartItems.value.toMutableList().apply {
             add(
@@ -318,10 +410,14 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         }
         _cartItems.value = nextList
         localStorageHelper.saveCartItems(nextList)
+        if (fromScanner && !isProUser.value) {
+            _remainingFreeScans.value = localStorageHelper.recordFreeScanUsed()
+        }
+        return true
     }
 
     fun editCartItem(id: Long, name: String, amount: Double, isVes: Boolean, quantity: Int) {
-        val usdBcvRate = _uiState.value.usdBcv?.rate ?: getSelectedRateValue().takeIf { it > 0 } ?: 1.0
+        val usdBcvRate = getEffectiveUsdBcv()?.rate ?: getSelectedRateValue().takeIf { it > 0 } ?: 1.0
         val unitUsd = if (isVes) {
             if (usdBcvRate > 0) amount / usdBcvRate else 0.0
         } else {
@@ -368,16 +464,20 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         localStorageHelper.saveCartItems(emptyList())
     }
 
-    fun toggleCartIva() {
+    fun toggleCartIva(): Boolean {
+        if (!isUltraUser.value) return false
         val next = !_cartIvaEnabled.value
         _cartIvaEnabled.value = next
         localStorageHelper.setCartIvaEnabled(next)
+        return true
     }
 
-    fun toggleCartIgtf() {
+    fun toggleCartIgtf(): Boolean {
+        if (!isUltraUser.value) return false
         val next = !_cartIgtfEnabled.value
         _cartIgtfEnabled.value = next
         localStorageHelper.setCartIgtfEnabled(next)
+        return true
     }
 
     // --- Ultra: Alerts & Widget ---
@@ -403,13 +503,18 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         return RateAlertWorker.sendAlertNotification(
             context = getApplication(),
             title = "Alerta Tasa VE Ultra",
-            body = "USD BCV: Bs. ${String.format(Locale.US, "%.2f", usd)} • EUR: Bs. ${String.format(Locale.US, "%.2f", eur)} • USDT: Bs. ${String.format(Locale.US, "%.2f", usdt)}"
+            body = "USD BCV: Bs. ${String.format(Locale.US, "%.4f", usd)} • EUR: Bs. ${String.format(Locale.US, "%.4f", eur)} • USDT: Bs. ${String.format(Locale.US, "%.2f", usdt)}"
         )
     }
 
-    // --- Ultra: Payment Profiles (Multiple Pago Móvil & Bank Accounts) ---
-    fun savePaymentProfile(profile: PaymentMethodProfile) {
+    // --- Payment Profiles (Free: 1 profile; Ultra: unlimited) ---
+    fun savePaymentProfile(profile: PaymentMethodProfile): Boolean {
         val current = _paymentProfiles.value.toMutableList()
+        val isExisting = profile.id > 0L && current.any { it.id == profile.id }
+        if (!isExisting && !UltraMath.canAddPaymentProfile(current.size, isUltraUser.value)) {
+            return false
+        }
+
         val finalProfile = if (profile.id <= 0L) {
             profile.copy(id = System.currentTimeMillis())
         } else {
@@ -424,6 +529,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         _paymentProfiles.value = current
         localStorageHelper.savePaymentProfiles(current)
         selectPaymentProfile(finalProfile.id)
+        return true
     }
 
     fun deletePaymentProfile(id: Long) {
@@ -446,10 +552,17 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun saveConversionToHistory(): Boolean {
-        val fVal = parseDouble(foreignAmount) ?: return false
-        val vVal = parseDouble(vesAmount) ?: return false
+        val fValRaw = parseDouble(foreignAmount) ?: return false
+        val vValRaw = parseDouble(vesAmount) ?: return false
         val rate = getSelectedRateValue()
         if (rate <= 0.0) return false
+
+        val fVal = if (activePercentModifier != 0.0) {
+            UltraMath.applyPercentModifier(fValRaw, activePercentModifier)
+        } else fValRaw
+        val vVal = if (activePercentModifier != 0.0) {
+            UltraMath.applyPercentModifier(vValRaw, activePercentModifier)
+        } else vValRaw
 
         val rateObj = getSelectedRateInfo() ?: return false
 
@@ -478,10 +591,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             "$" -> "USD_BCV"
             "€" -> "EUR_BCV"
             "₮" -> "USDT"
+            "COP" -> "COP"
             else -> when (item.currencyTo) {
                 "$" -> "USD_BCV"
                 "€" -> "EUR_BCV"
                 "₮" -> "USDT"
+                "COP" -> "COP"
                 else -> null
             }
         }
@@ -489,6 +604,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             selectedRateKey = matchingRate
         }
 
+        activePercentModifier = 0.0
         if (item.currencyFrom == "Bs.") {
             isVesAsInput = true
             vesAmount = String.format(Locale.US, "%.2f", item.amountFrom)
@@ -513,9 +629,10 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     fun getSelectedRateInfo(): RateInfo? {
         val state = _uiState.value
         return when (selectedRateKey) {
-            "USD_BCV" -> state.usdBcv
-            "EUR_BCV" -> state.eurBcv
+            "USD_BCV" -> getEffectiveUsdBcv()
+            "EUR_BCV" -> getEffectiveEurBcv()
             "USDT" -> state.usdtParalelo
+            "COP" -> getCopRateInfo()
             else -> null
         }
     }

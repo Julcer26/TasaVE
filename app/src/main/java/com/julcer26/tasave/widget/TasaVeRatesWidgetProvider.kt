@@ -54,8 +54,8 @@ class TasaVeRatesWidgetProvider : AppWidgetProvider() {
 
             val views = RemoteViews(context.packageName, R.layout.widget_tasa_ve_rates).apply {
                 setOnClickPendingIntent(R.id.widget_root, pendingIntent)
-                setTextViewText(R.id.widget_usd_value, "Bs. ${String.format(Locale.US, "%.2f", usd.rate)}")
-                setTextViewText(R.id.widget_eur_value, "Bs. ${String.format(Locale.US, "%.2f", eur.rate)}")
+                setTextViewText(R.id.widget_usd_value, "Bs. ${String.format(Locale.US, "%.4f", usd.rate)}")
+                setTextViewText(R.id.widget_eur_value, "Bs. ${String.format(Locale.US, "%.4f", eur.rate)}")
                 setTextViewText(R.id.widget_usdt_value, "Bs. ${String.format(Locale.US, "%.2f", usdt.rate)}")
                 setTextViewText(R.id.widget_updated, usd.dateUpdated)
                 setTextViewText(

@@ -74,6 +74,8 @@ fun PriceScannerDialog(
     usdBcv: RateInfo?,
     eurBcv: RateInfo?,
     usdtParalelo: RateInfo?,
+    isRewardedAdLoading: Boolean = false,
+    onWatchRewardedAd: () -> Unit = {},
     onSelectRate: (String) -> Unit,
     onApplyPrice: (amount: Double, isVes: Boolean, rateKey: String) -> Unit,
     onUpgradePro: () -> Unit,
@@ -103,7 +105,9 @@ fun PriceScannerDialog(
         }
     }
 
-    var activeRateKey by remember(selectedRateKey) { mutableStateOf(selectedRateKey) }
+    var activeRateKey by remember(selectedRateKey) {
+        mutableStateOf(if (selectedRateKey == "COP") "USD_BCV" else selectedRateKey)
+    }
     var detectedPrices by remember { mutableStateOf<List<DetectedPrice>>(emptyList()) }
     var selectedPrice by remember { mutableStateOf<DetectedPrice?>(null) }
     var isPaused by remember { mutableStateOf(false) }
@@ -139,7 +143,7 @@ fun PriceScannerDialog(
             .background(Color(0xFF0A0A0B))
     ) {
             if (!canScan) {
-                // Freemium Paywall View
+                // Freemium Paywall + Opt-In Rewarded Ad View
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -151,14 +155,14 @@ fun PriceScannerDialog(
                         modifier = Modifier
                             .size(72.dp)
                             .clip(CircleShape)
-                            .background(Color(0x26F59E0B)),
+                            .background(Color(0x2610B981)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Icons.Default.CameraAlt,
                             contentDescription = null,
-                            tint = Color(0xFFF59E0B),
-                            modifier = Modifier.size(36.dp)
+                            tint = emeraldLight,
+                            modifier = Modifier.size(34.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -171,32 +175,66 @@ fun PriceScannerDialog(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Ya usaste tus 3 escaneos gratuitos de hoy. Pásate a Pro ($proPrice pago único) o Ultra (todo incluido) para obtener escáner ilimitado y cero anuncios.",
+                        text = "Ya usaste tus escaneos gratuitos de hoy. Mira un anuncio corto para desbloquear +5 escaneos hoy, o pásate a Pro ($proPrice pago único) / Ultra para escáner ilimitado.",
                         fontSize = 13.sp,
                         color = Color(0xFF94A3B8),
                         textAlign = TextAlign.Center,
                         lineHeight = 19.sp
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
                     Button(
-                        onClick = onUpgradePro,
+                        onClick = onWatchRewardedAd,
+                        enabled = !isRewardedAdLoading,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFF59E0B),
+                            containerColor = emerald,
                             contentColor = Color.Black
                         ),
                         contentPadding = PaddingValues(vertical = 14.dp)
                     ) {
-                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(18.dp))
+                        if (isRewardedAdLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.Black
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Cargando anuncio...",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        } else {
+                            Icon(Icons.Default.PlayCircle, contentDescription = null, modifier = Modifier.size(19.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Ver anuncio corto (+5 escaneos hoy)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.5.sp
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = onUpgradePro,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color(0xFFF59E0B)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFFBBF24)
+                        ),
+                        contentPadding = PaddingValues(vertical = 14.dp)
+                    ) {
+                        Icon(Icons.Default.WorkspacePremium, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Ver Planes (Pro / Ultra)",
+                            text = "Ver Planes (Pro / Ultra ∞)",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 13.5.sp
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     TextButton(onClick = onDismiss) {
                         Text("Volver a la calculadora", color = Color(0xFF94A3B8))
                     }
@@ -448,21 +486,43 @@ fun PriceScannerDialog(
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 3.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(
-                                    if (isProUser) Color(0x33F59E0B) else Color(0x3310B981)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        Row(
+                            modifier = Modifier.padding(top = 3.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = if (isProUser) "PRO • Ilimitado" else "$remainingFreeScans/3 gratis hoy",
-                                color = if (isProUser) Color(0xFFFBBF24) else emeraldLight,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        if (isProUser) Color(0x33F59E0B) else Color(0x3310B981)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = if (isProUser) "PRO • Ilimitado" else "$remainingFreeScans gratis hoy",
+                                    color = if (isProUser) Color(0xFFFBBF24) else emeraldLight,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            if (!isProUser && remainingFreeScans <= 1) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0x33F59E0B))
+                                        .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(10.dp))
+                                        .clickable(enabled = !isRewardedAdLoading) { onWatchRewardedAd() }
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isRewardedAdLoading) "Cargando..." else "+5 Ad",
+                                        color = Color(0xFFFBBF24),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -550,6 +610,7 @@ fun PriceScannerDialog(
                         )
                         rates.forEach { (key, label, rateVal) ->
                             val selected = activeRateKey == key
+                            val decimals = if (key == "USD_BCV" || key == "EUR_BCV") "%.4f" else "%.2f"
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -575,7 +636,7 @@ fun PriceScannerDialog(
                                         color = if (selected) emeraldLight else Color.White
                                     )
                                     Text(
-                                        text = if (rateVal != null) "Bs. ${String.format(Locale.US, "%.2f", rateVal)}" else "--",
+                                        text = if (rateVal != null) "Bs. ${String.format(Locale.US, decimals, rateVal)}" else "--",
                                         fontSize = 9.5.sp,
                                         color = Color(0xFF94A3B8)
                                     )

@@ -53,6 +53,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
+import com.julcer26.tasave.ads.TopBannerAd
+import com.julcer26.tasave.data.RateInfo
+import com.julcer26.tasave.share.ShareCardGenerator
 import com.julcer26.tasave.ui.RateSelectorCard
 import com.julcer26.tasave.ui.TasaVeUiState
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
@@ -63,93 +66,7 @@ private val Emerald = Color(0xFF10B981)
 private val EmeraldLight = Color(0xFF34D399)
 private val BlueEuro = Color(0xFF60A5FA)
 private val AmberUltra = Color(0xFFF59E0B)
-
-@Composable
-private fun UltraLockBanner(
-    isDark: Boolean,
-    featureTitle: String,
-    featureDescription: String,
-    ultraPrice: String,
-    onOpenPlans: () -> Unit
-) {
-    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
-    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
-    val cardBg = if (isDark) Color(0xFF141418) else Color.White
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(cardBg)
-                .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(20.dp))
-                .padding(22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color(0x26F59E0B)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.WorkspacePremium,
-                    contentDescription = null,
-                    tint = AmberUltra,
-                    modifier = Modifier.size(34.dp)
-                )
-            }
-            Text(
-                text = "Función Exclusiva Ultra",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                color = AmberUltra,
-                letterSpacing = 0.6.sp
-            )
-            Text(
-                text = featureTitle,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold,
-                color = textPrimary,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = featureDescription,
-                fontSize = 13.sp,
-                color = textSecondary,
-                textAlign = TextAlign.Center,
-                lineHeight = 19.sp
-            )
-            Button(
-                onClick = onOpenPlans,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AmberUltra,
-                    contentColor = Color.Black
-                )
-            ) {
-                Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Ver Planes • Ultra $ultraPrice",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
-                )
-            }
-        }
-    }
-}
+private val PurpleZelle = Color(0xFFA855F7)
 
 // =========================================================================
 // TAB 2: CARRO DE COMPRAS CON ESCÁNER, EDICIÓN + IVA / IGTF
@@ -157,33 +74,24 @@ private fun UltraLockBanner(
 @Composable
 fun CartTab(
     isDark: Boolean,
+    isProUser: Boolean,
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
     cartItems: List<CartItem>,
     applyIva: Boolean,
     applyIgtf: Boolean,
-    onAddManualItem: (name: String, amount: Double, isVes: Boolean, quantity: Int) -> Unit,
+    onAddManualItem: (name: String, amount: Double, isVes: Boolean, quantity: Int) -> Boolean,
     onEditItem: (id: Long, name: String, amount: Double, isVes: Boolean, quantity: Int) -> Unit,
     onScanToCart: () -> Unit,
     onUpdateQuantity: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit,
     onClearCart: () -> Unit,
-    onToggleIva: () -> Unit,
-    onToggleIgtf: () -> Unit,
+    onToggleIva: () -> Boolean,
+    onToggleIgtf: () -> Boolean,
     onOpenPlans: () -> Unit
 ) {
-    if (!isUltraUser) {
-        UltraLockBanner(
-            isDark = isDark,
-            featureTitle = "Carrito Inteligente de Supermercado",
-            featureDescription = "Escanea precios pasillo por pasillo, edita productos y cantidades, y calcula IVA (16%) e IGTF (3%) en vivo. Ultra incluye cero anuncios y escáner ilimitado.",
-            ultraPrice = ultraPrice,
-            onOpenPlans = onOpenPlans
-        )
-        return
-    }
-
+    val context = LocalContext.current
     val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
     val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
     val cardBg = if (isDark) Color(0xFF141418) else Color.White
@@ -193,12 +101,23 @@ fun CartTab(
     val eurRate = uiState.eurBcv?.rate ?: 0.0
     val usdtRate = uiState.usdtParalelo?.rate ?: 0.0
 
-    val summary = remember(cartItems, applyIva, applyIgtf, usdRate, eurRate, usdtRate) {
-        UltraMath.calculateCartSummary(cartItems, applyIva, applyIgtf, usdRate, eurRate, usdtRate)
+    val effectiveApplyIva = isUltraUser && applyIva
+    val effectiveApplyIgtf = isUltraUser && applyIgtf
+
+    val summary = remember(cartItems, effectiveApplyIva, effectiveApplyIgtf, usdRate, eurRate, usdtRate) {
+        UltraMath.calculateCartSummary(
+            items = cartItems,
+            applyIva = effectiveApplyIva,
+            applyIgtf = effectiveApplyIgtf,
+            usdRate = usdRate,
+            eurRate = eurRate,
+            usdtRate = usdtRate
+        )
     }
 
     var showAddDialog by remember { mutableStateOf(false) }
     var editingItem by remember { mutableStateOf<CartItem?>(null) }
+    val cartFullForFree = !isUltraUser && !UltraMath.canAddCartItem(cartItems.size, isUltraUser)
 
     Column(
         modifier = Modifier
@@ -206,6 +125,8 @@ fun CartTab(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        TopBannerAd(isDark = isDark, isProUser = isProUser)
+
         // Summary Header Card
         Column(
             modifier = Modifier
@@ -222,13 +143,34 @@ fun CartTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(
-                        text = "TOTAL DEL CARRITO",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight,
-                        letterSpacing = 0.6.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "TOTAL DEL CARRITO",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight,
+                            letterSpacing = 0.6.sp
+                        )
+                        if (!isUltraUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (cartFullForFree) Color(0x26F59E0B) else Color(0x1F10B981))
+                                    .clickable { onOpenPlans() }
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${cartItems.size}/${UltraMath.FREE_CART_MAX_ITEMS} gratis",
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (cartFullForFree) AmberUltra else EmeraldLight
+                                )
+                            }
+                        }
+                    }
                     Text(
                         text = "$ ${String.format(Locale.US, "%,.2f", summary.totalUsd)}",
                         fontSize = 26.sp,
@@ -256,22 +198,42 @@ fun CartTab(
                 }
             }
 
-            // IVA & IGTF Quick Toggles
+            // IVA & IGTF Quick Toggles (Ultra Exclusive)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 FilterChip(
-                    selected = applyIva,
-                    onClick = onToggleIva,
+                    selected = effectiveApplyIva,
+                    onClick = {
+                        if (!isUltraUser || !onToggleIva()) {
+                            Toast.makeText(
+                                context,
+                                "IVA automático es exclusivo de Tasa VE Ultra ($ultraPrice)",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onOpenPlans()
+                        }
+                    },
                     shape = RoundedCornerShape(14.dp),
-                    label = { Text("IVA 16%", fontSize = 11.5.sp, fontWeight = FontWeight.Bold) },
+                    label = {
+                        Text(
+                            text = if (isUltraUser) "IVA 16%" else "IVA 16% • ULTRA",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     leadingIcon = {
                         Icon(
-                            imageVector = if (applyIva) Icons.Default.CheckCircle else Icons.Default.AddCircleOutline,
+                            imageVector = when {
+                                !isUltraUser -> Icons.Default.Lock
+                                effectiveApplyIva -> Icons.Default.CheckCircle
+                                else -> Icons.Default.AddCircleOutline
+                            },
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            tint = if (!isUltraUser) AmberUltra else LocalContentColor.current,
+                            modifier = Modifier.size(15.dp)
                         )
                     },
                     colors = FilterChipDefaults.filterChipColors(
@@ -281,15 +243,35 @@ fun CartTab(
                     )
                 )
                 FilterChip(
-                    selected = applyIgtf,
-                    onClick = onToggleIgtf,
+                    selected = effectiveApplyIgtf,
+                    onClick = {
+                        if (!isUltraUser || !onToggleIgtf()) {
+                            Toast.makeText(
+                                context,
+                                "IGTF automático es exclusivo de Tasa VE Ultra ($ultraPrice)",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onOpenPlans()
+                        }
+                    },
                     shape = RoundedCornerShape(14.dp),
-                    label = { Text("IGTF 3%", fontSize = 11.5.sp, fontWeight = FontWeight.Bold) },
+                    label = {
+                        Text(
+                            text = if (isUltraUser) "IGTF 3%" else "IGTF 3% • ULTRA",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
                     leadingIcon = {
                         Icon(
-                            imageVector = if (applyIgtf) Icons.Default.CheckCircle else Icons.Default.AddCircleOutline,
+                            imageVector = when {
+                                !isUltraUser -> Icons.Default.Lock
+                                effectiveApplyIgtf -> Icons.Default.CheckCircle
+                                else -> Icons.Default.AddCircleOutline
+                            },
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            tint = if (!isUltraUser) AmberUltra else LocalContentColor.current,
+                            modifier = Modifier.size(15.dp)
                         )
                     },
                     colors = FilterChipDefaults.filterChipColors(
@@ -310,11 +292,11 @@ fun CartTab(
                 }
             }
 
-            if (applyIva || applyIgtf) {
+            if (effectiveApplyIva || effectiveApplyIgtf) {
                 Text(
                     text = "Subtotal: $${String.format(Locale.US, "%.2f", summary.subtotalUsd)}" +
-                        (if (applyIva) " + IVA $${String.format(Locale.US, "%.2f", summary.ivaUsd)}" else "") +
-                        (if (applyIgtf) " + IGTF $${String.format(Locale.US, "%.2f", summary.igtfUsd)}" else ""),
+                        (if (effectiveApplyIva) " + IVA $${String.format(Locale.US, "%.2f", summary.ivaUsd)}" else "") +
+                        (if (effectiveApplyIgtf) " + IGTF $${String.format(Locale.US, "%.2f", summary.igtfUsd)}" else ""),
                     fontSize = 10.5.sp,
                     color = textSecondary
                 )
@@ -327,7 +309,18 @@ fun CartTab(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Button(
-                onClick = onScanToCart,
+                onClick = {
+                    if (cartFullForFree) {
+                        Toast.makeText(
+                            context,
+                            "Límite de 5 productos gratis. Pásate a Ultra para artículos ilimitados.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onOpenPlans()
+                    } else {
+                        onScanToCart()
+                    }
+                },
                 modifier = Modifier
                     .weight(1.3f)
                     .heightIn(min = 48.dp),
@@ -343,7 +336,18 @@ fun CartTab(
             }
 
             OutlinedButton(
-                onClick = { showAddDialog = true },
+                onClick = {
+                    if (cartFullForFree) {
+                        Toast.makeText(
+                            context,
+                            "Límite de 5 productos gratis. Pásate a Ultra para artículos ilimitados.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onOpenPlans()
+                    } else {
+                        showAddDialog = true
+                    }
+                },
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 48.dp),
@@ -503,8 +507,16 @@ fun CartTab(
             usdRate = usdRate,
             onDismiss = { showAddDialog = false },
             onConfirm = { name, amount, isVes, qty ->
-                onAddManualItem(name, amount, isVes, qty)
+                val added = onAddManualItem(name, amount, isVes, qty)
                 showAddDialog = false
+                if (!added) {
+                    Toast.makeText(
+                        context,
+                        "Límite de 5 productos gratis. Pásate a Ultra para artículos ilimitados.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onOpenPlans()
+                }
             }
         )
     }
@@ -753,6 +765,7 @@ private fun CartItemEditorDialog(
 @Composable
 fun MarketTab(
     isDark: Boolean,
+    isProUser: Boolean,
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
@@ -764,17 +777,6 @@ fun MarketTab(
     onTestNotification: () -> Boolean,
     onOpenPlans: () -> Unit
 ) {
-    if (!isUltraUser) {
-        UltraLockBanner(
-            isDark = isDark,
-            featureTitle = "Brecha Cambiaria, Tendencias y Alertas",
-            featureDescription = "Consulta la brecha porcentual en vivo, gráficos históricos por moneda (1D, 1S, 15D, 1M, 3M), recibe alertas locales y fija el Widget en tu inicio.",
-            ultraPrice = ultraPrice,
-            onOpenPlans = onOpenPlans
-        )
-        return
-    }
-
     val context = LocalContext.current
     val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
     val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
@@ -829,6 +831,7 @@ fun MarketTab(
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        TopBannerAd(isDark = isDark, isProUser = isProUser)
         // 1. Brecha Cambiaria Card
         Column(
             modifier = Modifier
@@ -1029,6 +1032,7 @@ fun MarketTab(
                     }
                 } ?: lastVal
                 val displayLabel = inspectedPoint?.label ?: "Actual"
+                val rateFmt = if (selectedCurrency == TrendCurrency.USDT) "%.2f" else "%.4f"
 
                 Row(
                     modifier = Modifier
@@ -1042,7 +1046,7 @@ fun MarketTab(
                     Column {
                         Text(displayLabel, fontSize = 10.sp, color = textSecondary)
                         Text(
-                            text = "Bs. ${String.format(Locale.US, "%.2f", displayVal)}",
+                            text = "Bs. ${String.format(Locale.US, rateFmt, displayVal)}",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = textPrimary
@@ -1058,7 +1062,7 @@ fun MarketTab(
                             color = deltaColor
                         )
                         Text(
-                            text = "Mín ${String.format(Locale.US, "%.2f", minVal)} • Máx ${String.format(Locale.US, "%.2f", maxVal)}",
+                            text = "Mín ${String.format(Locale.US, rateFmt, minVal)} • Máx ${String.format(Locale.US, rateFmt, maxVal)}",
                             fontSize = 9.5.sp,
                             color = textSecondary
                         )
@@ -1070,9 +1074,9 @@ fun MarketTab(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     val p = inspectedPoint ?: filteredPoints.lastOrNull()
-                    Text("● USD: ${String.format(Locale.US, "%.2f", p?.usdBcv ?: usdRate)}", fontSize = 10.5.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
-                    Text("● EUR: ${String.format(Locale.US, "%.2f", p?.eurBcv ?: eurRate)}", fontSize = 10.5.sp, color = BlueEuro, fontWeight = FontWeight.Bold)
-                    Text("● USDT: ${String.format(Locale.US, "%.2f", p?.usdt ?: usdtRate)}", fontSize = 10.5.sp, color = AmberUltra, fontWeight = FontWeight.Bold)
+                    Text("● USD: ${String.format(Locale.US, "%.4f", p?.usdBcv ?: usdRate)}", fontSize = 10.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
+                    Text("● EUR: ${String.format(Locale.US, "%.4f", p?.eurBcv ?: eurRate)}", fontSize = 10.sp, color = BlueEuro, fontWeight = FontWeight.Bold)
+                    Text("● USDT: ${String.format(Locale.US, "%.2f", p?.usdt ?: usdtRate)}", fontSize = 10.sp, color = AmberUltra, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -1266,13 +1270,17 @@ fun MarketTab(
             }
         }
 
-        // 3. Rate Alerts Card
+        // 3. Rate Alerts Card (Exclusivo Ultra)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                .border(
+                    1.dp,
+                    if (isUltraUser) borderCol else Color(0x4DF59E0B),
+                    RoundedCornerShape(20.dp)
+                )
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1282,12 +1290,32 @@ fun MarketTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Alertas de Cambio de Tasa",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Alertas de Cambio de Tasa",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        if (!isUltraUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0x26F59E0B))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "EXCLUSIVO ULTRA",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AmberUltra
+                                )
+                            }
+                        }
+                    }
                     Text(
                         text = "Avisa localmente cuando el precio varíe en segundo plano.",
                         fontSize = 11.sp,
@@ -1295,9 +1323,16 @@ fun MarketTab(
                     )
                 }
                 Switch(
-                    checked = alertSettings.enabled,
+                    checked = isUltraUser && alertSettings.enabled,
                     onCheckedChange = { enable ->
-                        if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        if (!isUltraUser) {
+                            Toast.makeText(
+                                context,
+                                "Las alertas automáticas son exclusivas de Tasa VE Ultra.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onOpenPlans()
+                        } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                             PackageManager.PERMISSION_GRANTED
                         ) {
@@ -1316,19 +1351,28 @@ fun MarketTab(
             ) {
                 FilterChip(
                     selected = alertSettings.watchUsdBcv,
-                    onClick = { onUpdateAlerts(alertSettings.copy(watchUsdBcv = !alertSettings.watchUsdBcv)) },
+                    onClick = {
+                        if (!isUltraUser) onOpenPlans()
+                        else onUpdateAlerts(alertSettings.copy(watchUsdBcv = !alertSettings.watchUsdBcv))
+                    },
                     shape = RoundedCornerShape(14.dp),
                     label = { Text("USD BCV", fontSize = 11.sp) }
                 )
                 FilterChip(
                     selected = alertSettings.watchEurBcv,
-                    onClick = { onUpdateAlerts(alertSettings.copy(watchEurBcv = !alertSettings.watchEurBcv)) },
+                    onClick = {
+                        if (!isUltraUser) onOpenPlans()
+                        else onUpdateAlerts(alertSettings.copy(watchEurBcv = !alertSettings.watchEurBcv))
+                    },
                     shape = RoundedCornerShape(14.dp),
                     label = { Text("EUR BCV", fontSize = 11.sp) }
                 )
                 FilterChip(
                     selected = alertSettings.watchUsdt,
-                    onClick = { onUpdateAlerts(alertSettings.copy(watchUsdt = !alertSettings.watchUsdt)) },
+                    onClick = {
+                        if (!isUltraUser) onOpenPlans()
+                        else onUpdateAlerts(alertSettings.copy(watchUsdt = !alertSettings.watchUsdt))
+                    },
                     shape = RoundedCornerShape(14.dp),
                     label = { Text("USDT", fontSize = 11.sp) }
                 )
@@ -1343,46 +1387,68 @@ fun MarketTab(
                 listOf(0.5, 1.0, 2.0).forEach { pct ->
                     FilterChip(
                         selected = alertSettings.thresholdPercent == pct,
-                        onClick = { onUpdateAlerts(alertSettings.copy(thresholdPercent = pct)) },
+                        onClick = {
+                            if (!isUltraUser) onOpenPlans()
+                            else onUpdateAlerts(alertSettings.copy(thresholdPercent = pct))
+                        },
                         shape = RoundedCornerShape(14.dp),
                         label = { Text("${pct}%", fontSize = 11.sp) }
                     )
                 }
             }
 
-            OutlinedButton(
-                onClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                        PackageManager.PERMISSION_GRANTED
-                    ) {
-                        notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        val sent = onTestNotification()
-                        Toast.makeText(
-                            context,
-                            if (sent) "Notificación de prueba enviada" else "Activa las notificaciones primero",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, borderCol)
-            ) {
-                Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Probar notificación ahora", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+            if (isUltraUser) {
+                OutlinedButton(
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                            PackageManager.PERMISSION_GRANTED
+                        ) {
+                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            val sent = onTestNotification()
+                            Toast.makeText(
+                                context,
+                                if (sent) "Notificación de prueba enviada" else "Activa las notificaciones primero",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, borderCol)
+                ) {
+                    Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Probar notificación ahora", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                }
+            } else {
+                Button(
+                    onClick = onOpenPlans,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 46.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black)
+                ) {
+                    Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Desbloquear con Ultra ($ultraPrice)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
 
-        // 4. Home Screen Widget Card
+        // 4. Home Screen Widget Card (Exclusivo Ultra)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
                 .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                .border(
+                    1.dp,
+                    if (isUltraUser) borderCol else Color(0x4DF59E0B),
+                    RoundedCornerShape(20.dp)
+                )
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -1390,9 +1456,29 @@ fun MarketTab(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Default.Widgets, contentDescription = null, tint = EmeraldLight)
+                Icon(Icons.Default.Widgets, contentDescription = null, tint = if (isUltraUser) EmeraldLight else AmberUltra)
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Widget de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("Widget de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                        if (!isUltraUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0x26F59E0B))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "EXCLUSIVO ULTRA",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AmberUltra
+                                )
+                            }
+                        }
+                    }
                     Text(
                         text = "Mira las 3 tasas y la brecha directo en tu escritorio.",
                         fontSize = 11.sp,
@@ -1400,62 +1486,69 @@ fun MarketTab(
                     )
                 }
             }
-            Button(
-                onClick = {
-                    TasaVeRatesWidgetProvider.updateAllWidgets(context)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val manager = AppWidgetManager.getInstance(context)
-                        val provider = ComponentName(context, TasaVeRatesWidgetProvider::class.java)
-                        if (manager.isRequestPinAppWidgetSupported) {
-                            manager.requestPinAppWidget(provider, null, null)
+            if (isUltraUser) {
+                Button(
+                    onClick = {
+                        TasaVeRatesWidgetProvider.updateAllWidgets(context)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            val manager = AppWidgetManager.getInstance(context)
+                            val provider = ComponentName(context, TasaVeRatesWidgetProvider::class.java)
+                            if (manager.isRequestPinAppWidgetSupported) {
+                                manager.requestPinAppWidget(provider, null, null)
+                            } else {
+                                Toast.makeText(context, "Agrégalo desde Widgets en tu pantalla de inicio.", Toast.LENGTH_LONG).show()
+                            }
                         } else {
-                            Toast.makeText(context, "Agrégalo desde Widgets en tu pantalla de inicio.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
                         }
-                    } else {
-                        Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-            ) {
-                Icon(Icons.Default.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Fijar Widget en Inicio", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                ) {
+                    Icon(Icons.Default.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Fijar Widget en Inicio", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                }
+            } else {
+                Button(
+                    onClick = onOpenPlans,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black)
+                ) {
+                    Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Desbloquear con Ultra ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                }
             }
         }
     }
 }
 
 // =========================================================================
-// TAB 4: COBROS (PAGO MIXTO, MÚLTIPLES PAGO MÓVIL / CUENTAS Y WHATSAPP)
+// TAB 4: COBROS (PAGO MIXTO, MÚLTIPLES MÉTODOS, TARJETA PNG Y WHATSAPP)
 // =========================================================================
 @Composable
 fun CheckoutTab(
     isDark: Boolean,
+    isProUser: Boolean,
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
+    effectiveUsdBcv: RateInfo? = uiState.usdBcv,
+    effectiveEurBcv: RateInfo? = uiState.eurBcv,
     paymentProfiles: List<PaymentMethodProfile>,
     selectedProfileId: Long?,
     onSelectProfile: (Long?) -> Unit,
-    onSaveProfile: (PaymentMethodProfile) -> Unit,
+    onSaveProfile: (PaymentMethodProfile) -> Boolean,
     onDeleteProfile: (Long) -> Unit,
     onOpenPlans: () -> Unit
 ) {
-    if (!isUltraUser) {
-        UltraLockBanner(
-            isDark = isDark,
-            featureTitle = "Pago Mixto, Cuentas y Cobros por WhatsApp",
-            featureDescription = "Calcula cuánto falta en Bs. o cuánto vuelto dar en pagos mixtos, guarda varios Pago Móvil o cuentas bancarias y comparte el cobro en 1 toque.",
-            ultraPrice = ultraPrice,
-            onOpenPlans = onOpenPlans
-        )
-        return
-    }
-
     val context = LocalContext.current
     val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
     val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
@@ -1475,15 +1568,16 @@ fun CheckoutTab(
     }
 
     val activeRate = when (selectedRateKey) {
-        "EUR_BCV" -> uiState.eurBcv?.rate ?: 1.0
+        "EUR_BCV" -> effectiveEurBcv?.rate ?: 1.0
         "USDT" -> uiState.usdtParalelo?.rate ?: 1.0
-        else -> uiState.usdBcv?.rate ?: 1.0
+        else -> effectiveUsdBcv?.rate ?: 1.0
     }
     val rateLabel = when (selectedRateKey) {
         "EUR_BCV" -> "Euro BCV"
         "USDT" -> "USDT"
         else -> "Dólar BCV"
     }
+    val rateFmt = if (selectedRateKey == "USDT") "%.2f" else "%.4f"
 
     val totalUsd = totalUsdStr.replace(",", ".").toDoubleOrNull() ?: 0.0
     val cashUsd = cashUsdStr.replace(",", ".").toDoubleOrNull() ?: 0.0
@@ -1493,11 +1587,11 @@ fun CheckoutTab(
         UltraMath.calculateMixedPayment(totalUsd, cashUsd, paidVes, activeRate)
     }
 
-    val shareSummaryText = remember(result, rateLabel, activeRate, selectedProfile) {
+    val shareSummaryText = remember(result, rateLabel, rateFmt, activeRate, selectedProfile) {
         buildString {
             appendLine("*Resumen de Cobro — Tasa VE*")
             appendLine("Total: $${String.format(Locale.US, "%.2f", result.totalUsd)} (Bs. ${String.format(Locale.US, "%,.2f", result.totalVes)})")
-            appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, "%.2f", activeRate)}")
+            appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, activeRate)}")
             if (result.paidForeignUsd > 0 || result.paidVes > 0) {
                 appendLine("Abonado: $${String.format(Locale.US, "%.2f", result.paidForeignUsd)} + Bs. ${String.format(Locale.US, "%,.2f", result.paidVes)}")
             }
@@ -1510,17 +1604,31 @@ fun CheckoutTab(
             }
             selectedProfile?.let { profile ->
                 appendLine()
-                if (profile.type == PaymentMethodType.PAGO_MOVIL) {
-                    appendLine("*Datos Pago Móvil${if (profile.alias.isNotBlank()) " (${profile.alias})" else ""}:*")
-                    appendLine("Banco: ${profile.formattedBank()}")
-                    if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
-                    if (profile.phoneNumber.isNotBlank()) appendLine("Teléfono: ${profile.formattedPhone()}")
-                } else {
-                    appendLine("*Datos Cuenta Bancaria${if (profile.alias.isNotBlank()) " (${profile.alias})" else ""}:*")
-                    appendLine("Banco: ${profile.formattedBank()}")
-                    if (profile.accountNumber.isNotBlank()) appendLine("Cuenta: ${profile.accountNumber}")
-                    if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
-                    if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
+                val aliasSuffix = if (profile.alias.isNotBlank()) " (${profile.alias})" else ""
+                when (profile.type) {
+                    PaymentMethodType.PAGO_MOVIL -> {
+                        appendLine("*Datos Pago Móvil$aliasSuffix:*")
+                        appendLine("Banco: ${profile.formattedBank()}")
+                        if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
+                        if (profile.phoneNumber.isNotBlank()) appendLine("Teléfono: ${profile.formattedPhone()}")
+                    }
+                    PaymentMethodType.BANK_ACCOUNT -> {
+                        appendLine("*Datos Cuenta Bancaria$aliasSuffix:*")
+                        appendLine("Banco: ${profile.formattedBank()}")
+                        if (profile.accountNumber.isNotBlank()) appendLine("Cuenta: ${profile.accountNumber}")
+                        if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
+                        if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
+                    }
+                    PaymentMethodType.ZELLE -> {
+                        appendLine("*Datos Zelle$aliasSuffix:*")
+                        if (profile.digitalIdentifier.isNotBlank()) appendLine("Correo / Tel: ${profile.digitalIdentifier}")
+                        if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
+                    }
+                    PaymentMethodType.BINANCE -> {
+                        appendLine("*Datos Binance Pay$aliasSuffix:*")
+                        if (profile.digitalIdentifier.isNotBlank()) appendLine("Pay ID / Correo: ${profile.digitalIdentifier}")
+                        if (profile.accountHolder.isNotBlank()) appendLine("Alias / Titular: ${profile.accountHolder}")
+                    }
                 }
             }
         }.trim()
@@ -1534,14 +1642,16 @@ fun CheckoutTab(
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        TopBannerAd(isDark = isDark, isProUser = isProUser)
+
         // Rate Selector
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             listOf(
-                Triple("USD_BCV", uiState.usdBcv, "USD BCV"),
-                Triple("EUR_BCV", uiState.eurBcv, "EUR BCV"),
+                Triple("USD_BCV", effectiveUsdBcv, "USD BCV"),
+                Triple("EUR_BCV", effectiveEurBcv, "EUR BCV"),
                 Triple("USDT", uiState.usdtParalelo, "USDT")
             ).forEach { (key, info, label) ->
                 RateSelectorCard(
@@ -1666,7 +1776,8 @@ fun CheckoutTab(
             }
         }
 
-        // Multi-Profile Pago Móvil & Bank Accounts Section
+        // Multi-Profile Pago Móvil, Bank Accounts, Zelle & Binance Pay Section
+        val profileLimitReached = !isUltraUser && !UltraMath.canAddPaymentProfile(paymentProfiles.size, isUltraUser)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1683,28 +1794,49 @@ fun CheckoutTab(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Mis Pago Móvil y Cuentas (${paymentProfiles.size})",
+                        text = if (isUltraUser) {
+                            "Mis Métodos de Cobro (${paymentProfiles.size})"
+                        } else {
+                            "Mis Métodos de Cobro (${paymentProfiles.size}/${UltraMath.FREE_PAYMENT_PROFILES_MAX} gratis)"
+                        },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = textPrimary
                     )
                     Text(
-                        text = "Toca una para incluirla al compartir el cobro",
+                        text = "Pago Móvil, Bancos, Zelle o Binance • Toca para incluir",
                         fontSize = 10.5.sp,
                         color = textSecondary
                     )
                 }
                 FilledTonalButton(
                     onClick = {
-                        editingProfile = null
-                        showProfileDialog = true
+                        if (profileLimitReached) {
+                            Toast.makeText(
+                                context,
+                                "Gratis permite 1 perfil. Ultra desbloquea perfiles ilimitados.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onOpenPlans()
+                        } else {
+                            editingProfile = null
+                            showProfileDialog = true
+                        }
                     },
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        imageVector = if (profileLimitReached) Icons.Default.Lock else Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Nueva", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (profileLimitReached) "Ultra ∞" else "Nueva",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -1720,12 +1852,47 @@ fun CheckoutTab(
                 ) {
                     Icon(Icons.Default.AccountBalance, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Agregar Pago Móvil o Cuenta Bancaria", fontSize = 12.sp, color = textPrimary)
+                    Text("Agregar Pago Móvil, Banco, Zelle o Binance", fontSize = 11.5.sp, color = textPrimary)
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     paymentProfiles.forEach { profile ->
                         val isSelected = profile.id == selectedProfile?.id
+                        val badgeBg = when (profile.type) {
+                            PaymentMethodType.PAGO_MOVIL -> Color(0x2610B981)
+                            PaymentMethodType.BANK_ACCOUNT -> Color(0x2660A5FA)
+                            PaymentMethodType.ZELLE -> Color(0x26A855F7)
+                            PaymentMethodType.BINANCE -> Color(0x26F59E0B)
+                        }
+                        val badgeTextCol = when (profile.type) {
+                            PaymentMethodType.PAGO_MOVIL -> EmeraldLight
+                            PaymentMethodType.BANK_ACCOUNT -> BlueEuro
+                            PaymentMethodType.ZELLE -> PurpleZelle
+                            PaymentMethodType.BINANCE -> AmberUltra
+                        }
+                        val badgeLabel = when (profile.type) {
+                            PaymentMethodType.PAGO_MOVIL -> "PAGO MÓVIL"
+                            PaymentMethodType.BANK_ACCOUNT -> "CUENTA"
+                            PaymentMethodType.ZELLE -> "ZELLE"
+                            PaymentMethodType.BINANCE -> "BINANCE PAY"
+                        }
+                        val sub = when (profile.type) {
+                            PaymentMethodType.PAGO_MOVIL ->
+                                "${profile.formattedBank()} • ${profile.formattedDoc()} • ${profile.formattedPhone()}"
+                            PaymentMethodType.BANK_ACCOUNT ->
+                                "${profile.formattedBank()} • ${profile.accountNumber}"
+                            PaymentMethodType.ZELLE ->
+                                listOf(profile.digitalIdentifier, profile.accountHolder)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(" • ")
+                                    .ifBlank { "Cuenta Zelle" }
+                            PaymentMethodType.BINANCE ->
+                                listOf(profile.digitalIdentifier, profile.accountHolder)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(" • ")
+                                    .ifBlank { "Binance Pay" }
+                        }
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1763,20 +1930,14 @@ fun CheckoutTab(
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(
-                                                if (profile.type == PaymentMethodType.PAGO_MOVIL) {
-                                                    Color(0x2610B981)
-                                                } else {
-                                                    Color(0x2660A5FA)
-                                                }
-                                            )
+                                            .background(badgeBg)
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = if (profile.type == PaymentMethodType.PAGO_MOVIL) "PAGO MÓVIL" else "CUENTA",
+                                            text = badgeLabel,
                                             fontSize = 8.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (profile.type == PaymentMethodType.PAGO_MOVIL) EmeraldLight else BlueEuro
+                                            color = badgeTextCol
                                         )
                                     }
                                     Text(
@@ -1787,11 +1948,6 @@ fun CheckoutTab(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                }
-                                val sub = if (profile.type == PaymentMethodType.PAGO_MOVIL) {
-                                    "${profile.formattedBank()} • ${profile.formattedDoc()} • ${profile.formattedPhone()}"
-                                } else {
-                                    "${profile.formattedBank()} • ${profile.accountNumber}"
                                 }
                                 Text(
                                     text = sub,
@@ -1832,10 +1988,10 @@ fun CheckoutTab(
             }
         }
 
-        // Copy & WhatsApp Share Buttons
+        // Copy, Visual PNG Card & WhatsApp Share Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
                 onClick = {
@@ -1851,27 +2007,60 @@ fun CheckoutTab(
             ) {
                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp), tint = textPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Copiar", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = textPrimary)
+                Text("Copiar texto", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = textPrimary)
             }
 
-            Button(
+            OutlinedButton(
                 onClick = {
-                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, shareSummaryText)
+                    val statusTitle = when {
+                        isChange -> "VUELTO A ENTREGAR"
+                        isPaidExact -> "CUENTA SALDADA"
+                        else -> "FALTA POR PAGAR"
                     }
-                    context.startActivity(Intent.createChooser(sendIntent, "Enviar cobro por WhatsApp"))
+                    ShareCardGenerator.shareCheckoutCard(
+                        context = context,
+                        isDark = isDark,
+                        totalUsd = result.totalUsd,
+                        totalVes = result.totalVes,
+                        rateLabel = rateLabel,
+                        rateValue = activeRate,
+                        paidUsd = result.paidForeignUsd,
+                        paidVes = result.paidVes,
+                        statusTitle = statusTitle,
+                        statusUsd = showUsd,
+                        statusVes = showVes,
+                        profile = selectedProfile
+                    )
                 },
                 modifier = Modifier
-                    .weight(1.3f)
+                    .weight(1f)
                     .heightIn(min = 48.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                border = BorderStroke(1.dp, Color(0x4D10B981))
             ) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Enviar por WhatsApp", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                Text("Tarjeta (IMG)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
             }
+        }
+
+        Button(
+            onClick = {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, shareSummaryText)
+                }
+                context.startActivity(Intent.createChooser(sendIntent, "Enviar cobro por WhatsApp"))
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+        ) {
+            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Enviar por WhatsApp", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
         }
     }
 
@@ -1881,9 +2070,18 @@ fun CheckoutTab(
             initial = editingProfile,
             onDismiss = { showProfileDialog = false },
             onSave = { profile ->
-                onSaveProfile(profile)
+                val saved = onSaveProfile(profile)
                 showProfileDialog = false
-                Toast.makeText(context, "Método de cobro guardado", Toast.LENGTH_SHORT).show()
+                if (saved) {
+                    Toast.makeText(context, "Método de cobro guardado", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Gratis permite 1 perfil. Ultra desbloquea perfiles ilimitados.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onOpenPlans()
+                }
             }
         )
     }
@@ -1914,6 +2112,7 @@ private fun PaymentProfileEditorDialog(
     var phoneNumber by remember(initial) { mutableStateOf(initial?.phoneNumber ?: "") }
     var accountNumber by remember(initial) { mutableStateOf(initial?.accountNumber ?: "") }
     var accountHolder by remember(initial) { mutableStateOf(initial?.accountHolder ?: "") }
+    var digitalIdentifier by remember(initial) { mutableStateOf(initial?.digitalIdentifier ?: "") }
 
     var showBankPicker by remember { mutableStateOf(false) }
     var expandDocMenu by remember { mutableStateOf(false) }
@@ -1953,36 +2152,45 @@ private fun PaymentProfileEditorDialog(
                     }
                 }
 
-                // Type Toggle: Pago Móvil / Cuenta Bancaria
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    PaymentMethodType.entries.forEach { t ->
-                        FilterChip(
-                            selected = methodType == t,
-                            onClick = {
-                                methodType = t
-                                if (t == PaymentMethodType.BANK_ACCOUNT && accountNumber.isBlank()) {
-                                    accountNumber = selectedBank.code
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(14.dp),
-                            label = {
-                                Text(
-                                    text = t.label,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth()
+                // Type Toggle: 2 rows of 2 chips (Pago Móvil / Cuenta Bancaria / Zelle / Binance Pay)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(
+                        listOf(PaymentMethodType.PAGO_MOVIL, PaymentMethodType.BANK_ACCOUNT),
+                        listOf(PaymentMethodType.ZELLE, PaymentMethodType.BINANCE)
+                    ).forEach { rowTypes ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowTypes.forEach { t ->
+                                FilterChip(
+                                    selected = methodType == t,
+                                    onClick = {
+                                        methodType = t
+                                        if (t == PaymentMethodType.BANK_ACCOUNT && accountNumber.isBlank()) {
+                                            accountNumber = selectedBank.code
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(14.dp),
+                                    label = {
+                                        Text(
+                                            text = t.label,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Color(0x2610B981),
+                                        selectedLabelColor = EmeraldLight
+                                    )
                                 )
-                            },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0x2610B981),
-                                selectedLabelColor = EmeraldLight
-                            )
-                        )
+                            }
+                        }
                     }
                 }
 
@@ -1990,98 +2198,55 @@ private fun PaymentProfileEditorDialog(
                     value = alias,
                     onValueChange = { alias = it },
                     label = { Text("Nombre o Alias (opcional)") },
-                    placeholder = { Text("Ej. Personal Banesco / Tienda") },
+                    placeholder = {
+                        Text(
+                            when (methodType) {
+                                PaymentMethodType.ZELLE -> "Ej. Zelle Personal / Tienda"
+                                PaymentMethodType.BINANCE -> "Ej. Binance Comercio"
+                                else -> "Ej. Personal Banesco / Tienda"
+                            }
+                        )
+                    },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Venezuelan Bank Dropdown Selector (0134 - Banesco, etc.)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Banco (Código + Nombre)", fontSize = 11.sp, color = textSecondary)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
-                            .clickable { showBankPicker = true }
-                            .padding(horizontal = 14.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = selectedBank.display(),
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = textPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Elegir banco",
-                            tint = EmeraldLight
-                        )
-                    }
-                }
-
-                // Fixed Document Prefix (V / E / J / G / P / C) + Number
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Cédula / RIF", fontSize = 11.sp, color = textSecondary)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box {
-                            Row(
-                                modifier = Modifier
-                                    .width(76.dp)
-                                    .height(56.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
-                                    .clickable { expandDocMenu = true }
-                                    .padding(horizontal = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(docPrefix, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = EmeraldLight)
-                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
-                            }
-                            DropdownMenu(
-                                expanded = expandDocMenu,
-                                onDismissRequest = { expandDocMenu = false }
-                            ) {
-                                DOC_PREFIXES.forEach { prefix ->
-                                    DropdownMenuItem(
-                                        text = { Text(prefix, fontWeight = FontWeight.Bold) },
-                                        onClick = {
-                                            docPrefix = prefix
-                                            expandDocMenu = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        OutlinedTextField(
-                            value = docNumber,
-                            onValueChange = { input -> docNumber = input.filter { it.isDigit() }.take(12) },
-                            placeholder = { Text("12345678") },
-                            singleLine = true,
-                            shape = RoundedCornerShape(14.dp),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                if (methodType == PaymentMethodType.PAGO_MOVIL) {
-                    // Fixed Phone Prefix (0412 / 0414 / 0424 / 0416 / 0426 / 0422) + 7 digits
+                if (methodType == PaymentMethodType.PAGO_MOVIL || methodType == PaymentMethodType.BANK_ACCOUNT) {
+                    // Venezuelan Bank Dropdown Selector (0134 - Banesco, etc.)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Teléfono (7 dígitos)", fontSize = 11.sp, color = textSecondary)
+                        Text("Banco (Código + Nombre)", fontSize = 11.sp, color = textSecondary)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 56.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
+                                .clickable { showBankPicker = true }
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedBank.display(),
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Elegir banco",
+                                tint = EmeraldLight
+                            )
+                        }
+                    }
+
+                    // Fixed Document Prefix (V / E / J / G / P / C) + Number
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Cédula / RIF", fontSize = 11.sp, color = textSecondary)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -2090,28 +2255,28 @@ private fun PaymentProfileEditorDialog(
                             Box {
                                 Row(
                                     modifier = Modifier
-                                        .width(96.dp)
+                                        .width(76.dp)
                                         .height(56.dp)
                                         .clip(RoundedCornerShape(14.dp))
                                         .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
-                                        .clickable { expandPhoneMenu = true }
+                                        .clickable { expandDocMenu = true }
                                         .padding(horizontal = 12.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(phonePrefix, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp, color = EmeraldLight)
+                                    Text(docPrefix, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, color = EmeraldLight)
                                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
                                 }
                                 DropdownMenu(
-                                    expanded = expandPhoneMenu,
-                                    onDismissRequest = { expandPhoneMenu = false }
+                                    expanded = expandDocMenu,
+                                    onDismissRequest = { expandDocMenu = false }
                                 ) {
-                                    PHONE_PREFIXES.forEach { prefix ->
+                                    DOC_PREFIXES.forEach { prefix ->
                                         DropdownMenuItem(
                                             text = { Text(prefix, fontWeight = FontWeight.Bold) },
                                             onClick = {
-                                                phonePrefix = prefix
-                                                expandPhoneMenu = false
+                                                docPrefix = prefix
+                                                expandDocMenu = false
                                             }
                                         )
                                     }
@@ -2119,34 +2284,129 @@ private fun PaymentProfileEditorDialog(
                             }
 
                             OutlinedTextField(
-                                value = phoneNumber,
-                                onValueChange = { input -> phoneNumber = input.filter { it.isDigit() }.take(7) },
-                                placeholder = { Text("1234567") },
+                                value = docNumber,
+                                onValueChange = { input -> docNumber = input.filter { it.isDigit() }.take(12) },
+                                placeholder = { Text("12345678") },
                                 singleLine = true,
                                 shape = RoundedCornerShape(14.dp),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
-                } else {
+
+                    if (methodType == PaymentMethodType.PAGO_MOVIL) {
+                        // Fixed Phone Prefix (0412 / 0414 / 0424 / 0416 / 0426 / 0422) + 7 digits
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Teléfono (7 dígitos)", fontSize = 11.sp, color = textSecondary)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box {
+                                    Row(
+                                        modifier = Modifier
+                                            .width(96.dp)
+                                            .height(56.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .border(1.dp, Color(0x4D94A3B8), RoundedCornerShape(14.dp))
+                                            .clickable { expandPhoneMenu = true }
+                                            .padding(horizontal = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(phonePrefix, fontWeight = FontWeight.ExtraBold, fontSize = 13.5.sp, color = EmeraldLight)
+                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = textSecondary)
+                                    }
+                                    DropdownMenu(
+                                        expanded = expandPhoneMenu,
+                                        onDismissRequest = { expandPhoneMenu = false }
+                                    ) {
+                                        PHONE_PREFIXES.forEach { prefix ->
+                                            DropdownMenuItem(
+                                                text = { Text(prefix, fontWeight = FontWeight.Bold) },
+                                                onClick = {
+                                                    phonePrefix = prefix
+                                                    expandPhoneMenu = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                OutlinedTextField(
+                                    value = phoneNumber,
+                                    onValueChange = { input -> phoneNumber = input.filter { it.isDigit() }.take(7) },
+                                    placeholder = { Text("1234567") },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(14.dp),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    } else {
+                        OutlinedTextField(
+                            value = accountNumber,
+                            onValueChange = { input -> accountNumber = input.filter { it.isDigit() }.take(20) },
+                            label = { Text("Número de Cuenta (20 dígitos)") },
+                            placeholder = { Text("${selectedBank.code}0000000000000000") },
+                            supportingText = { Text("${accountNumber.length}/20 dígitos") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = accountHolder,
+                            onValueChange = { accountHolder = it },
+                            label = { Text("Titular de la cuenta (opcional)") },
+                            placeholder = { Text("Nombre o razón social") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else if (methodType == PaymentMethodType.ZELLE) {
                     OutlinedTextField(
-                        value = accountNumber,
-                        onValueChange = { input -> accountNumber = input.filter { it.isDigit() }.take(20) },
-                        label = { Text("Número de Cuenta (20 dígitos)") },
-                        placeholder = { Text("${selectedBank.code}0000000000000000") },
-                        supportingText = { Text("${accountNumber.length}/20 dígitos") },
+                        value = digitalIdentifier,
+                        onValueChange = { digitalIdentifier = it },
+                        label = { Text("Correo o Teléfono Zelle") },
+                        placeholder = { Text("ej. pagos@miempresa.com o +1...") },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = accountHolder,
                         onValueChange = { accountHolder = it },
-                        label = { Text("Titular de la cuenta (opcional)") },
-                        placeholder = { Text("Nombre o razón social") },
+                        label = { Text("Titular de la cuenta") },
+                        placeholder = { Text("Nombre exacto del titular") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    OutlinedTextField(
+                        value = digitalIdentifier,
+                        onValueChange = { digitalIdentifier = it },
+                        label = { Text("Binance Pay ID o Correo") },
+                        placeholder = { Text("Ej. 123456789 o correo@ejemplo.com") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = accountHolder,
+                        onValueChange = { accountHolder = it },
+                        label = { Text("Alias / Titular (opcional)") },
+                        placeholder = { Text("Nickname de Binance o nombre") },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -2181,7 +2441,8 @@ private fun PaymentProfileEditorDialog(
                                     phonePrefix = phonePrefix,
                                     phoneNumber = phoneNumber.trim(),
                                     accountNumber = accountNumber.trim(),
-                                    accountHolder = accountHolder.trim()
+                                    accountHolder = accountHolder.trim(),
+                                    digitalIdentifier = digitalIdentifier.trim()
                                 )
                             )
                         },
@@ -2418,13 +2679,15 @@ fun PlansComparisonDialog(
                     HorizontalDivider(color = Color(0x1A94A3B8))
 
                     val rows = listOf(
-                        listOf("Calculadora BCV/USDT", "✓", "✓", "✓"),
+                        listOf("Calculadora + 4 decimales", "✓", "✓", "✓"),
+                        listOf("BCV Mañana + COP + Ajuste %", "✓", "✓", "✓"),
+                        listOf("Brecha + Gráficos históricos", "✓", "✓", "✓"),
+                        listOf("Pago Mixto + Tarjeta PNG", "✓", "✓", "✓"),
+                        listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "1", "∞"),
+                        listOf("Carrito inteligente", "5 prod.", "5 prod.", "∞ + IVA/IGTF"),
+                        listOf("Escáner cámara OCR", "3/día +5 Ad", "∞", "∞"),
                         listOf("Sin publicidad", "—", "✓", "✓"),
-                        listOf("Escáner cámara", "3/día", "∞", "∞"),
-                        listOf("Carrito + IVA/IGTF", "—", "—", "✓"),
-                        listOf("Brecha + Tendencias", "—", "—", "✓"),
-                        listOf("Alertas + Widget", "—", "—", "✓"),
-                        listOf("Cobros y Cuentas", "—", "—", "✓")
+                        listOf("Alertas + Widget inicio", "—", "—", "✓")
                     )
                     rows.forEach { cols ->
                         Row(
@@ -2460,7 +2723,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Incluye cero anuncios + escáner ilimitado (no pagas Pro aparte) + Carrito, Brecha y Tendencias, Alertas, Widget y Cobros. Cancela cuando quieras.",
+                        text = "Incluye cero anuncios + escáner ilimitado (no pagas Pro aparte) + Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

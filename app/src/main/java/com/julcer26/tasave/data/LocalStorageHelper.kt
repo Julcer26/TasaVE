@@ -8,29 +8,60 @@ import com.julcer26.tasave.ultra.PagoMovilInfo
 import com.julcer26.tasave.ultra.PaymentMethodProfile
 import com.julcer26.tasave.ultra.PaymentMethodType
 import com.julcer26.tasave.ultra.RateSnapshot
+import com.julcer26.tasave.ultra.UltraMath
 import com.julcer26.tasave.ultra.VENEZUELAN_BANKS
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+
+data class CachedRatesBundle(
+    val usdBcv: RateInfo,
+    val eurBcv: RateInfo,
+    val usdtParalelo: RateInfo,
+    val copPerUsd: Double,
+    val copDate: String,
+    val nextUsdBcv: RateInfo? = null,
+    val nextEurBcv: RateInfo? = null,
+    val nextBcvDateIso: String? = null
+)
 
 class LocalStorageHelper(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("tasa_ve_preferences", Context.MODE_PRIVATE)
 
     companion object {
         private const val KEY_USD_BCV_RATE = "usd_bcv_rate"
+        private const val KEY_USD_BCV_RATE_EXACT = "usd_bcv_rate_exact"
         private const val KEY_USD_BCV_DATE = "usd_bcv_date"
+        private const val KEY_USD_BCV_EFFECTIVE = "usd_bcv_effective"
+        private const val KEY_USD_BCV_CHANGE_PCT = "usd_bcv_change_pct"
+
         private const val KEY_EUR_BCV_RATE = "eur_bcv_rate"
+        private const val KEY_EUR_BCV_RATE_EXACT = "eur_bcv_rate_exact"
         private const val KEY_EUR_BCV_DATE = "eur_bcv_date"
+        private const val KEY_EUR_BCV_EFFECTIVE = "eur_bcv_effective"
+        private const val KEY_EUR_BCV_CHANGE_PCT = "eur_bcv_change_pct"
+
         private const val KEY_USDT_RATE = "usdt_rate"
+        private const val KEY_USDT_RATE_EXACT = "usdt_rate_exact"
         private const val KEY_USDT_DATE = "usdt_date"
+
+        private const val KEY_COP_PER_USD_EXACT = "cop_per_usd_exact"
+        private const val KEY_COP_DATE = "cop_date"
+
+        private const val KEY_NEXT_USD_BCV_EXACT = "next_usd_bcv_exact"
+        private const val KEY_NEXT_EUR_BCV_EXACT = "next_eur_bcv_exact"
+        private const val KEY_NEXT_BCV_DATE_ISO = "next_bcv_date_iso"
+
         private const val KEY_LAST_CACHED_TIME = "last_cached_time"
         private const val KEY_THEME = "theme"
         private const val KEY_IS_PRO_USER = "is_pro_user"
         private const val KEY_IS_ULTRA_USER = "is_ultra_user"
         private const val KEY_SCAN_DATE = "scanner_last_date"
         private const val KEY_SCAN_COUNT_TODAY = "scanner_count_today"
+        private const val KEY_SCAN_BONUS_TODAY = "scanner_bonus_today"
 
         // Ultra local persistence keys
         private const val KEY_CART_ITEMS_JSON = "ultra_cart_items_json"
@@ -63,6 +94,7 @@ class LocalStorageHelper(context: Context) {
         const val FALLBACK_USD = 850.00
         const val FALLBACK_EUR = 950.00
         const val FALLBACK_USDT = 1000.00
+        const val FALLBACK_COP_PER_USD = 3310.00
     }
 
     fun isCacheExpired(): Boolean {
@@ -72,44 +104,140 @@ class LocalStorageHelper(context: Context) {
     }
 
     fun hasCachedData(): Boolean {
-        return prefs.contains(KEY_USD_BCV_RATE)
+        return prefs.contains(KEY_USD_BCV_RATE) || prefs.contains(KEY_USD_BCV_RATE_EXACT)
     }
 
-    fun saveRates(usd: Double, usdDate: String, eur: Double, eurDate: String, usdt: Double, usdtDate: String) {
+    fun saveRates(
+        usd: Double,
+        usdDate: String,
+        eur: Double,
+        eurDate: String,
+        usdt: Double,
+        usdtDate: String,
+        usdEffectiveIso: String? = null,
+        eurEffectiveIso: String? = null,
+        usdChangePct: Double? = null,
+        eurChangePct: Double? = null,
+        copPerUsd: Double? = null,
+        copDate: String? = null,
+        nextUsd: Double? = null,
+        nextEur: Double? = null,
+        nextBcvDateIso: String? = null
+    ) {
         prefs.edit().apply {
             putFloat(KEY_USD_BCV_RATE, usd.toFloat())
+            putString(KEY_USD_BCV_RATE_EXACT, usd.toString())
             putString(KEY_USD_BCV_DATE, usdDate)
+            if (usdEffectiveIso != null) putString(KEY_USD_BCV_EFFECTIVE, usdEffectiveIso) else remove(KEY_USD_BCV_EFFECTIVE)
+            if (usdChangePct != null) putString(KEY_USD_BCV_CHANGE_PCT, usdChangePct.toString()) else remove(KEY_USD_BCV_CHANGE_PCT)
+
             putFloat(KEY_EUR_BCV_RATE, eur.toFloat())
+            putString(KEY_EUR_BCV_RATE_EXACT, eur.toString())
             putString(KEY_EUR_BCV_DATE, eurDate)
+            if (eurEffectiveIso != null) putString(KEY_EUR_BCV_EFFECTIVE, eurEffectiveIso) else remove(KEY_EUR_BCV_EFFECTIVE)
+            if (eurChangePct != null) putString(KEY_EUR_BCV_CHANGE_PCT, eurChangePct.toString()) else remove(KEY_EUR_BCV_CHANGE_PCT)
+
             putFloat(KEY_USDT_RATE, usdt.toFloat())
+            putString(KEY_USDT_RATE_EXACT, usdt.toString())
             putString(KEY_USDT_DATE, usdtDate)
+
+            if (copPerUsd != null && copPerUsd > 0.0) {
+                putString(KEY_COP_PER_USD_EXACT, copPerUsd.toString())
+                if (!copDate.isNullOrBlank()) putString(KEY_COP_DATE, copDate)
+            }
+
+            if (nextUsd != null && nextUsd > 0.0 && nextEur != null && nextEur > 0.0 && !nextBcvDateIso.isNullOrBlank()) {
+                putString(KEY_NEXT_USD_BCV_EXACT, nextUsd.toString())
+                putString(KEY_NEXT_EUR_BCV_EXACT, nextEur.toString())
+                putString(KEY_NEXT_BCV_DATE_ISO, nextBcvDateIso)
+            } else {
+                remove(KEY_NEXT_USD_BCV_EXACT)
+                remove(KEY_NEXT_EUR_BCV_EXACT)
+                remove(KEY_NEXT_BCV_DATE_ISO)
+            }
+
             putLong(KEY_LAST_CACHED_TIME, System.currentTimeMillis())
             apply()
         }
         appendRateSnapshot(usd, eur, usdt)
     }
 
+    private fun readExactDouble(exactKey: String, legacyFloatKey: String?, fallback: Double): Double {
+        val exact = prefs.getString(exactKey, null)?.toDoubleOrNull()
+        if (exact != null && exact > 0.0) return exact
+        if (legacyFloatKey != null && prefs.contains(legacyFloatKey)) {
+            return prefs.getFloat(legacyFloatKey, fallback.toFloat()).toDouble()
+        }
+        return fallback
+    }
+
     fun getRates(): Triple<RateInfo, RateInfo, RateInfo> {
-        val usd = prefs.getFloat(KEY_USD_BCV_RATE, FALLBACK_USD.toFloat()).toDouble()
+        val bundle = getAllCachedRates()
+        return Triple(bundle.usdBcv, bundle.eurBcv, bundle.usdtParalelo)
+    }
+
+    fun getAllCachedRates(): CachedRatesBundle {
+        val usd = readExactDouble(KEY_USD_BCV_RATE_EXACT, KEY_USD_BCV_RATE, FALLBACK_USD)
         val usdDate = prefs.getString(KEY_USD_BCV_DATE, "N/D") ?: "N/D"
+        val usdEff = prefs.getString(KEY_USD_BCV_EFFECTIVE, null)
+        val usdPct = prefs.getString(KEY_USD_BCV_CHANGE_PCT, null)?.toDoubleOrNull()
 
-        val eur = prefs.getFloat(KEY_EUR_BCV_RATE, FALLBACK_EUR.toFloat()).toDouble()
+        val eur = readExactDouble(KEY_EUR_BCV_RATE_EXACT, KEY_EUR_BCV_RATE, FALLBACK_EUR)
         val eurDate = prefs.getString(KEY_EUR_BCV_DATE, "N/D") ?: "N/D"
+        val eurEff = prefs.getString(KEY_EUR_BCV_EFFECTIVE, null)
+        val eurPct = prefs.getString(KEY_EUR_BCV_CHANGE_PCT, null)?.toDoubleOrNull()
 
-        val usdt = prefs.getFloat(KEY_USDT_RATE, FALLBACK_USDT.toFloat()).toDouble()
+        val usdt = readExactDouble(KEY_USDT_RATE_EXACT, KEY_USDT_RATE, FALLBACK_USDT)
         val usdtDate = prefs.getString(KEY_USDT_DATE, "N/D") ?: "N/D"
+
+        val copPerUsd = readExactDouble(KEY_COP_PER_USD_EXACT, null, FALLBACK_COP_PER_USD)
+        val copDate = prefs.getString(KEY_COP_DATE, "TRM") ?: "TRM"
 
         val isLocalOffline = !hasCachedData()
 
-        val usdInfo = RateInfo("USD_BCV", "Dólar BCV", "$", usd, usdDate, isLocalOffline)
-        val eurInfo = RateInfo("EUR_BCV", "Euro BCV", "€", eur, eurDate, isLocalOffline)
+        val usdInfo = RateInfo("USD_BCV", "Dólar BCV", "$", usd, usdDate, isLocalOffline, usdEff, usdPct)
+        val eurInfo = RateInfo("EUR_BCV", "Euro BCV", "€", eur, eurDate, isLocalOffline, eurEff, eurPct)
         val usdtInfo = RateInfo("USDT", "USDT Binance", "₮", usdt, usdtDate, isLocalOffline)
 
-        return Triple(usdInfo, eurInfo, usdtInfo)
+        val nextDateIso = prefs.getString(KEY_NEXT_BCV_DATE_ISO, null)
+        val nextUsdVal = prefs.getString(KEY_NEXT_USD_BCV_EXACT, null)?.toDoubleOrNull()
+        val nextEurVal = prefs.getString(KEY_NEXT_EUR_BCV_EXACT, null)?.toDoubleOrNull()
+        val todayCaracas = todayCaracasIsoDate()
+
+        val validNext = nextDateIso != null &&
+            nextDateIso > todayCaracas &&
+            nextUsdVal != null && nextUsdVal > 0.0 &&
+            nextEurVal != null && nextEurVal > 0.0
+
+        val nextUsdInfo = if (validNext) {
+            RateInfo("USD_BCV", "Dólar BCV", "$", nextUsdVal!!, usdDate, isLocalOffline, nextDateIso, usdPct)
+        } else null
+        val nextEurInfo = if (validNext) {
+            RateInfo("EUR_BCV", "Euro BCV", "€", nextEurVal!!, eurDate, isLocalOffline, nextDateIso, eurPct)
+        } else null
+
+        return CachedRatesBundle(
+            usdBcv = usdInfo,
+            eurBcv = eurInfo,
+            usdtParalelo = usdtInfo,
+            copPerUsd = copPerUsd,
+            copDate = copDate,
+            nextUsdBcv = nextUsdInfo,
+            nextEurBcv = nextEurInfo,
+            nextBcvDateIso = if (validNext) nextDateIso else null
+        )
+    }
+
+    fun getCachedCopPerUsd(): Double = readExactDouble(KEY_COP_PER_USD_EXACT, null, FALLBACK_COP_PER_USD)
+
+    private fun todayCaracasIsoDate(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("America/Caracas")
+        return sdf.format(Date())
     }
 
     fun getTheme(): String {
-        return prefs.getString(KEY_THEME, "DARK") ?: "DARK" // Default to DARK mode
+        return prefs.getString(KEY_THEME, "DARK") ?: "DARK"
     }
 
     fun saveTheme(theme: String) {
@@ -145,19 +273,37 @@ class LocalStorageHelper(context: Context) {
             return MAX_FREE_SCANS_PER_DAY
         }
         val used = prefs.getInt(KEY_SCAN_COUNT_TODAY, 0)
-        return (MAX_FREE_SCANS_PER_DAY - used).coerceAtLeast(0)
+        val bonus = prefs.getInt(KEY_SCAN_BONUS_TODAY, 0)
+        return ((MAX_FREE_SCANS_PER_DAY + bonus) - used).coerceAtLeast(0)
     }
 
     fun recordFreeScanUsed(): Int {
         val today = todayDateKey()
         val savedDate = prefs.getString(KEY_SCAN_DATE, null)
         val currentUsed = if (savedDate == today) prefs.getInt(KEY_SCAN_COUNT_TODAY, 0) else 0
-        val nextUsed = (currentUsed + 1).coerceAtMost(MAX_FREE_SCANS_PER_DAY)
+        val currentBonus = if (savedDate == today) prefs.getInt(KEY_SCAN_BONUS_TODAY, 0) else 0
+        val totalAllowed = MAX_FREE_SCANS_PER_DAY + currentBonus
+        val nextUsed = (currentUsed + 1).coerceAtMost(totalAllowed)
         prefs.edit()
             .putString(KEY_SCAN_DATE, today)
             .putInt(KEY_SCAN_COUNT_TODAY, nextUsed)
+            .putInt(KEY_SCAN_BONUS_TODAY, currentBonus)
             .apply()
-        return (MAX_FREE_SCANS_PER_DAY - nextUsed).coerceAtLeast(0)
+        return (totalAllowed - nextUsed).coerceAtLeast(0)
+    }
+
+    fun grantRewardedScanBonus(extraScans: Int = UltraMath.REWARDED_SCAN_BONUS): Int {
+        val today = todayDateKey()
+        val savedDate = prefs.getString(KEY_SCAN_DATE, null)
+        val currentUsed = if (savedDate == today) prefs.getInt(KEY_SCAN_COUNT_TODAY, 0) else 0
+        val currentBonus = if (savedDate == today) prefs.getInt(KEY_SCAN_BONUS_TODAY, 0) else 0
+        val nextBonus = currentBonus + extraScans.coerceAtLeast(1)
+        prefs.edit()
+            .putString(KEY_SCAN_DATE, today)
+            .putInt(KEY_SCAN_COUNT_TODAY, currentUsed)
+            .putInt(KEY_SCAN_BONUS_TODAY, nextBonus)
+            .apply()
+        return ((MAX_FREE_SCANS_PER_DAY + nextBonus) - currentUsed).coerceAtLeast(0)
     }
 
     // --- Cart Persistence ---
@@ -321,7 +467,7 @@ class LocalStorageHelper(context: Context) {
             .apply()
     }
 
-    // --- Pago Móvil & Bank Account Multi-Profile Storage ---
+    // --- Pago Móvil, Bank Account, Zelle & Binance Pay Multi-Profile Storage ---
     fun getPaymentProfiles(): List<PaymentMethodProfile> {
         val raw = prefs.getString(KEY_PAYMENT_PROFILES_JSON, null)
         if (!raw.isNullOrBlank()) {
@@ -345,7 +491,8 @@ class LocalStorageHelper(context: Context) {
                                 phonePrefix = obj.optString("phonePrefix", "0414"),
                                 phoneNumber = obj.optString("phoneNumber", ""),
                                 accountNumber = obj.optString("accountNumber", ""),
-                                accountHolder = obj.optString("accountHolder", "")
+                                accountHolder = obj.optString("accountHolder", ""),
+                                digitalIdentifier = obj.optString("digitalIdentifier", "")
                             )
                         )
                     }
@@ -406,6 +553,7 @@ class LocalStorageHelper(context: Context) {
                     put("phoneNumber", p.phoneNumber)
                     put("accountNumber", p.accountNumber)
                     put("accountHolder", p.accountHolder)
+                    put("digitalIdentifier", p.digitalIdentifier)
                 }
             )
         }
