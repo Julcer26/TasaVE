@@ -31,23 +31,23 @@ import com.google.android.gms.ads.LoadAdError
  * Implements Google Play Ads Policy compliance:
  * - Clear disclosure label ("PUBLICIDAD").
  * - Does not obstruct interactive navigation or touch targets.
- * - Automatically disappears when [isProUser] is true.
+ * - Automatically disappears when [isUltraUser] is true.
  * - Uses official Google AdMob test banner unit ID in development to prevent policy violations.
  */
 @Composable
 fun TopBannerAd(
     modifier: Modifier = Modifier,
     isDark: Boolean,
-    isProUser: Boolean,
+    isUltraUser: Boolean,
     adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Official Google Test Banner Ad Unit ID
 ) {
-    if (isProUser) return
+    if (isUltraUser) return
 
     val isInPreview = LocalInspectionMode.current
     var isAdLoaded by remember { mutableStateOf(false) }
 
     AnimatedVisibility(
-        visible = !isProUser,
+        visible = !isUltraUser,
         enter = fadeIn(),
         exit = fadeOut()
     ) {

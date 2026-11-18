@@ -19,13 +19,11 @@ import kotlinx.coroutines.flow.stateIn
 
 /**
  * Manages Google Play In-App Billing for:
- * - "Tasa VE Pro" ($2.99 USD one-time purchase)
- * - "Tasa VE Ultra" ($1.49/month or $9.99/year subscription)
+ * - "Tasa VE Ultra" ($0.99/month or $7.99/year subscription)
  *
- * Key entitlement rule:
- * - Active Ultra subscribers automatically receive ALL Pro benefits
- *   (no ads + unlimited camera scanner) without needing to purchase Pro separately.
- * - If Ultra expires/cancels, users who previously purchased Pro retain Pro for life.
+ * Ultra removes all ads and unlocks every feature:
+ * unlimited camera OCR, unlimited smart cart + IVA/IGTF, unlimited payment profiles,
+ * rate alerts, and home screen widget.
  */
 class BillingManager(
     private val context: Context,
@@ -35,31 +33,22 @@ class BillingManager(
 
     companion object {
         private const val TAG = "BillingManager"
-        const val PRODUCT_ID_PRO = "tasave_pro_remove_ads"
         const val PRODUCT_ID_ULTRA_MONTHLY = "tasave_ultra_monthly"
         const val PRODUCT_ID_ULTRA_YEARLY = "tasave_ultra_yearly"
 
-        fun resolveEffectiveEntitlements(
-            purchasedPro: Boolean,
+        fun resolveEffectiveUltraEntitlement(
             purchasedUltra: Boolean,
             isDebugBuild: Boolean,
             debugTier: UserTier
-        ): Pair<Boolean, Boolean> {
+        ): Boolean {
             return if (isDebugBuild) {
-                when (debugTier) {
-                    UserTier.FREE -> false to false
-                    UserTier.PRO -> true to false
-                    UserTier.ULTRA -> true to true
-                }
+                debugTier == UserTier.ULTRA
             } else {
-                val isUltra = purchasedUltra
-                val hasPro = purchasedPro || isUltra
-                hasPro to isUltra
+                purchasedUltra
             }
         }
     }
 
-    private val _purchasedPro = MutableStateFlow(storageHelper.isProUser())
     private val _purchasedUltra = MutableStateFlow(storageHelper.isUltraUser())
 
     private val _debugTier = MutableStateFlow(
@@ -73,44 +62,26 @@ class BillingManager(
     val debugTier: StateFlow<UserTier> = _debugTier.asStateFlow()
 
     val isUltraUser: StateFlow<Boolean> = combine(_purchasedUltra, _debugTier) { ultra, dbg ->
-        resolveEffectiveEntitlements(_purchasedPro.value, ultra, BuildConfig.DEBUG, dbg).second
+        resolveEffectiveUltraEntitlement(ultra, BuildConfig.DEBUG, dbg)
     }.stateIn(
         scope = scope,
         started = SharingStarted.Eagerly,
-        initialValue = resolveEffectiveEntitlements(
-            _purchasedPro.value,
+        initialValue = resolveEffectiveUltraEntitlement(
             _purchasedUltra.value,
             BuildConfig.DEBUG,
             _debugTier.value
-        ).second
+        )
     )
 
-    val isProUser: StateFlow<Boolean> = combine(_purchasedPro, _purchasedUltra, _debugTier) { pro, ultra, dbg ->
-        resolveEffectiveEntitlements(pro, ultra, BuildConfig.DEBUG, dbg).first
-    }.stateIn(
-        scope = scope,
-        started = SharingStarted.Eagerly,
-        initialValue = resolveEffectiveEntitlements(
-            _purchasedPro.value,
-            _purchasedUltra.value,
-            BuildConfig.DEBUG,
-            _debugTier.value
-        ).first
-    )
-
-    private val _productPrice = MutableStateFlow("$2.99 USD")
-    val productPrice: StateFlow<String> = _productPrice.asStateFlow()
-
-    private val _ultraMonthlyPrice = MutableStateFlow("$1.49 / mes")
+    private val _ultraMonthlyPrice = MutableStateFlow("$0.99 / mes")
     val ultraMonthlyPrice: StateFlow<String> = _ultraMonthlyPrice.asStateFlow()
 
-    private val _ultraYearlyPrice = MutableStateFlow("$9.99 / año")
+    private val _ultraYearlyPrice = MutableStateFlow("$7.99 / año")
     val ultraYearlyPrice: StateFlow<String> = _ultraYearlyPrice.asStateFlow()
 
     private val _purchaseStatusMessage = MutableStateFlow<String?>(null)
     val purchaseStatusMessage: StateFlow<String?> = _purchaseStatusMessage.asStateFlow()
 
-    private var proProductDetails: ProductDetails? = null
     private var ultraMonthlyDetails: ProductDetails? = null
     private var ultraYearlyDetails: ProductDetails? = null
 
@@ -134,7 +105,6 @@ class BillingManager(
         storageHelper.setDebugTierOverride(tier.name)
         _purchaseStatusMessage.value = when (tier) {
             UserTier.FREE -> "Modo prueba: Plan Gratis"
-            UserTier.PRO -> "Modo prueba: Plan Pro activado"
             UserTier.ULTRA -> "Modo prueba: Plan Ultra activado"
         }
     }
@@ -160,31 +130,6 @@ class BillingManager(
     }
 
     private fun queryProductDetails() {
-        // 1. One-time Pro INAPP product
-        val inAppParams = QueryProductDetailsParams.newBuilder()
-            .setProductList(
-                listOf(
-                    QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(PRODUCT_ID_PRO)
-                        .setProductType(ProductType.INAPP)
-                        .build()
-                )
-            )
-            .build()
-
-        billingClient.queryProductDetailsAsync(inAppParams) { billingResult, result ->
-            if (billingResult.responseCode == BillingResponseCode.OK) {
-                val details = result.productDetailsList.firstOrNull { it.productId == PRODUCT_ID_PRO }
-                if (details != null) {
-                    proProductDetails = details
-                    details.oneTimePurchaseOfferDetails?.formattedPrice?.let {
-                        _productPrice.value = it
-                    }
-                }
-            }
-        }
-
-        // 2. Ultra SUBS products
         val subsParams = QueryProductDetailsParams.newBuilder()
             .setProductList(
                 listOf(
@@ -224,37 +169,13 @@ class BillingManager(
         }
     }
 
-    fun launchPurchase(activity: Activity) {
-        val details = proProductDetails
-        if (details == null) {
-            if (!billingClient.isReady) startBillingConnection()
-            _purchaseStatusMessage.value = "Conectando con Google Play... Reintenta en un momento."
-            return
-        }
-
-        val params = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(
-                listOf(
-                    BillingFlowParams.ProductDetailsParams.newBuilder()
-                        .setProductDetails(details)
-                        .build()
-                )
-            )
-            .build()
-
-        val responseCode = billingClient.launchBillingFlow(activity, params).responseCode
-        if (responseCode != BillingResponseCode.OK) {
-            _purchaseStatusMessage.value = "No se pudo iniciar la compra. Código: $responseCode"
-        }
-    }
-
     fun launchUltraSubscription(activity: Activity, yearly: Boolean = false) {
         val details = if (yearly) ultraYearlyDetails else ultraMonthlyDetails
         val offerToken = details?.subscriptionOfferDetails?.firstOrNull()?.offerToken
         if (details == null || offerToken == null) {
             if (!billingClient.isReady) startBillingConnection()
             _purchaseStatusMessage.value = if (BuildConfig.DEBUG) {
-                "En prueba puedes alternar los planes Gratis / Pro / Ultra desde Configuración."
+                "En prueba puedes alternar Gratis / Ultra desde Configuración."
             } else {
                 "Conectando suscripción Ultra con Google Play... Reintenta en un momento."
             }
@@ -288,7 +209,7 @@ class BillingManager(
             }
             BillingResponseCode.ITEM_ALREADY_OWNED -> {
                 queryPurchases()
-                _purchaseStatusMessage.value = "¡Ya tienes este plan activo en tu cuenta!"
+                _purchaseStatusMessage.value = "¡Ya tienes Tasa VE Ultra activo en tu cuenta!"
             }
             else -> {
                 _purchaseStatusMessage.value = "Error al procesar compra: ${billingResult.debugMessage}"
@@ -298,14 +219,12 @@ class BillingManager(
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            val isPro = purchase.products.contains(PRODUCT_ID_PRO)
             val isUltra = purchase.products.contains(PRODUCT_ID_ULTRA_MONTHLY) ||
                 purchase.products.contains(PRODUCT_ID_ULTRA_YEARLY)
 
-            if (isPro) setStoredPro(true)
             if (isUltra) setStoredUltra(true)
 
-            if ((isPro || isUltra) && !purchase.isAcknowledged) {
+            if (isUltra && !purchase.isAcknowledged) {
                 val ackParams = AcknowledgePurchaseParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
@@ -319,9 +238,7 @@ class BillingManager(
             }
 
             if (isUltra) {
-                _purchaseStatusMessage.value = "¡Bienvenido a Tasa VE Ultra! Todas las funciones y beneficios Pro activados."
-            } else if (isPro) {
-                _purchaseStatusMessage.value = "¡Gracias por adquirir Tasa VE Pro! Anuncios desactivados y escáner ilimitado."
+                _purchaseStatusMessage.value = "¡Bienvenido a Tasa VE Ultra! Cero anuncios y todas las funciones desbloqueadas."
             }
         }
     }
@@ -330,19 +247,6 @@ class BillingManager(
         if (!billingClient.isReady) {
             startBillingConnection()
             return
-        }
-
-        val inAppParams = QueryPurchasesParams.newBuilder()
-            .setProductType(ProductType.INAPP)
-            .build()
-        billingClient.queryPurchasesAsync(inAppParams) { billingResult, purchasesList ->
-            if (billingResult.responseCode == BillingResponseCode.OK) {
-                val hasPro = purchasesList.any { purchase ->
-                    purchase.products.contains(PRODUCT_ID_PRO) &&
-                        purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-                }
-                setStoredPro(hasPro)
-            }
         }
 
         val subsParams = QueryPurchasesParams.newBuilder()
@@ -362,16 +266,11 @@ class BillingManager(
 
     fun restorePurchases() {
         queryPurchases()
-        _purchaseStatusMessage.value = "Verificando compras y suscripciones en Google Play..."
+        _purchaseStatusMessage.value = "Verificando suscripciones en Google Play..."
     }
 
     fun clearStatusMessage() {
         _purchaseStatusMessage.value = null
-    }
-
-    private fun setStoredPro(isPro: Boolean) {
-        _purchasedPro.value = isPro
-        storageHelper.setProUser(isPro)
     }
 
     private fun setStoredUltra(isUltra: Boolean) {

@@ -76,40 +76,26 @@ class UltraMathAndBillingTest {
     }
 
     @Test
-    fun billingEntitlements_ultraGrantsProBenefitsAndDebugOverridesWork() {
+    fun billingEntitlements_ultraAndDebugOverridesWork() {
         // Production entitlements
-        val free = BillingManager.resolveEffectiveEntitlements(
-            purchasedPro = false,
-            purchasedUltra = false,
-            isDebugBuild = false,
-            debugTier = UserTier.ULTRA
+        assertFalse(
+            BillingManager.resolveEffectiveUltraEntitlement(
+                purchasedUltra = false,
+                isDebugBuild = false,
+                debugTier = UserTier.ULTRA
+            )
         )
-        assertFalse(free.first)
-        assertFalse(free.second)
-
-        val ultraOnly = BillingManager.resolveEffectiveEntitlements(
-            purchasedPro = false,
-            purchasedUltra = true,
-            isDebugBuild = false,
-            debugTier = UserTier.FREE
+        assertTrue(
+            BillingManager.resolveEffectiveUltraEntitlement(
+                purchasedUltra = true,
+                isDebugBuild = false,
+                debugTier = UserTier.FREE
+            )
         )
-        assertTrue("Ultra must automatically grant Pro benefits", ultraOnly.first)
-        assertTrue(ultraOnly.second)
-
-        // Canceling Ultra falls back to previously purchased Pro
-        val proFallback = BillingManager.resolveEffectiveEntitlements(
-            purchasedPro = true,
-            purchasedUltra = false,
-            isDebugBuild = false,
-            debugTier = UserTier.FREE
-        )
-        assertTrue(proFallback.first)
-        assertFalse(proFallback.second)
 
         // Debug overrides
-        assertEquals(false to false, BillingManager.resolveEffectiveEntitlements(true, true, true, UserTier.FREE))
-        assertEquals(true to false, BillingManager.resolveEffectiveEntitlements(false, false, true, UserTier.PRO))
-        assertEquals(true to true, BillingManager.resolveEffectiveEntitlements(false, false, true, UserTier.ULTRA))
+        assertFalse(BillingManager.resolveEffectiveUltraEntitlement(true, true, UserTier.FREE))
+        assertTrue(BillingManager.resolveEffectiveUltraEntitlement(false, true, UserTier.ULTRA))
     }
 
     @Test

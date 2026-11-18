@@ -67,9 +67,9 @@ import kotlin.math.max
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun PriceScannerDialog(
-    isProUser: Boolean,
+    isUltraUser: Boolean,
     remainingFreeScans: Int,
-    proPrice: String,
+    ultraPrice: String,
     selectedRateKey: String,
     usdBcv: RateInfo?,
     eurBcv: RateInfo?,
@@ -78,7 +78,7 @@ fun PriceScannerDialog(
     onWatchRewardedAd: () -> Unit = {},
     onSelectRate: (String) -> Unit,
     onApplyPrice: (amount: Double, isVes: Boolean, rateKey: String) -> Unit,
-    onUpgradePro: () -> Unit,
+    onUpgradeUltra: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -97,7 +97,7 @@ fun PriceScannerDialog(
         hasCameraPermission = granted
     }
 
-    val canScan = isProUser || remainingFreeScans > 0
+    val canScan = isUltraUser || remainingFreeScans > 0
 
     LaunchedEffect(canScan) {
         if (canScan && !hasCameraPermission) {
@@ -175,7 +175,7 @@ fun PriceScannerDialog(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Ya usaste tus escaneos gratuitos de hoy. Mira un anuncio corto para desbloquear +5 escaneos hoy, o pásate a Pro ($proPrice pago único) / Ultra para escáner ilimitado.",
+                        text = "Ya usaste tus escaneos gratuitos de hoy. Mira un anuncio corto para desbloquear +5 escaneos hoy, o pásate a Tasa VE Ultra ($ultraPrice) para escáner ilimitado y cero anuncios.",
                         fontSize = 13.sp,
                         color = Color(0xFF94A3B8),
                         textAlign = TextAlign.Center,
@@ -217,7 +217,7 @@ fun PriceScannerDialog(
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedButton(
-                        onClick = onUpgradePro,
+                        onClick = onUpgradeUltra,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, Color(0xFFF59E0B)),
@@ -229,7 +229,7 @@ fun PriceScannerDialog(
                         Icon(Icons.Default.WorkspacePremium, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Ver Planes (Pro / Ultra ∞)",
+                            text = "Activar Tasa VE Ultra ∞",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.5.sp
                         )
@@ -495,18 +495,18 @@ fun PriceScannerDialog(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (isProUser) Color(0x33F59E0B) else Color(0x3310B981)
+                                        if (isUltraUser) Color(0x33F59E0B) else Color(0x3310B981)
                                     )
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = if (isProUser) "PRO • Ilimitado" else "$remainingFreeScans gratis hoy",
-                                    color = if (isProUser) Color(0xFFFBBF24) else emeraldLight,
+                                    text = if (isUltraUser) "ULTRA • Ilimitado" else "$remainingFreeScans gratis hoy",
+                                    color = if (isUltraUser) Color(0xFFFBBF24) else emeraldLight,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            if (!isProUser && remainingFreeScans <= 1) {
+                            if (!isUltraUser && remainingFreeScans <= 1) {
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(10.dp))

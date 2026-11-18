@@ -74,7 +74,6 @@ private val PurpleZelle = Color(0xFFA855F7)
 @Composable
 fun CartTab(
     isDark: Boolean,
-    isProUser: Boolean,
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
@@ -125,7 +124,7 @@ fun CartTab(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TopBannerAd(isDark = isDark, isProUser = isProUser)
+        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser)
 
         // Summary Header Card
         Column(
@@ -765,7 +764,6 @@ private fun CartItemEditorDialog(
 @Composable
 fun MarketTab(
     isDark: Boolean,
-    isProUser: Boolean,
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
@@ -831,7 +829,7 @@ fun MarketTab(
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TopBannerAd(isDark = isDark, isProUser = isProUser)
+        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser)
         // 1. Brecha Cambiaria Card
         Column(
             modifier = Modifier
@@ -1536,7 +1534,6 @@ fun MarketTab(
 @Composable
 fun CheckoutTab(
     isDark: Boolean,
-    isProUser: Boolean,
     isUltraUser: Boolean,
     ultraPrice: String,
     uiState: TasaVeUiState,
@@ -1589,48 +1586,52 @@ fun CheckoutTab(
 
     val shareSummaryText = remember(result, rateLabel, rateFmt, activeRate, selectedProfile) {
         buildString {
-            appendLine("*Resumen de Cobro — Tasa VE*")
-            appendLine("Total: $${String.format(Locale.US, "%.2f", result.totalUsd)} (Bs. ${String.format(Locale.US, "%,.2f", result.totalVes)})")
-            appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, activeRate)}")
-            if (result.paidForeignUsd > 0 || result.paidVes > 0) {
-                appendLine("Abonado: $${String.format(Locale.US, "%.2f", result.paidForeignUsd)} + Bs. ${String.format(Locale.US, "%,.2f", result.paidVes)}")
-            }
-            if (result.remainingUsd > 0.005) {
-                appendLine("*Restante por pagar:* $${String.format(Locale.US, "%.2f", result.remainingUsd)} / Bs. ${String.format(Locale.US, "%,.2f", result.remainingVes)}")
-            } else if (result.changeUsd > 0.005) {
-                appendLine("*Vuelto:* $${String.format(Locale.US, "%.2f", result.changeUsd)} / Bs. ${String.format(Locale.US, "%,.2f", result.changeVes)}")
-            } else if (result.totalUsd > 0) {
-                appendLine("Estado: Pagado completo ✅")
+            if (result.totalUsd > 0.005) {
+                appendLine("*Tasa VE • Resumen de Cobro*")
+                appendLine("Total: $${String.format(Locale.US, "%.2f", result.totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", result.totalVes)}")
+                appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, activeRate)}")
+                if (result.paidForeignUsd > 0 || result.paidVes > 0) {
+                    appendLine("Abonado: $${String.format(Locale.US, "%.2f", result.paidForeignUsd)} + Bs. ${String.format(Locale.US, "%,.2f", result.paidVes)}")
+                }
+                if (result.remainingUsd > 0.005) {
+                    appendLine("Por pagar: $${String.format(Locale.US, "%.2f", result.remainingUsd)} / Bs. ${String.format(Locale.US, "%,.2f", result.remainingVes)}")
+                } else if (result.changeUsd > 0.005) {
+                    appendLine("Vuelto: $${String.format(Locale.US, "%.2f", result.changeUsd)} / Bs. ${String.format(Locale.US, "%,.2f", result.changeVes)}")
+                } else {
+                    appendLine("Estado: Pagado completo ✅")
+                }
             }
             selectedProfile?.let { profile ->
-                appendLine()
+                if (result.totalUsd > 0.005) appendLine()
                 val aliasSuffix = if (profile.alias.isNotBlank()) " (${profile.alias})" else ""
                 when (profile.type) {
                     PaymentMethodType.PAGO_MOVIL -> {
-                        appendLine("*Datos Pago Móvil$aliasSuffix:*")
+                        appendLine("*Pago Móvil$aliasSuffix*")
                         appendLine("Banco: ${profile.formattedBank()}")
                         if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
                         if (profile.phoneNumber.isNotBlank()) appendLine("Teléfono: ${profile.formattedPhone()}")
                     }
                     PaymentMethodType.BANK_ACCOUNT -> {
-                        appendLine("*Datos Cuenta Bancaria$aliasSuffix:*")
+                        appendLine("*Cuenta Bancaria$aliasSuffix*")
                         appendLine("Banco: ${profile.formattedBank()}")
                         if (profile.accountNumber.isNotBlank()) appendLine("Cuenta: ${profile.accountNumber}")
                         if (profile.docNumber.isNotBlank()) appendLine("CI/RIF: ${profile.formattedDoc()}")
                         if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
                     }
                     PaymentMethodType.ZELLE -> {
-                        appendLine("*Datos Zelle$aliasSuffix:*")
+                        appendLine("*Datos Zelle$aliasSuffix*")
                         if (profile.digitalIdentifier.isNotBlank()) appendLine("Correo / Tel: ${profile.digitalIdentifier}")
                         if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
                     }
                     PaymentMethodType.BINANCE -> {
-                        appendLine("*Datos Binance Pay$aliasSuffix:*")
+                        appendLine("*Binance Pay$aliasSuffix*")
                         if (profile.digitalIdentifier.isNotBlank()) appendLine("Pay ID / Correo: ${profile.digitalIdentifier}")
-                        if (profile.accountHolder.isNotBlank()) appendLine("Alias / Titular: ${profile.accountHolder}")
+                        if (profile.accountHolder.isNotBlank()) appendLine("Titular: ${profile.accountHolder}")
                     }
                 }
             }
+            if (isNotEmpty()) appendLine()
+            append("Descarga Tasa VE: https://tasave.net")
         }.trim()
     }
 
@@ -1642,7 +1643,7 @@ fun CheckoutTab(
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TopBannerAd(isDark = isDark, isProUser = isProUser)
+        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser)
 
         // Rate Selector
         Row(
@@ -2029,7 +2030,8 @@ fun CheckoutTab(
                         statusTitle = statusTitle,
                         statusUsd = if (isChange) result.changeUsd else result.remainingUsd,
                         statusVes = if (isChange) result.changeVes else result.remainingVes,
-                        profile = selectedProfile
+                        profile = selectedProfile,
+                        captionText = shareSummaryText
                     )
                 },
                 modifier = Modifier
@@ -2597,17 +2599,14 @@ private fun BankPickerDialog(
 }
 
 // =========================================================================
-// COMPARATIVA DE PLANES: GRATIS vs PRO ($2.99 único) vs ULTRA ($1.49/mes)
+// COMPARATIVA DE PLANES: GRATIS vs TASA VE ULTRA ($0.99/mes o $7.99/año)
 // =========================================================================
 @Composable
 fun PlansComparisonDialog(
     isDark: Boolean,
-    isProUser: Boolean,
     isUltraUser: Boolean,
-    proPrice: String,
     ultraMonthlyPrice: String,
     ultraYearlyPrice: String,
-    onPurchasePro: () -> Unit,
     onPurchaseUltraMonthly: () -> Unit,
     onPurchaseUltraYearly: () -> Unit,
     onRestorePurchases: () -> Unit,
@@ -2643,13 +2642,13 @@ fun PlansComparisonDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Elige tu plan Tasa VE",
+                            text = "Tasa VE Ultra",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = textPrimary
                         )
                         Text(
-                            text = "Ultra incluye todo lo de Pro sin pagar doble",
+                            text = "Sin publicidad y todas las funciones ilimitadas",
                             fontSize = 11.sp,
                             color = EmeraldLight,
                             fontWeight = FontWeight.SemiBold
@@ -2660,7 +2659,7 @@ fun PlansComparisonDialog(
                     }
                 }
 
-                // Comparison Table
+                // Comparison Table (Gratis vs Ultra)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2671,33 +2670,31 @@ fun PlansComparisonDialog(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        Text("Función", modifier = Modifier.weight(1.6f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = textSecondary)
-                        Text("Gratis", modifier = Modifier.weight(0.7f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = textSecondary, textAlign = TextAlign.Center)
-                        Text("Pro", modifier = Modifier.weight(0.7f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = EmeraldLight, textAlign = TextAlign.Center)
-                        Text("Ultra", modifier = Modifier.weight(0.7f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = AmberUltra, textAlign = TextAlign.Center)
+                        Text("Función", modifier = Modifier.weight(1.8f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = textSecondary)
+                        Text("Gratis", modifier = Modifier.weight(0.8f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = textSecondary, textAlign = TextAlign.Center)
+                        Text("Ultra", modifier = Modifier.weight(0.8f), fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = AmberUltra, textAlign = TextAlign.Center)
                     }
                     HorizontalDivider(color = Color(0x1A94A3B8))
 
                     val rows = listOf(
-                        listOf("Calculadora + 4 decimales", "✓", "✓", "✓"),
-                        listOf("BCV Mañana + COP + Ajuste %", "✓", "✓", "✓"),
-                        listOf("Brecha + Gráficos históricos", "✓", "✓", "✓"),
-                        listOf("Pago Mixto + Tarjeta PNG", "✓", "✓", "✓"),
-                        listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "1", "∞"),
-                        listOf("Carrito inteligente", "5 prod.", "5 prod.", "∞ + IVA/IGTF"),
-                        listOf("Escáner cámara OCR", "3/día +5 Ad", "∞", "∞"),
-                        listOf("Sin publicidad", "—", "✓", "✓"),
-                        listOf("Alertas + Widget inicio", "—", "—", "✓")
+                        listOf("Calculadora + 4 decimales", "✓", "✓"),
+                        listOf("BCV Mañana + COP + Ajuste %", "✓", "✓"),
+                        listOf("Brecha + Gráficos históricos", "✓", "✓"),
+                        listOf("Pago Mixto + Tarjeta PNG", "✓", "✓"),
+                        listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
+                        listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
+                        listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
+                        listOf("Sin publicidad", "—", "✓"),
+                        listOf("Alertas + Widget inicio", "—", "✓")
                     )
                     rows.forEach { cols ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(cols[0], modifier = Modifier.weight(1.6f), fontSize = 11.sp, color = textPrimary)
-                            Text(cols[1], modifier = Modifier.weight(0.7f), fontSize = 11.sp, color = textSecondary, textAlign = TextAlign.Center)
-                            Text(cols[2], modifier = Modifier.weight(0.7f), fontSize = 11.sp, color = EmeraldLight, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                            Text(cols[3], modifier = Modifier.weight(0.7f), fontSize = 11.sp, color = AmberUltra, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                            Text(cols[0], modifier = Modifier.weight(1.8f), fontSize = 11.sp, color = textPrimary)
+                            Text(cols[1], modifier = Modifier.weight(0.8f), fontSize = 11.sp, color = textSecondary, textAlign = TextAlign.Center)
+                            Text(cols[2], modifier = Modifier.weight(0.8f), fontSize = 11.sp, color = AmberUltra, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                     }
                 }
@@ -2717,13 +2714,13 @@ fun PlansComparisonDialog(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = if (isUltraUser) "Tasa VE Ultra Activo ⭐" else "Tasa VE Ultra (Todo incluido)",
+                        text = if (isUltraUser) "Tasa VE Ultra Activo ⭐" else "Activa Tasa VE Ultra",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = textPrimary
                     )
                     Text(
-                        text = "Incluye cero anuncios + escáner ilimitado (no pagas Pro aparte) + Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio. Cancela cuando quieras.",
+                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp
@@ -2754,30 +2751,11 @@ fun PlansComparisonDialog(
                     }
                 }
 
-                // Pro One-Time CTA Card
-                if (!isProUser && !isUltraUser) {
-                    OutlinedButton(
-                        onClick = onPurchasePro,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 46.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        border = BorderStroke(1.dp, Emerald)
-                    ) {
-                        Text(
-                            text = "Solo quiero Pro ($proPrice pago único)",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = EmeraldLight
-                        )
-                    }
-                }
-
                 TextButton(
                     onClick = onRestorePurchases,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text("Restaurar compras y suscripciones", fontSize = 11.sp, color = textSecondary)
+                    Text("Restaurar suscripción", fontSize = 11.sp, color = textSecondary)
                 }
 
                 Text(

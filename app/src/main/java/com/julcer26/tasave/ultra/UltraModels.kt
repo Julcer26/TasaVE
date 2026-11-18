@@ -11,7 +11,6 @@ enum class AppTab(val label: String) {
 
 enum class UserTier {
     FREE,
-    PRO,
     ULTRA
 }
 

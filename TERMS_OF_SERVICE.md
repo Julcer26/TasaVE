@@ -28,21 +28,17 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 - Incluye la calculadora conversora multi-tasa con **4 decimales en BCV**, **BCV Mañana**, **Peso Colombiano (COP)**, **ajustes porcentuales**, historial local, **Brecha y Tendencias**, **Pago Mixto**, **Tarjeta visual PNG**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** en el día).
 - Muestra banners y anuncios bonificados opcionales gestionados a través de **Google Mobile Ads (AdMob)**.
 
-### B. Tasa VE Pro (Pago Único Vitalicio — $2.99 USD)
-- Compra única voluntaria (o equivalente en moneda local en Google Play) sin cargos recurrentes.
-- **Beneficios:** Eliminación permanente de todos los anuncios y acceso ilimitado al escáner de precios con cámara.
-
-### C. Tasa VE Ultra (Suscripción Mensual $1.49 USD / Anual $9.99 USD)
-- **Beneficios Pro incluidos:** Mientras la suscripción **Tasa VE Ultra** esté activa, incluye automáticamente **todos los beneficios de Pro** (cero anuncios y escáner ilimitado) sin pagar Pro por separado. Si el usuario ya había comprado Pro previamente y luego cancela Ultra, conservará intacta su licencia Pro vitalicia.
-- **Funciones exclusivas Ultra:**
+### B. Tasa VE Ultra (Suscripción Mensual $0.99 USD / Anual $7.99 USD)
+- **Beneficios completos:** Mientras la suscripción **Tasa VE Ultra** esté activa, elimina por completo la publicidad y desbloquea todas las funciones ilimitadas:
+  - **Escáner de precios OCR ilimitado** por cámara.
   - **Carrito Inteligente ilimitado** con escaneo directo, edición de productos y cálculos referenciales de **IVA (16 %)** e **IGTF (3 %)**.
   - **Alertas locales de cambio de tasa** y **Widget de pantalla de inicio**.
   - **Módulo Cobros avanzado:** Guardado local opcional de **múltiples perfiles ilimitados** (Pago Móvil, Cuentas Bancarias, Zelle y Binance Pay).
 - **Renovación Automática y Cancelación:** La suscripción se renueva automáticamente a través de **Google Play Billing** por el período seleccionado salvo cancelación con al menos **24 horas de antelación** al vencimiento desde *Google Play Store > Suscripciones*. La desinstalación de la app no cancela la suscripción.
 
-### D. Procesamiento, Restauración y Reembolsos
-- **Facturación:** Todas las compras y suscripciones se procesan exclusivamente mediante **Google Play Billing**.
-- **Restauración:** Puede restaurar sus compras vinculadas a su cuenta Google desde *Configuración > Restaurar compras y suscripciones*.
+### C. Procesamiento, Restauración y Reembolsos
+- **Facturación:** Todas las suscripciones se procesan exclusivamente mediante **Google Play Billing**.
+- **Restauración:** Puede restaurar sus suscripciones vinculadas a su cuenta Google desde *Configuración > Restaurar suscripción*.
 - **Reembolsos:** Se rigen exclusivamente por las políticas oficiales de reembolso de Google Play Store.
 
 ---

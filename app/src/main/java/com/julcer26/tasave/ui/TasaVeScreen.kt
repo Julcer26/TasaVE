@@ -88,10 +88,8 @@ fun TasaVeScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
-    val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
     val isUltraUser by viewModel.isUltraUser.collectAsStateWithLifecycle()
     val debugTier by viewModel.debugTier.collectAsStateWithLifecycle()
-    val proPrice by viewModel.proProductPrice.collectAsStateWithLifecycle()
     val ultraMonthlyPrice by viewModel.ultraMonthlyPrice.collectAsStateWithLifecycle()
     val ultraYearlyPrice by viewModel.ultraYearlyPrice.collectAsStateWithLifecycle()
     val purchaseStatus by viewModel.purchaseStatusMessage.collectAsStateWithLifecycle()
@@ -109,8 +107,8 @@ fun TasaVeScreen(
     val rewardedAdManager = remember { RewardedAdManager() }
     val isRewardedAdLoading by rewardedAdManager.isLoading.collectAsStateWithLifecycle()
 
-    LaunchedEffect(isProUser) {
-        if (!isProUser) {
+    LaunchedEffect(isUltraUser) {
+        if (!isUltraUser) {
             rewardedAdManager.preload(context)
         }
     }
@@ -229,21 +227,6 @@ fun TasaVeScreen(
                             ) {
                                 Text(
                                     text = "ULTRA",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.Black,
-                                    maxLines = 1
-                                )
-                            }
-                        } else if (isProUser) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0xFF10B981))
-                                    .padding(horizontal = 7.dp, vertical = 3.dp)
-                            ) {
-                                Text(
-                                    text = "PRO",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color.Black,
@@ -411,7 +394,6 @@ fun TasaVeScreen(
                 AppTab.CART -> {
                     CartTab(
                         isDark = isDark,
-                        isProUser = isProUser,
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
@@ -440,7 +422,6 @@ fun TasaVeScreen(
                 AppTab.MARKET -> {
                     MarketTab(
                         isDark = isDark,
-                        isProUser = isProUser,
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
@@ -456,7 +437,6 @@ fun TasaVeScreen(
                 AppTab.CHECKOUT -> {
                     CheckoutTab(
                         isDark = isDark,
-                        isProUser = isProUser,
                         isUltraUser = isUltraUser,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
@@ -479,13 +459,13 @@ fun TasaVeScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Non-intrusive Top Banner Ad (hidden for Pro/Ultra users)
+            // Non-intrusive Top Banner Ad (hidden for Ultra users)
             TopBannerAd(
                 isDark = isDark,
-                isProUser = isProUser
+                isUltraUser = isUltraUser
             )
 
-            // Relocated sleek Plans banner (replaces TopAppBar PLANES pill so it never covers logo/title)
+            // Relocated sleek Ultra banner
             if (!isUltraUser) {
                 Row(
                     modifier = Modifier
@@ -518,14 +498,14 @@ fun TasaVeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.WorkspacePremium,
-                                contentDescription = "Planes",
+                                contentDescription = "Tasa VE Ultra",
                                 tint = Color(0xFFF59E0B),
                                 modifier = Modifier.size(17.dp)
                             )
                         }
                         Column {
                             Text(
-                                text = if (isProUser) "Actualiza a Tasa VE Ultra" else "Planes Tasa VE • Pro y Ultra",
+                                text = "Tasa VE Ultra • $ultraMonthlyPrice",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = textPrimary,
@@ -533,11 +513,7 @@ fun TasaVeScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = if (isProUser) {
-                                    "Desbloquea Carrito ∞ + IVA/IGTF, Alertas, Widget y Perfiles ∞"
-                                } else {
-                                    "Cero anuncios, escáner ∞, carrito ∞ + IVA/IGTF, alertas y perfiles ∞"
-                                },
+                                text = "Cero anuncios, escáner ∞, carrito ∞ + IVA/IGTF, alertas y perfiles ∞",
                                 fontSize = 10.sp,
                                 color = textSecondary,
                                 maxLines = 1,
@@ -557,7 +533,7 @@ fun TasaVeScreen(
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = if (isProUser) "ULTRA" else "PLANES",
+                            text = "ULTRA",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.Black
@@ -1683,10 +1659,8 @@ fun TasaVeScreen(
     if (showSettings) {
         SleekSettingsDialog(
             isDark = isDark,
-            isProUser = isProUser,
             isUltraUser = isUltraUser,
             debugTier = debugTier,
-            proPrice = proPrice,
             ultraMonthlyPrice = ultraMonthlyPrice,
             onDismiss = { showSettings = false },
             onToggleTheme = { viewModel.toggleTheme() },
@@ -1694,13 +1668,6 @@ fun TasaVeScreen(
             onOpenPlans = {
                 showSettings = false
                 showPlansDialog = true
-            },
-            onPurchasePro = {
-                if (activity != null) {
-                    viewModel.purchasePro(activity)
-                } else {
-                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
-                }
             },
             onRestorePurchases = {
                 viewModel.restorePurchases()
@@ -1711,18 +1678,9 @@ fun TasaVeScreen(
     if (showPlansDialog) {
         PlansComparisonDialog(
             isDark = isDark,
-            isProUser = isProUser,
             isUltraUser = isUltraUser,
-            proPrice = proPrice,
             ultraMonthlyPrice = ultraMonthlyPrice,
             ultraYearlyPrice = ultraYearlyPrice,
-            onPurchasePro = {
-                if (activity != null) {
-                    viewModel.purchasePro(activity)
-                } else {
-                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
-                }
-            },
             onPurchaseUltraMonthly = {
                 if (activity != null) {
                     viewModel.purchaseUltra(activity, yearly = false)
@@ -1746,9 +1704,9 @@ fun TasaVeScreen(
 
     if (showScanner) {
         PriceScannerDialog(
-            isProUser = isProUser,
+            isUltraUser = isUltraUser,
             remainingFreeScans = remainingFreeScans,
-            proPrice = proPrice,
+            ultraPrice = ultraMonthlyPrice,
             selectedRateKey = viewModel.selectedRateKey,
             usdBcv = viewModel.getEffectiveUsdBcv(),
             eurBcv = viewModel.getEffectiveEurBcv(),
@@ -1786,7 +1744,7 @@ fun TasaVeScreen(
                     Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
                 }
             },
-            onUpgradePro = {
+            onUpgradeUltra = {
                 showScanner = false
                 showPlansDialog = true
             },
@@ -2105,16 +2063,13 @@ fun HistoryDialog(
 @Composable
 fun SleekSettingsDialog(
     isDark: Boolean,
-    isProUser: Boolean,
     isUltraUser: Boolean,
     debugTier: UserTier,
-    proPrice: String,
     ultraMonthlyPrice: String,
     onDismiss: () -> Unit,
     onToggleTheme: () -> Unit,
     onSelectDebugTier: (UserTier) -> Unit,
     onOpenPlans: () -> Unit,
-    onPurchasePro: () -> Unit,
     onRestorePurchases: () -> Unit
 ) {
     val context = LocalContext.current
@@ -2180,7 +2135,7 @@ fun SleekSettingsDialog(
 
                 HorizontalDivider(color = dividerColor)
 
-                // DEBUG BUILD: Plan Switcher so user can test FREE / PRO / ULTRA without Play Store
+                // DEBUG BUILD: Plan Switcher so user can test FREE / ULTRA without Play Store
                 if (BuildConfig.DEBUG) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -2202,17 +2157,16 @@ fun SleekSettingsDialog(
                                 letterSpacing = 0.6.sp
                             )
                             Text(
-                                text = "Alterna libremente entre Gratis, Pro y Ultra para probar anuncios, límites y funciones.",
+                                text = "Alterna libremente entre Gratis y Ultra para probar anuncios, límites y funciones.",
                                 fontSize = 11.sp,
                                 color = textSecondary
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 listOf(
                                     UserTier.FREE to "Gratis",
-                                    UserTier.PRO to "Pro",
                                     UserTier.ULTRA to "Ultra"
                                 ).forEach { (tier, label) ->
                                     FilterChip(
@@ -2236,16 +2190,12 @@ fun SleekSettingsDialog(
                     }
                 }
 
-                // PLANS STATUS & COMPARISON CARD (PRO + ULTRA)
-                val planBorderColor = when {
-                    isUltraUser -> Color(0x66F59E0B)
-                    isProUser -> Color(0x4D10B981)
-                    else -> Color(0x4DF59E0B)
-                }
-                val planContainerColor = when {
-                    isUltraUser -> if (isDark) Color(0x1FF59E0B) else Color(0x14F59E0B)
-                    isProUser -> if (isDark) Color(0x1F10B981) else Color(0x1410B981)
-                    else -> if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
+                // PLAN ULTRA CARD
+                val planBorderColor = if (isUltraUser) Color(0x6610B981) else Color(0x4DF59E0B)
+                val planContainerColor = if (isUltraUser) {
+                    if (isDark) Color(0x1F10B981) else Color(0x1410B981)
+                } else {
+                    if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
                 }
 
                 Card(
@@ -2263,21 +2213,13 @@ fun SleekSettingsDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = when {
-                                    isUltraUser -> Icons.Default.WorkspacePremium
-                                    isProUser -> Icons.Default.Verified
-                                    else -> Icons.Default.Star
-                                },
+                                imageVector = if (isUltraUser) Icons.Default.WorkspacePremium else Icons.Default.Star,
                                 contentDescription = null,
-                                tint = if (isProUser && !isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                tint = if (isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = when {
-                                    isUltraUser -> "Tasa VE Ultra Activo ⭐"
-                                    isProUser -> "Tasa VE Pro Activo ✓"
-                                    else -> "Planes Tasa VE (Pro y Ultra)"
-                                },
+                                text = if (isUltraUser) "Tasa VE Ultra Activo ⭐" else "Tasa VE Ultra ($ultraMonthlyPrice)",
                                 fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = textPrimary
@@ -2285,10 +2227,10 @@ fun SleekSettingsDialog(
                         }
 
                         Text(
-                            text = when {
-                                isUltraUser -> "Tienes acceso total: Carrito con IVA/IGTF, Brecha y Alertas, Widget, Pago Mixto, cero anuncios y escáner ilimitado."
-                                isProUser -> "Tienes escáner ilimitado y cero anuncios de por vida. ¿Quieres Carrito, Brecha, Alertas y Cobros? Pásate a Ultra ($ultraMonthlyPrice)."
-                                else -> "Elige Pro ($proPrice pago único: cero anuncios + escáner ilimitado) o Ultra ($ultraMonthlyPrice: todo lo de Pro incluido sin pagar doble + Carrito, Alertas, Brecha, Widget y Cobros)."
+                            text = if (isUltraUser) {
+                                "Tienes acceso total: cero anuncios, escáner ilimitado, Carrito ∞ + IVA/IGTF, Brecha y Alertas, Widget y perfiles ilimitados."
+                            } else {
+                                "Elimina toda la publicidad y desbloquea escáner ilimitado, carrito ilimitado + IVA/IGTF, alertas de tasa, Widget y perfiles de cobro ilimitados."
                             },
                             fontSize = 11.5.sp,
                             color = textSecondary,
@@ -2307,26 +2249,10 @@ fun SleekSettingsDialog(
                             Icon(Icons.Default.WorkspacePremium, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isUltraUser) "Ver detalle de tu Plan Ultra" else "Comparar Planes (Pro vs Ultra)",
+                                text = if (isUltraUser) "Ver detalle de tu Plan Ultra" else "Ver Plan Ultra ($ultraMonthlyPrice)",
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                        }
-
-                        if (!isProUser && !isUltraUser) {
-                            OutlinedButton(
-                                onClick = onPurchasePro,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(14.dp),
-                                border = BorderStroke(1.dp, Color(0xFF10B981))
-                            ) {
-                                Text(
-                                    text = "Activar solo Pro ($proPrice pago único)",
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
-                                )
-                            }
                         }
 
                         if (!isUltraUser) {
@@ -2336,7 +2262,7 @@ fun SleekSettingsDialog(
                             ) {
                                 TextButton(onClick = onRestorePurchases) {
                                     Text(
-                                        text = "Restaurar compras y suscripciones",
+                                        text = "Restaurar suscripción",
                                         fontSize = 11.sp,
                                         color = textSecondary
                                     )
@@ -2422,7 +2348,7 @@ fun SleekSettingsDialog(
                     LegalMenuRow(
                         icon = Icons.Default.Gavel,
                         title = "Términos de Uso y Descargo",
-                        subtitle = "BCV, SENIAT, SUDEBAN, Pro y Suscripción Ultra",
+                        subtitle = "BCV, SENIAT, SUDEBAN y Suscripción Ultra",
                         isDark = isDark,
                         onClick = { legalDialogTab = 1 }
                     )
@@ -2482,11 +2408,7 @@ fun SleekSettingsDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = when {
-                            isUltraUser -> "Plan Ultra • Todo Desbloqueado ⭐"
-                            isProUser -> "Plan Pro • Sin Anuncios + Escáner ∞ ✓"
-                            else -> "Plan Gratuito • Pro y Ultra Disponibles"
-                        },
+                        text = if (isUltraUser) "Plan Ultra • Todo Desbloqueado ⭐" else "Plan Gratuito • Ultra Disponible",
                         fontSize = 10.sp,
                         color = Color(0xFF64748B)
                     )
@@ -2602,12 +2524,12 @@ private fun LegalCenterDialog(
                 "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en el caché local compartido por FileProvider sin subirse a servidores externos. Las consultas a las APIs de tasas solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
             "5. Seguridad de los datos" to
                 "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
-            "6. Publicidad, anuncios bonificados y suscripciones" to
-                "El Plan Gratuito incluye calculadora, 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en el carrito, 1 perfil de cobro y 3 escaneos diarios (con opción voluntaria de ver un anuncio bonificado de Google AdMob para obtener +5 escaneos extra). Tasa VE Pro ($2.99 USD pago único vitalicio) quita todos los anuncios y ofrece escáner ilimitado. Tasa VE Ultra (suscripción mensual/anual) incluye todo lo de Pro más Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
+            "6. Publicidad, anuncios bonificados y suscripción Ultra" to
+                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra) con anuncios no invasivos. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
             "7. Permisos del sistema" to
-                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y compras/suscripciones en Google Play.",
+                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y suscripción Ultra en Google Play.",
             "8. Uso de tecnologías de terceros" to
-                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners y anuncios bonificados opcionales), Google Play Billing (compras mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI, DolarVzla, Open ER-API).",
+                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI, DolarVzla, Open ER-API).",
             "9. Cambios en esta política" to
                 "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
@@ -2623,8 +2545,8 @@ private fun LegalCenterDialog(
                 "La lista de códigos bancarios (0134 Banesco, etc.) y los perfiles de Pago Móvil, Cuenta Bancaria, Zelle y Binance Pay son solo plantillas de texto/imagen para facilitar tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha, COP y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
             "3. Fuentes de Datos y Descargo" to
                 "Las tasas se consultan de fuentes públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
-            "4. Planes Gratis, Pro y Suscripción Ultra" to
-                "El Plan Gratuito ofrece funciones principales con anuncios y límites diarios en escáner (ampliables voluntariamente con anuncio bonificado), 5 productos en carrito y 1 perfil de cobro. Tasa VE Pro ($2.99 USD pago único) es vitalicio (cero anuncios y escáner ilimitado). Tasa VE Ultra es una suscripción mensual o anual renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; incluye todo lo de Pro más Carrito ilimitado + IVA/IGTF, perfiles ilimitados, Alertas y Widget.",
+            "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
+                "El Plan Gratuito ofrece las funciones principales con anuncios no invasivos y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, Alertas y Widget.",
             "5. Reembolsos, Restauración y Contacto" to
                 "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: soporte@tasave.net."
         )

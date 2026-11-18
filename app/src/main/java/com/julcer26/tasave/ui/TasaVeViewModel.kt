@@ -42,7 +42,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val repository by lazy { TasaVeRepository(application, database.conversionHistoryDao) }
     private val localStorageHelper by lazy { LocalStorageHelper(application) }
 
-    // Official Google Play Billing integration (Pro + Ultra)
+    // Official Google Play Billing integration (Ultra)
     val billingManager by lazy {
         BillingManager(
             context = application,
@@ -51,10 +51,8 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         )
     }
 
-    val isProUser: StateFlow<Boolean> = billingManager.isProUser
     val isUltraUser: StateFlow<Boolean> = billingManager.isUltraUser
     val debugTier: StateFlow<UserTier> = billingManager.debugTier
-    val proProductPrice: StateFlow<String> = billingManager.productPrice
     val ultraMonthlyPrice: StateFlow<String> = billingManager.ultraMonthlyPrice
     val ultraYearlyPrice: StateFlow<String> = billingManager.ultraYearlyPrice
     val purchaseStatusMessage: StateFlow<String?> = billingManager.purchaseStatusMessage
@@ -159,10 +157,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setDebugTier(tier: UserTier) {
         billingManager.setDebugTier(tier)
-    }
-
-    fun purchasePro(activity: Activity) {
-        billingManager.launchPurchase(activity)
     }
 
     fun purchaseUltra(activity: Activity, yearly: Boolean = false) {
@@ -364,7 +358,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         } else {
             updateForeignAmount(formattedInput)
         }
-        if (!isProUser.value) {
+        if (!isUltraUser.value) {
             _remainingFreeScans.value = localStorageHelper.recordFreeScanUsed()
         }
     }
@@ -410,7 +404,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         }
         _cartItems.value = nextList
         localStorageHelper.saveCartItems(nextList)
-        if (fromScanner && !isProUser.value) {
+        if (fromScanner && !isUltraUser.value) {
             _remainingFreeScans.value = localStorageHelper.recordFreeScanUsed()
         }
         return true

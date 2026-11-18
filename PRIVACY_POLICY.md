@@ -27,7 +27,7 @@ Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guar
    - Estos datos **permanecen únicamente en su dispositivo** y **nunca se transmiten a servidores del desarrollador**.
    - Se excluyen explícitamente del respaldo automático en la nube de Android (`android:fullBackupContent` / `dataExtractionRules`) para mayor resguardo.
 4. **Caché temporal de tarjetas visuales (PNG):** Cuando el usuario genera una imagen para compartir un cálculo o resumen de cobro, el archivo PNG temporal se crea únicamente en el caché privado local (`shared_cards/`) expuesto de forma segura mediante `FileProvider`.
-5. **Preferencias de interfaz y alertas:** Tema visual (Oscuro/Claro), saldo diario de escaneos gratuitos/bonificados, umbrales locales de notificación y estado de licencias Pro/Ultra.
+5. **Preferencias de interfaz y alertas:** Tema visual (Oscuro/Claro), saldo diario de escaneos gratuitos/bonificados, umbrales locales de notificación y estado de la suscripción Ultra.
 
 ---
 
@@ -36,7 +36,7 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP y ajustes porcentuales), cálculos estimados de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos y gráficos de tendencia.
 2. Formatear resúmenes y tarjetas visuales PNG de cobro o cálculo que el usuario **elige explícitamente** copiar al portapapeles o compartir mediante otras aplicaciones (como WhatsApp).
 3. Actualizar el Widget de pantalla de inicio y mostrar alertas locales de variación de tasa cuando el usuario las activa.
-4. Mostrar publicidad no invasiva (banners y anuncios bonificados voluntarios) en la versión gratuita y validar el acceso a **Tasa VE Pro** y **Tasa VE Ultra**.
+4. Mostrar publicidad no invasiva (banners y anuncios bonificados voluntarios) en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
 
 ---
 
@@ -54,21 +54,20 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 
 ---
 
-## 6. Publicidad, anuncios bonificados y suscripciones
+## 6. Publicidad, anuncios bonificados y suscripción Ultra
 - **Versión gratuita (AdMob):** Incluye calculadora con 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra banners publicitarios gestionados por Google Mobile Ads y ofrece la opción **voluntaria** de ver un anuncio bonificado (*Rewarded Ad*) para desbloquear **+5 escaneos adicionales** en el día.
-- **Tasa VE Pro ($2.99 USD pago único vitalicio):** Elimina permanentemente todos los anuncios (banners y bonificados) y desbloquea el escáner de cámara ilimitado.
-- **Tasa VE Ultra (Suscripción mensual $1.49 USD / anual $9.99 USD):** Incluye automáticamente todos los beneficios de **Pro** (cero anuncios y escáner ilimitado) mientras la suscripción permanezca activa, además de **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **Alertas locales de variación de tasa** y **Widget de pantalla de inicio**.
-- **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*. Si el usuario ya había adquirido **Pro** previamente y luego cancela **Ultra**, conserva su licencia Pro vitalicia.
+- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners y bonificados) y desbloquea de forma ilimitada todas las funciones: **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **Alertas locales de variación de tasa** y **Widget de pantalla de inicio**.
+- **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*.
 - **Seguridad de pagos:** Todas las transacciones son procesadas exclusivamente por **Google Play Billing**; el desarrollador nunca accede a tarjetas, cuentas ni credenciales financieras.
 
 ---
 
 ## 7. Permisos del sistema
 Tasa VE solicita únicamente los permisos estrictamente necesarios:
-1. **Cámara (`CAMERA`):** Opcional y solo en primer plano cuando el usuario abre el escáner de precios. El OCR se ejecuta localmente en el dispositivo; **no grabamos video ni almacenamos ni enviamos fotografías a servidores**.
+1. **Cámara (`CAMERA`):** Opcional y solo en primer plano cuando el usuario abre el escáner de precios. El OCR se ejecuta localmente en el dispositivo; **no grabamos video ni almacenamos ni subimos fotografías a servidores**.
 2. **Notificaciones (`POST_NOTIFICATIONS`):** Opcional en Android 13+ para usuarios que activen las alertas locales de variación de tasa.
-3. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, mostrar anuncios en la versión gratuita y validar compras en Google Play.
-4. **Facturación de Google Play (`com.android.vending.BILLING`):** Necesario para gestionar la compra única Pro, la suscripción Ultra y la restauración de compras.
+3. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, mostrar anuncios en la versión gratuita y validar suscripciones en Google Play.
+4. **Facturación de Google Play (`com.android.vending.BILLING`):** Necesario para gestionar la suscripción Tasa VE Ultra y la restauración de compras.
 
 ---
 

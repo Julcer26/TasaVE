@@ -64,9 +64,6 @@ class TasaVeRepository(
     fun getLocalTheme(): String = cacheHelper.getTheme()
     fun saveLocalTheme(theme: String) = cacheHelper.saveTheme(theme)
 
-    fun isProUser(): Boolean = cacheHelper.isProUser()
-    fun setProUser(isPro: Boolean) = cacheHelper.setProUser(isPro)
-
     fun getCachedRatesBundle(): CachedRatesBundle = cacheHelper.getAllCachedRates()
 
     fun getCachedRates(): Triple<RateInfo, RateInfo, RateInfo> {

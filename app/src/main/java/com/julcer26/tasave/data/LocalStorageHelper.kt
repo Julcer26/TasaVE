@@ -57,7 +57,6 @@ class LocalStorageHelper(context: Context) {
 
         private const val KEY_LAST_CACHED_TIME = "last_cached_time"
         private const val KEY_THEME = "theme"
-        private const val KEY_IS_PRO_USER = "is_pro_user"
         private const val KEY_IS_ULTRA_USER = "is_ultra_user"
         private const val KEY_SCAN_DATE = "scanner_last_date"
         private const val KEY_SCAN_COUNT_TODAY = "scanner_count_today"
@@ -242,12 +241,6 @@ class LocalStorageHelper(context: Context) {
 
     fun saveTheme(theme: String) {
         prefs.edit().putString(KEY_THEME, theme).apply()
-    }
-
-    fun isProUser(): Boolean = prefs.getBoolean(KEY_IS_PRO_USER, false)
-
-    fun setProUser(isPro: Boolean) {
-        prefs.edit().putBoolean(KEY_IS_PRO_USER, isPro).apply()
     }
 
     fun isUltraUser(): Boolean = prefs.getBoolean(KEY_IS_ULTRA_USER, false)
