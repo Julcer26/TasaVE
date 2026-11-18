@@ -5,7 +5,10 @@ import android.content.SharedPreferences
 import com.julcer26.tasave.ultra.AlertSettings
 import com.julcer26.tasave.ultra.CartItem
 import com.julcer26.tasave.ultra.PagoMovilInfo
+import com.julcer26.tasave.ultra.PaymentMethodProfile
+import com.julcer26.tasave.ultra.PaymentMethodType
 import com.julcer26.tasave.ultra.RateSnapshot
+import com.julcer26.tasave.ultra.VENEZUELAN_BANKS
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat

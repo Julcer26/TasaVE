@@ -89,7 +89,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _paymentProfiles = MutableStateFlow(localStorageHelper.getPaymentProfiles())
     val paymentProfiles: StateFlow<List<PaymentMethodProfile>> = _paymentProfiles.asStateFlow()
 
-    private val _selectedPaymentProfileId = MutableStateFlow(
+    private val _selectedPaymentProfileId = MutableStateFlow<Long?>(
         localStorageHelper.getSelectedPaymentProfileId()
             ?: _paymentProfiles.value.firstOrNull()?.id
     )

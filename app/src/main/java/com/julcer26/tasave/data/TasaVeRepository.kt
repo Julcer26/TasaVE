@@ -2,6 +2,7 @@ package com.julcer26.tasave.data
 
 import android.content.Context
 import android.util.Log
+import com.julcer26.tasave.ultra.RateSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
