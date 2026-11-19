@@ -81,6 +81,9 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_APP_LAUNCH_COUNT = "app_launch_count"
         private const val KEY_AD_FREE_PASS_UNTIL_MS = "rewarded_ad_free_until_ms"
         private const val KEY_CUSTOM_BRAND_NAME = "ultra_custom_brand_name"
+        private const val KEY_WIDGET_CALC_RATE = "widget_calc_rate_key"
+        private const val KEY_WIDGET_CALC_IS_VES = "widget_calc_is_ves"
+        private const val KEY_WIDGET_CALC_INPUT = "widget_calc_input"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -587,5 +590,19 @@ class LocalStorageHelper(context: Context) {
     fun saveCustomBrandName(name: String) {
         val cleaned = name.trim().take(40)
         prefs.edit().putString(KEY_CUSTOM_BRAND_NAME, cleaned).apply()
+    }
+
+    fun getWidgetCalcRateKey(): String = prefs.getString(KEY_WIDGET_CALC_RATE, "USD_BCV") ?: "USD_BCV"
+
+    fun isWidgetCalcVesInput(): Boolean = prefs.getBoolean(KEY_WIDGET_CALC_IS_VES, false)
+
+    fun getWidgetCalcInput(): String = prefs.getString(KEY_WIDGET_CALC_INPUT, "1") ?: "1"
+
+    fun saveWidgetCalcState(rateKey: String, isVesInput: Boolean, input: String) {
+        prefs.edit()
+            .putString(KEY_WIDGET_CALC_RATE, rateKey)
+            .putBoolean(KEY_WIDGET_CALC_IS_VES, isVesInput)
+            .putString(KEY_WIDGET_CALC_INPUT, input)
+            .apply()
     }
 }

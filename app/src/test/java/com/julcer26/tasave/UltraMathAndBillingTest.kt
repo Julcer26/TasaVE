@@ -385,6 +385,37 @@ class UltraMathAndBillingTest {
         assertTrue(emailBody.contains("Pantalla / Módulo: Escáner OCR"))
         assertTrue(emailBody.contains("No detectó \"precio\""))
     }
+
+    @Test
+    fun widgetCalcMath_handlesTokensBackspaceAndConversion() {
+        var input = "0"
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "2")
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "5")
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, ".")
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, ".")
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "5")
+        assertEquals("25.5", input)
+        assertEquals("25.", com.julcer26.tasave.widget.WidgetCalcMath.backspace(input))
+        assertEquals("0", com.julcer26.tasave.widget.WidgetCalcMath.backspace("7"))
+
+        val (leftUsd, rightBs) = com.julcer26.tasave.widget.WidgetCalcMath.formatDisplayPair(
+            input = "10",
+            rate = 240.0,
+            isVesInput = false,
+            foreignSymbol = "$"
+        )
+        assertEquals("$ 10", leftUsd)
+        assertEquals("Bs. 2,400.00", rightBs)
+
+        val (leftBs, rightUsd) = com.julcer26.tasave.widget.WidgetCalcMath.formatDisplayPair(
+            input = "2400",
+            rate = 240.0,
+            isVesInput = true,
+            foreignSymbol = "$"
+        )
+        assertEquals("Bs. 2400", leftBs)
+        assertEquals("$ 10.00", rightUsd)
+    }
 }
 
 
