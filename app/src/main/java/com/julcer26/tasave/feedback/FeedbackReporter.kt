@@ -31,7 +31,7 @@ data class FeedbackSubmission(
     val contact: String = "",
     val appVersion: String = BuildConfig.VERSION_NAME,
     val planLabel: String = "Gratis",
-    val deviceSummary: String = defaultDeviceSummary()
+    val deviceSummary: String = FeedbackReporter.defaultDeviceSummary()
 )
 
 sealed class FeedbackSubmitResult {
