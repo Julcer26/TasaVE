@@ -12,7 +12,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -79,21 +78,43 @@ object FeedbackReporter {
         return sdf.format(Date(nowMs))
     }
 
+    private fun escapeJson(raw: String): String = buildString(raw.length + 8) {
+        for (ch in raw) {
+            when (ch) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                else -> if (ch.code < 0x20) {
+                    append(String.format(Locale.US, "\\u%04x", ch.code))
+                } else {
+                    append(ch)
+                }
+            }
+        }
+    }
+
     internal fun buildJsonPayload(
         submission: FeedbackSubmission,
         timestamp: String = formatCaracasTimestamp()
     ): String {
-        return JSONObject().apply {
-            put("timestamp", timestamp)
-            put("type", submission.type.label)
-            put("module", submission.module.trim())
-            put("description", submission.description.trim())
-            put("contact", submission.contact.trim())
-            put("appVersion", submission.appVersion.trim())
-            put("plan", submission.planLabel.trim())
-            put("device", submission.deviceSummary.trim())
-            put("status", "Pendiente")
-        }.toString()
+        val fields = listOf(
+            "timestamp" to timestamp,
+            "type" to submission.type.label,
+            "module" to submission.module.trim(),
+            "description" to submission.description.trim(),
+            "contact" to submission.contact.trim(),
+            "appVersion" to submission.appVersion.trim(),
+            "plan" to submission.planLabel.trim(),
+            "device" to submission.deviceSummary.trim(),
+            "status" to "Pendiente"
+        )
+        return fields.joinToString(
+            separator = ",",
+            prefix = "{",
+            postfix = "}"
+        ) { (k, v) -> "\"${escapeJson(k)}\":\"${escapeJson(v)}\"" }
     }
 
     internal fun buildFallbackEmailBody(submission: FeedbackSubmission): String {

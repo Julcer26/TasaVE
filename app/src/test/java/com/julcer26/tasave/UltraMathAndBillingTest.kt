@@ -351,7 +351,7 @@ class UltraMathAndBillingTest {
         val submission = com.julcer26.tasave.feedback.FeedbackSubmission(
             type = com.julcer26.tasave.feedback.FeedbackType.BUG,
             module = "Escáner OCR",
-            description = "No detectó precio con fondo oscuro",
+            description = "No detectó \"precio\"\ncon fondo oscuro",
             contact = "@usuario",
             appVersion = "1.2.0",
             planLabel = "Ultra",
@@ -361,21 +361,29 @@ class UltraMathAndBillingTest {
             submission = submission,
             timestamp = "2026-11-19 12:30"
         )
-        val parsed = org.json.JSONObject(json)
-        assertEquals("2026-11-19 12:30", parsed.getString("timestamp"))
-        assertEquals("Error", parsed.getString("type"))
-        assertEquals("Escáner OCR", parsed.getString("module"))
-        assertEquals("No detectó precio con fondo oscuro", parsed.getString("description"))
-        assertEquals("@usuario", parsed.getString("contact"))
-        assertEquals("1.2.0", parsed.getString("appVersion"))
-        assertEquals("Ultra", parsed.getString("plan"))
-        assertEquals("Pixel 8 (Android 14)", parsed.getString("device"))
-        assertEquals("Pendiente", parsed.getString("status"))
+        val adapter = com.squareup.moshi.Moshi.Builder().build()
+            .adapter<Map<String, String>>(
+                com.squareup.moshi.Types.newParameterizedType(
+                    Map::class.java,
+                    String::class.java,
+                    String::class.java
+                )
+            )
+        val parsed = adapter.fromJson(json)!!
+        assertEquals("2026-11-19 12:30", parsed["timestamp"])
+        assertEquals("Error", parsed["type"])
+        assertEquals("Escáner OCR", parsed["module"])
+        assertEquals("No detectó \"precio\"\ncon fondo oscuro", parsed["description"])
+        assertEquals("@usuario", parsed["contact"])
+        assertEquals("1.2.0", parsed["appVersion"])
+        assertEquals("Ultra", parsed["plan"])
+        assertEquals("Pixel 8 (Android 14)", parsed["device"])
+        assertEquals("Pendiente", parsed["status"])
 
         val emailBody = com.julcer26.tasave.feedback.FeedbackReporter.buildFallbackEmailBody(submission)
         assertTrue(emailBody.contains("Tipo: Error"))
         assertTrue(emailBody.contains("Pantalla / Módulo: Escáner OCR"))
-        assertTrue(emailBody.contains("No detectó precio con fondo oscuro"))
+        assertTrue(emailBody.contains("No detectó \"precio\""))
     }
 }
 
