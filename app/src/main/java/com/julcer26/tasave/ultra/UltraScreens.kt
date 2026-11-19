@@ -1687,8 +1687,7 @@ fun CheckoutTab(
                     customLabel = label,
                     isDark = isDark,
                     isSelected = selectedRateKey == key,
-                    onSelect = { selectedRateKey = key },
-                    onCopy = {}
+                    onSelect = { selectedRateKey = key }
                 )
             }
         }

@@ -810,13 +810,7 @@ fun TasaVeScreen(
                             customLabel = customLabel,
                             isDark = isDark,
                             isSelected = isSelected,
-                            onSelect = { viewModel.selectRate(key) },
-                            onCopy = { rateValue ->
-                                val decimals = if (key == "USDT") "%.2f" else "%.4f"
-                                val formatted = String.format(Locale.US, decimals, rateValue)
-                                copyToClipboard(context, formatted)
-                                Toast.makeText(context, "$customLabel copiado: Bs. $formatted", Toast.LENGTH_SHORT).show()
-                            }
+                            onSelect = { viewModel.selectRate(key) }
                         )
                     }
                 }
@@ -1683,8 +1677,7 @@ fun RateSelectorCard(
     customLabel: String,
     isDark: Boolean,
     isSelected: Boolean,
-    onSelect: () -> Unit,
-    onCopy: (Double) -> Unit
+    onSelect: () -> Unit
 ) {
     // Gentle floating scale representation on hover/selection
     val scale = animateFloatAsState(
@@ -1707,12 +1700,7 @@ fun RateSelectorCard(
                 scaleY = scale.value
             }
             .clip(RoundedCornerShape(20.dp))
-            .clickable {
-                onSelect()
-                if (rateInfo != null) {
-                    onCopy(rateInfo.rate)
-                }
-            }
+            .clickable { onSelect() }
             .background(
                 if (isSelected) {
                     if (isDark) Color(0x1F222226) else Color(0x3DFFFFFF)
