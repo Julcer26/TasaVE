@@ -11,6 +11,10 @@ import com.julcer26.tasave.ads.InterstitialAdManager
 import com.julcer26.tasave.ads.RewardedAdManager
 import com.julcer26.tasave.ads.TopBannerAd
 import com.julcer26.tasave.data.TasaVeRepository
+import com.julcer26.tasave.feedback.FeedbackReporter
+import com.julcer26.tasave.feedback.FeedbackSubmission
+import com.julcer26.tasave.feedback.FeedbackSubmitResult
+import com.julcer26.tasave.feedback.FeedbackType
 import com.julcer26.tasave.scanner.PriceScannerDialog
 import com.julcer26.tasave.share.ShareCardGenerator
 import androidx.compose.animation.*
@@ -1995,6 +1999,7 @@ fun SleekSettingsDialog(
 ) {
     val context = LocalContext.current
     var legalDialogTab by remember { mutableStateOf<Int?>(null) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
 
     val dialogBg = if (isDark) Color(0xFF0E0E10) else Color(0xFFF1F5F9)
     val dividerColor = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569)
@@ -2305,6 +2310,104 @@ fun SleekSettingsDialog(
                     )
                 }
 
+                // Community, Official Website & Social Media Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
+                        .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "COMUNIDAD Y ENLACES",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        letterSpacing = 0.7.sp
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.Language,
+                        title = "Página Web Oficial",
+                        subtitle = "tasave.net • Simulador, APK y novedades",
+                        isDark = isDark,
+                        accentColor = Color(0xFF10B981),
+                        onClick = {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://tasave.net"))
+                                )
+                            }.onFailure {
+                                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.PhotoCamera,
+                        title = "Instagram (@tasa.ve)",
+                        subtitle = "Consejos, tasas y actualizaciones en vivo",
+                        isDark = isDark,
+                        accentColor = Color(0xFFEC4899),
+                        onClick = {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.instagram.com/tasa.ve/"))
+                                )
+                            }.onFailure {
+                                Toast.makeText(context, "No se pudo abrir Instagram", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.PlayCircle,
+                        title = "TikTok (@tasa.ve)",
+                        subtitle = "Videos rápidos de cobros, Pago Mixto y OCR",
+                        isDark = isDark,
+                        accentColor = Color(0xFF38BDF8),
+                        onClick = {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.tiktok.com/@tasa.ve"))
+                                )
+                            }.onFailure {
+                                Toast.makeText(context, "No se pudo abrir TikTok", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+
+                // Support & Suggestions Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
+                        .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "SOPORTE Y MEJORAS",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF59E0B),
+                        letterSpacing = 0.7.sp
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.Feedback,
+                        title = "Reportar error o sugerir función",
+                        subtitle = "¿Falló algo o qué te gustaría ver en Tasa VE?",
+                        isDark = isDark,
+                        accentColor = Color(0xFFF59E0B),
+                        onClick = { showFeedbackDialog = true }
+                    )
+                }
+
                 // Legal & Privacy Section (3 clear separated entries)
                 Column(
                     modifier = Modifier
@@ -2403,6 +2506,14 @@ fun SleekSettingsDialog(
         }
     }
 
+    if (showFeedbackDialog) {
+        FeedbackReportDialog(
+            isDark = isDark,
+            isUltraUser = isUltraUser,
+            onDismiss = { showFeedbackDialog = false }
+        )
+    }
+
     legalDialogTab?.let { initialTab ->
         LegalCenterDialog(
             isDark = isDark,
@@ -2427,6 +2538,7 @@ private fun LegalMenuRow(
     title: String,
     subtitle: String,
     isDark: Boolean,
+    accentColor: Color = Color(0xFF10B981),
     onClick: () -> Unit
 ) {
     val rowBg = if (isDark) Color(0x12FFFFFF) else Color(0xFFF8FAFC)
@@ -2449,13 +2561,13 @@ private fun LegalMenuRow(
             modifier = Modifier
                 .size(34.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(Color(0x1F10B981)),
+                .background(accentColor.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFF10B981),
+                tint = accentColor,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -2480,6 +2592,323 @@ private fun LegalMenuRow(
             tint = textSecondary,
             modifier = Modifier.size(18.dp)
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FeedbackReportDialog(
+    isDark: Boolean,
+    isUltraUser: Boolean,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val dialogBg = if (isDark) Color(0xFF141418) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    var selectedType by remember { mutableStateOf(FeedbackType.SUGGESTION) }
+    var selectedModule by remember { mutableStateOf(FeedbackReporter.MODULES.first()) }
+    var description by remember { mutableStateOf("") }
+    var contact by remember { mutableStateOf("") }
+    var isSending by remember { mutableStateOf(false) }
+    var fallbackErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    val buildSubmission = {
+        FeedbackSubmission(
+            type = selectedType,
+            module = selectedModule,
+            description = description.trim(),
+            contact = contact.trim(),
+            planLabel = if (isUltraUser) "Ultra" else "Gratis"
+        )
+    }
+
+    Dialog(
+        onDismissRequest = { if (!isSending) onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg),
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .border(1.dp, Color(0x3310B981), RoundedCornerShape(24.dp))
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Reportes y Sugerencias",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Tu opinión se registra directamente para mejorar Tasa VE.",
+                            fontSize = 10.5.sp,
+                            color = textSecondary
+                        )
+                    }
+                    IconButton(
+                        onClick = { if (!isSending) onDismiss() },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Type Toggle: Bug vs Suggestion
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedType == FeedbackType.BUG,
+                        onClick = { selectedType = FeedbackType.BUG },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.BugReport,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Reportar error",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2EF59E0B),
+                            selectedLabelColor = Color(0xFFF59E0B),
+                            selectedLeadingIconColor = Color(0xFFF59E0B)
+                        )
+                    )
+                    FilterChip(
+                        selected = selectedType == FeedbackType.SUGGESTION,
+                        onClick = { selectedType = FeedbackType.SUGGESTION },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Sugerir función",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = Color(0xFF34D399),
+                            selectedLeadingIconColor = Color(0xFF34D399)
+                        )
+                    )
+                }
+
+                // Module selector
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "PANTALLA O MÓDULO",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textSecondary,
+                        letterSpacing = 0.6.sp
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FeedbackReporter.MODULES.forEach { mod ->
+                            FilterChip(
+                                selected = selectedModule == mod,
+                                onClick = { selectedModule = mod },
+                                shape = RoundedCornerShape(12.dp),
+                                label = {
+                                    Text(
+                                        text = mod,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (selectedModule == mod) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { if (it.length <= 600) description = it },
+                    label = {
+                        Text(
+                            if (selectedType == FeedbackType.BUG) {
+                                "¿Qué error ocurrió y cómo reproducirlo?"
+                            } else {
+                                "¿Qué más te gustaría ver en la app?"
+                            }
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            if (selectedType == FeedbackType.BUG) {
+                                "Ej. Al escanear una etiqueta con luz baja..."
+                            } else {
+                                "Ej. Me gustaría exportar el carrito a PDF..."
+                            }
+                        )
+                    },
+                    minLines = 3,
+                    maxLines = 5,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = contact,
+                    onValueChange = { if (it.length <= 80) contact = it },
+                    label = { Text("Contacto opcional (correo o @instagram)") },
+                    placeholder = { Text("Solo si deseas recibir respuesta") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    text = "Se adjunta versión (${BuildConfig.VERSION_NAME}) y modelo del equipo para validar el reporte.",
+                    fontSize = 10.sp,
+                    color = textSecondary
+                )
+
+                fallbackErrorMessage?.let { msg ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0x1FF59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(14.dp))
+                            .padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = msg,
+                            fontSize = 11.sp,
+                            color = Color(0xFFF59E0B),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                val opened = FeedbackReporter.openEmailFallback(context, buildSubmission())
+                                if (opened) {
+                                    onDismiss()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "No hay app de correo instalada (soporte@tasave.net)",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0x66F59E0B)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFFF59E0B))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Enviar por correo a soporte@tasave.net",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF59E0B)
+                            )
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        if (description.trim().length < 5) {
+                            Toast.makeText(
+                                context,
+                                "Cuéntanos un poco más (mínimo 5 caracteres).",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        isSending = true
+                        fallbackErrorMessage = null
+                        val submission = buildSubmission()
+                        coroutineScope.launch {
+                            when (val result = FeedbackReporter.submitFeedback(context, submission)) {
+                                is FeedbackSubmitResult.SentToSheet -> {
+                                    isSending = false
+                                    Toast.makeText(
+                                        context,
+                                        "¡Recibido! Gracias por ayudarnos a mejorar Tasa VE.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    onDismiss()
+                                }
+                                is FeedbackSubmitResult.WebhookNotConfigured -> {
+                                    isSending = false
+                                    val opened = FeedbackReporter.openEmailFallback(context, submission)
+                                    if (opened) {
+                                        onDismiss()
+                                    } else {
+                                        fallbackErrorMessage = "Envío directo pendiente de activación. Escríbenos a soporte@tasave.net."
+                                    }
+                                }
+                                is FeedbackSubmitResult.Error -> {
+                                    isSending = false
+                                    fallbackErrorMessage = result.message
+                                }
+                            }
+                        }
+                    },
+                    enabled = !isSending,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF10B981),
+                        contentColor = Color.Black
+                    )
+                ) {
+                    if (isSending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Enviando...", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    } else {
+                        Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Enviar reporte / sugerencia", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    }
+                }
+            }
+        }
     }
 }
 

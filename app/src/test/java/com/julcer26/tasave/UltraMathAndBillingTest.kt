@@ -345,6 +345,38 @@ class UltraMathAndBillingTest {
         assertEquals("BO", com.julcer26.tasave.share.ShareCardGenerator.extractBrandInitials("Bodega"))
         assertEquals("BL", com.julcer26.tasave.share.ShareCardGenerator.extractBrandInitials("Bodega La Esquina"))
     }
+
+    @Test
+    fun feedbackReporter_buildsValidJsonAndEmailBody() {
+        val submission = com.julcer26.tasave.feedback.FeedbackSubmission(
+            type = com.julcer26.tasave.feedback.FeedbackType.BUG,
+            module = "Escáner OCR",
+            description = "No detectó precio con fondo oscuro",
+            contact = "@usuario",
+            appVersion = "1.2.0",
+            planLabel = "Ultra",
+            deviceSummary = "Pixel 8 (Android 14)"
+        )
+        val json = com.julcer26.tasave.feedback.FeedbackReporter.buildJsonPayload(
+            submission = submission,
+            timestamp = "2026-11-19 12:30"
+        )
+        val parsed = org.json.JSONObject(json)
+        assertEquals("2026-11-19 12:30", parsed.getString("timestamp"))
+        assertEquals("Error", parsed.getString("type"))
+        assertEquals("Escáner OCR", parsed.getString("module"))
+        assertEquals("No detectó precio con fondo oscuro", parsed.getString("description"))
+        assertEquals("@usuario", parsed.getString("contact"))
+        assertEquals("1.2.0", parsed.getString("appVersion"))
+        assertEquals("Ultra", parsed.getString("plan"))
+        assertEquals("Pixel 8 (Android 14)", parsed.getString("device"))
+        assertEquals("Pendiente", parsed.getString("status"))
+
+        val emailBody = com.julcer26.tasave.feedback.FeedbackReporter.buildFallbackEmailBody(submission)
+        assertTrue(emailBody.contains("Tipo: Error"))
+        assertTrue(emailBody.contains("Pantalla / Módulo: Escáner OCR"))
+        assertTrue(emailBody.contains("No detectó precio con fondo oscuro"))
+    }
 }
 
 

@@ -104,3 +104,39 @@ Cuando `v1.2` esté estable en Play Store, `v1.3` separará visualmente los dos 
 4. **Cuentas por Cobrar ("Fiados") + Reposición por Brecha:**
    - Lista de clientes con saldo pendiente indexado a USD BCV o USDT (recalcula automáticamente la deuda en Bs. cada día) y botón **"Enviar recordatorio de pago"** (Tarjeta PNG + WhatsApp).
    - **Calculadora de Reposición:** ingresas costo en USDT + margen deseado → sugiere el precio de venta en **USD BCV** y **Bs.** compensando la brecha cambiaria actual para evitar descapitalización al reponer inventario.
+
+---
+
+## 5. Hoja de Google Sheets para Reportes de Errores y Sugerencias
+
+- **Hoja oficial creada:** [`Tasa VE — Reportes y Sugerencias`](https://docs.google.com/spreadsheets/d/1TALv6ZVhZAmgLjN3CHny4HaOkRqlQn8Zpat-djiKQGo/edit) (ID: `1TALv6ZVhZAmgLjN3CHny4HaOkRqlQn8Zpat-djiKQGo`).
+- **Pestañas:**
+  - `Reportes`: columnas `Fecha y Hora`, `Tipo` (`Error`/`Sugerencia`), `Pantalla / Módulo`, `Descripción`, `Contacto (Opcional)`, `Versión App`, `Plan`, `Dispositivo / Android` y `Estado Validación` (`Pendiente`, `En revisión`, `En desarrollo`, `Implementado`, `Descartado`).
+  - `Resumen`: métricas en tiempo real con fórmulas automáticas.
+
+### Activar envío directo desde la app (Google Apps Script — 1 minuto)
+1. Abre la hoja y entra a **Extensiones → Apps Script**.
+2. Pega el siguiente código y guarda:
+   ```javascript
+   function doPost(e) {
+     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Reportes");
+     const data = JSON.parse(e.postData.contents || "{}");
+     sheet.appendRow([
+       data.timestamp || new Date().toISOString(),
+       data.type || "Sugerencia",
+       data.module || "Otro",
+       data.description || "",
+       data.contact || "",
+       data.appVersion || "",
+       data.plan || "Gratis",
+       data.device || "",
+       data.status || "Pendiente"
+     ]);
+     return ContentService
+       .createTextOutput(JSON.stringify({ ok: true }))
+       .setMimeType(ContentService.MimeType.JSON);
+   }
+   ```
+3. Haz clic en **Implementar → Nueva implementación → Tipo: Aplicación web**, selecciona **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier persona**.
+4. Copia la URL `/exec` generada y pégala en `app/src/main/res/values/strings.xml` dentro de `feedback_webhook_url` *(mientras esté vacío, el botón abre automáticamente el correo prellenado a `soporte@tasave.net` como respaldo)*.
+
