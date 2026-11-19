@@ -214,19 +214,19 @@ fun TasaVeScreen(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isDark) Color(0x1F10B981) else Color(0x0F10B981))
+                                .background(Color(0xFF0F172A))
                                 .border(
                                     width = 1.5.dp,
-                                    color = if (isDark) Color(0x5910B981) else Color(0x4010B981),
+                                    color = if (isDark) Color(0x5910B981) else Color(0x6610B981),
                                     shape = RoundedCornerShape(10.dp)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                painter = painterResource(id = R.drawable.ic_brand_mark),
                                 contentDescription = "Tasa VE Logo",
                                 tint = Color.Unspecified,
-                                modifier = Modifier.size(30.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                         Text(
@@ -2516,19 +2516,19 @@ fun SleekSettingsDialog(
                         modifier = Modifier
                             .size(54.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(if (isDark) Color(0x1410B981) else Color(0x0A10B981))
+                            .background(Color(0xFF0F172A))
                             .border(
                                 width = 1.dp,
-                                color = if (isDark) Color(0x2610B981) else Color(0x1F10B981),
+                                color = if (isDark) Color(0x4010B981) else Color(0x5510B981),
                                 shape = RoundedCornerShape(14.dp)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ic_brand_mark),
                             contentDescription = "Tasa VE Logo",
                             tint = Color.Unspecified,
-                            modifier = Modifier.size(46.dp)
+                            modifier = Modifier.size(42.dp)
                         )
                     }
                     

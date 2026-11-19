@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="76dp"
+    android:height="76dp"
+    android:viewportWidth="76"
+    android:viewportHeight="76">
+
+    <path android:pathData="M 16.00,17.00 L 14.33,32.56 L 18.01,30.52 L 30.52,53.09 C 31.50,54.86 32.56,56.24 33.66,57.23 L 35.49,56.01 L 40.20,49.29 L 38.00,46.79 L 26.40,25.87 L 30.08,23.83 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="12"
+                android:startY="17"
+                android:endX="36"
+                android:endY="60"
+                android:type="linear">
+                <item android:offset="0" android:color="#FBBF24" />
+                <item android:offset="1" android:color="#F59E0B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path
+        android:pathData="M 36.89,44.79 L 38.00,46.79 L 35.49,56.01 L 33.66,57.23 Q 37.14,53.37 36.89,44.79 Z"
+        android:fillColor="#B45309"
+        android:fillAlpha="0.58" />
+
+    <path android:pathData="M 60.00,17.00 L 61.67,32.56 L 57.99,30.52 L 45.48,53.09 C 42.00,59.37 37.56,60.75 33.66,57.23 C 36.33,54.26 36.16,50.11 38.00,46.79 L 49.60,25.87 L 45.92,23.83 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="62"
+                android:endX="64"
+                android:endY="17"
+                android:type="linear">
+                <item android:offset="0" android:color="#059669" />
+                <item android:offset="0.45" android:color="#10B981" />
+                <item android:offset="1" android:color="#34D399" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <path
+        android:pathData="M 36.85,17.60 L 39.15,17.60 L 39.15,36.20 L 36.85,36.20 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 42.15,22.40 C 41.70,20.65 40.05,19.85 38.00,19.85 C 35.20,19.85 33.55,21.40 33.55,23.35 C 33.55,25.60 35.40,26.35 38.00,26.95 C 40.65,27.55 42.55,28.35 42.55,30.60 C 42.55,32.75 40.65,34.15 38.00,34.15 C 35.70,34.15 33.95,33.15 33.40,31.30"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.80"
+        android:strokeLineCap="butt" />
+</vector>

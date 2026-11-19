@@ -7,12 +7,13 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
-import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.julcer26.tasave.R
 import com.julcer26.tasave.ultra.PaymentMethodProfile
 import com.julcer26.tasave.ultra.PaymentMethodType
 import java.io.File
@@ -76,6 +77,7 @@ object ShareCardGenerator {
             val badgeLabel = if (isTomorrowBcv) "PRÓXIMA BCV" else "CONVERSIÓN EN VIVO"
             val rateLine = "$rateLabel: $rateDisplay" + (updatedAt?.let { " • $it" } ?: "")
             drawCenteredBrandHeader(
+                context = context,
                 canvas = canvas,
                 width = width,
                 isDark = isDark,
@@ -249,6 +251,7 @@ object ShareCardGenerator {
             val rateFmt = if (rateLabel.contains("USDT", ignoreCase = true)) "%.2f" else "%.4f"
             val pillLabel = if (hasTotal) "RESUMEN DE COBRO" else "DATOS DE COBRO"
             drawCenteredBrandHeader(
+                context = context,
                 canvas = canvas,
                 width = width,
                 isDark = isDark,
@@ -389,6 +392,7 @@ object ShareCardGenerator {
     }
 
     private fun drawCenteredBrandHeader(
+        context: Context,
         canvas: Canvas,
         width: Int,
         isDark: Boolean,
@@ -422,39 +426,17 @@ object ShareCardGenerator {
         canvas.drawRoundRect(tileRect, 18f, 18f, tileFill)
         canvas.drawRoundRect(tileRect, 18f, 18f, tileStroke)
 
-        // Exact Dual-Arrow Exchange Vector Emblem from ic_launcher_foreground.xml (viewport 108x108)
-        val scale = iconSize / 108f
-        val topArrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#10B981")
-            style = Paint.Style.STROKE
-            strokeWidth = 7.5f * scale
-            strokeCap = Paint.Cap.ROUND
-            strokeJoin = Paint.Join.ROUND
+        // Canonical Tasa VE Folded-V + Dollar Vector Mark (ic_brand_mark.xml)
+        ContextCompat.getDrawable(context, R.drawable.ic_brand_mark)?.let { mark ->
+            val inset = 6
+            mark.setBounds(
+                startX.toInt() + inset,
+                iconTop.toInt() + inset,
+                (startX + iconSize).toInt() - inset,
+                (iconTop + iconSize).toInt() - inset
+            )
+            mark.draw(canvas)
         }
-        val topPath = Path().apply {
-            moveTo(startX + 30f * scale, iconTop + 42f * scale)
-            lineTo(startX + 74f * scale, iconTop + 42f * scale)
-            moveTo(startX + 62f * scale, iconTop + 30f * scale)
-            lineTo(startX + 74f * scale, iconTop + 42f * scale)
-            lineTo(startX + 62f * scale, iconTop + 54f * scale)
-        }
-        canvas.drawPath(topPath, topArrowPaint)
-
-        val bottomArrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#F59E0B")
-            style = Paint.Style.STROKE
-            strokeWidth = 7.5f * scale
-            strokeCap = Paint.Cap.ROUND
-            strokeJoin = Paint.Join.ROUND
-        }
-        val bottomPath = Path().apply {
-            moveTo(startX + 78f * scale, iconTop + 66f * scale)
-            lineTo(startX + 34f * scale, iconTop + 66f * scale)
-            moveTo(startX + 46f * scale, iconTop + 54f * scale)
-            lineTo(startX + 34f * scale, iconTop + 66f * scale)
-            lineTo(startX + 46f * scale, iconTop + 78f * scale)
-        }
-        canvas.drawPath(bottomPath, bottomArrowPaint)
 
         // Bold "Tasa VE" Wordmark next to emblem
         canvas.drawText("Tasa VE", startX + iconSize + gap, iconTop + 50f, brandPaint)

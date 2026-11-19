@@ -500,9 +500,12 @@ Descarga Tasa VE: https://tasave.net`;
       <div class="png-mini-card">
         <div class="png-logo-lockup">
           <span class="png-badge-tile" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 8h13m-3-3 3 3-3 3" stroke="#10B981"></path>
-              <path d="M19 16H6m3-3-3 3 3 3" stroke="#F59E0B"></path>
+            <svg viewBox="0 0 76 76" width="22" height="22" fill="none">
+              <path d="M 16.00,17.00 L 14.33,32.56 L 18.01,30.52 L 30.52,53.09 C 31.50,54.86 32.56,56.24 33.66,57.23 L 35.49,56.01 L 40.20,49.29 L 38.00,46.79 L 26.40,25.87 L 30.08,23.83 Z" fill="#F59E0B"></path>
+              <path d="M 36.89,44.79 L 38.00,46.79 L 35.49,56.01 L 33.66,57.23 Q 37.14,53.37 36.89,44.79 Z" fill="#B45309" opacity="0.58"></path>
+              <path d="M 60.00,17.00 L 61.67,32.56 L 57.99,30.52 L 45.48,53.09 C 42.00,59.37 37.56,60.75 33.66,57.23 C 36.33,54.26 36.16,50.11 38.00,46.79 L 49.60,25.87 L 45.92,23.83 Z" fill="#10B981"></path>
+              <path d="M 36.85,17.60 L 39.15,17.60 L 39.15,36.20 L 36.85,36.20 Z" fill="#FFFFFF"></path>
+              <path d="M 42.15,22.40 C 41.70,20.65 40.05,19.85 38.00,19.85 C 35.20,19.85 33.55,21.40 33.55,23.35 C 33.55,25.60 35.40,26.35 38.00,26.95 C 40.65,27.55 42.55,28.35 42.55,30.60 C 42.55,32.75 40.65,34.15 38.00,34.15 C 35.70,34.15 33.95,33.15 33.40,31.30" stroke="#FFFFFF" stroke-width="2.80" stroke-linecap="butt"></path>
             </svg>
           </span>
           <span>Tasa VE</span>

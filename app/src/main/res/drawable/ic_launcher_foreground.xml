@@ -1,23 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Exchange Arrow Top (Emerald Green) -->
+
+    <!-- Left Amber Arrow Arm (Original Tasa VE Gold) -->
+    <path android:pathData="M 32.00,33.00 L 30.33,48.56 L 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 51.49,72.01 L 56.20,65.29 L 54.00,62.79 L 42.40,41.87 L 46.08,39.83 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="28"
+                android:startY="33"
+                android:endX="52"
+                android:endY="76"
+                android:type="linear">
+                <item android:offset="0" android:color="#FBBF24" />
+                <item android:offset="1" android:color="#F59E0B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Ribbon Fold Shadow at V-Vertex -->
     <path
-        android:pathData="M 32,42 L 72,42 M 62,30 L 74,42 L 62,54"
-        android:strokeColor="#10B981"
-        android:strokeWidth="6.5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-        
-    <!-- Exchange Arrow Bottom (Amber Yellow) -->
+        android:pathData="M 52.89,60.79 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.14,69.37 52.89,60.79 Z"
+        android:fillColor="#B45309"
+        android:fillAlpha="0.58" />
+
+    <!-- Right Continuous Emerald Arrow Arm (Original Tasa VE Emerald) -->
+    <path android:pathData="M 76.00,33.00 L 77.67,48.56 L 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 52.33,70.26 52.16,66.11 54.00,62.79 L 65.60,41.87 L 61.92,39.83 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="46"
+                android:startY="78"
+                android:endX="80"
+                android:endY="33"
+                android:type="linear">
+                <item android:offset="0" android:color="#059669" />
+                <item android:offset="0.45" android:color="#10B981" />
+                <item android:offset="1" android:color="#34D399" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Upper-Center Geometric Dollar Sign -->
     <path
-        android:pathData="M 76,66 L 36,66 M 46,54 L 34,66 L 46,78"
-        android:strokeColor="#F59E0B"
-        android:strokeWidth="6.5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:pathData="M 52.85,33.60 L 55.15,33.60 L 55.15,52.20 L 52.85,52.20 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M 58.15,38.40 C 57.70,36.65 56.05,35.85 54.00,35.85 C 51.20,35.85 49.55,37.40 49.55,39.35 C 49.55,41.60 51.40,42.35 54.00,42.95 C 56.65,43.55 58.55,44.35 58.55,46.60 C 58.55,48.75 56.65,50.15 54.00,50.15 C 51.70,50.15 49.95,49.15 49.40,47.30"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.80"
+        android:strokeLineCap="butt" />
 </vector>
