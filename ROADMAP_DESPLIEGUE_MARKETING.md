@@ -12,7 +12,7 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor 4 decimales, BCV Hoy/Mañana, COP, ajuste %, Brecha y Gráficos, Pago Mixto + Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
+| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor 4 decimales, BCV Hoy/Mañana, USDT paralelo, Brecha y Gráficos, Pago Mixto + Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
 | **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, Alertas locales de tasa y Widget de pantalla de inicio. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
@@ -54,9 +54,9 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 ### 3.1 ASO (Posicionamiento en Google Play Store)
 - **Título (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
 - **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, escáner OCR, carrito IVA/IGTF y cobros Pago Móvil.`
-- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `usdt paralelo`, `pago movil`, `vuelto mixto`, `igtf`, `peso colombiano venezuela`, `escaner de precios`.
+- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `usdt paralelo`, `pago movil`, `vuelto mixto`, `igtf`, `escaner de precios`.
 - **Activos visuales recomendados (6 capturas en orden de impacto):**
-  1. Calculadora en vivo (BCV Hoy / Mañana + COP + 4 decimales).
+  1. Calculadora en vivo (BCV Hoy / Mañana + Euro BCV + USDT en 4 decimales).
   2. Escáner de cámara OCR leyendo una etiqueta real de supermercado.
   3. Carrito inteligente con IVA (16 %) y equivalencias.
   4. Cobros / Pago Mixto con vuelto automático y Tarjeta PNG lista para WhatsApp.

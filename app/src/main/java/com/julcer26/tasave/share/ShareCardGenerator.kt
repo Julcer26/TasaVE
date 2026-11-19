@@ -415,9 +415,9 @@ object ShareCardGenerator {
         val startX = (width - lockupWidth) / 2f
         val iconTop = 92f
 
-        // Dark Obsidian Rounded App Icon Tile
+        // Deep Obsidian Rounded App Icon Tile
         val tileRect = RectF(startX, iconTop, startX + iconSize, iconTop + iconSize)
-        val tileFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#0F172A") }
+        val tileFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#070C16") }
         val tileStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#5510B981")
             style = Paint.Style.STROKE

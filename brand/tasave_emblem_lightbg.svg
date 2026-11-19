@@ -1,30 +1,111 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="16 16 76 76" width="1024" height="1024">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="16" y1="16" x2="92" y2="92" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0A101D"/>
-      <stop offset="100%" stop-color="#172133"/>
+    <linearGradient id="amberVol" x1="115.00" y1="115.00" x2="262.00" y2="395.00" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EA8C00"/>
+      <stop offset="40%" stop-color="#C96400"/>
+      <stop offset="78%" stop-color="#9A4100"/>
+      <stop offset="100%" stop-color="#6B2B00"/>
     </linearGradient>
-    <linearGradient id="amberGrad" x1="28.0" y1="33.0" x2="52.0" y2="76.0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F59E0B"/>
-      <stop offset="55%" stop-color="#D97706"/>
-      <stop offset="100%" stop-color="#B45309"/>
+    <linearGradient id="amberRim" x1="100.00" y1="115.00" x2="235.00" y2="385.00" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.58"/>
+      <stop offset="65%" stop-color="#F59E0B" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#B45309" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="foldShadowGrad" x1="46.0" y1="66.0" x2="54.0" y2="62.0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#78350F" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#78350F" stop-opacity="0.78"/>
+    <linearGradient id="foldGrad2" x1="215.00" y1="350.00" x2="255.00" y2="325.00" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B1400" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#290D00" stop-opacity="0.82"/>
     </linearGradient>
-    <linearGradient id="emeraldGrad" x1="46.0" y1="78.0" x2="80.0" y2="33.0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#047857"/>
-      <stop offset="52%" stop-color="#059669"/>
+
+    <linearGradient id="emeraldVol" x1="245.00" y1="405.00" x2="405.00" y2="115.00" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#022C22"/>
+      <stop offset="22%" stop-color="#064E3B"/>
+      <stop offset="56%" stop-color="#047857"/>
+      <stop offset="86%" stop-color="#059669"/>
       <stop offset="100%" stop-color="#10B981"/>
     </linearGradient>
+    <linearGradient id="emeraldTopLight" x1="245.00" y1="335.00" x2="405.00" y2="115.00" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0"/>
+      <stop offset="55%" stop-color="#34D399" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#A7F3D0" stop-opacity="0.58"/>
+    </linearGradient>
+
+    <linearGradient id="dollarGrad" x1="256.00" y1="115.00" x2="256.00" y2="235.00" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="75%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <clipPath id="clipAmber2">
+      <path d="M 107.79,114.53 L 96.57,219.34 L 121.31,205.62 L 205.59,357.66 C 212.20,369.58 219.33,378.89 226.74,385.56 L 239.10,377.31 L 270.82,332.05 L 256.00,315.21 L 177.88,174.27 L 202.62,160.55 Z"/>
+    </clipPath>
+    <clipPath id="clipEmerald2">
+      <path d="M 404.21,114.53 L 415.43,219.34 L 390.69,205.62 L 306.41,357.66 C 282.98,399.94 253.04,409.24 226.74,385.56 C 244.77,365.54 243.59,337.60 256.00,315.21 L 334.12,174.27 L 309.38,160.55 Z"/>
+    </clipPath>
+
+    <filter id="vShadow2" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12.00" result="blurAmb"/>
+      <feOffset in="blurAmb" dx="0" dy="14.00" result="offAmb"/>
+      <feFlood flood-color="#000000" flood-opacity="0.28" result="colAmb"/>
+      <feComposite in="colAmb" in2="offAmb" operator="in" result="shAmb"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5.00" result="blurKey"/>
+      <feOffset in="blurKey" dx="2.00" dy="7.00" result="offKey"/>
+      <feFlood flood-color="#0F172A" flood-opacity="0.34" result="colKey"/>
+      <feComposite in="colKey" in2="offKey" operator="in" result="shKey"/>
+
+      <feMerge>
+        <feMergeNode in="shAmb"/>
+        <feMergeNode in="shKey"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softBlur6" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5.50"/>
+    </filter>
+    <filter id="softBlur4" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.50"/>
+    </filter>
+
+    <filter id="dollarShadow2" x="-120%" y="-80%" width="340%" height="260%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="9.00" result="b1"/>
+      <feOffset in="b1" dx="3.00" dy="10.00" result="o1"/>
+      <feFlood flood-color="#0F172A" flood-opacity="0.26" result="c1"/>
+      <feComposite in="c1" in2="o1" operator="in" result="s1"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3.00" result="b2"/>
+      <feOffset in="b2" dx="1.00" dy="4.00" result="o2"/>
+      <feFlood flood-color="#000000" flood-opacity="0.22" result="c2"/>
+      <feComposite in="c2" in2="o2" operator="in" result="s2"/>
+
+      <feMerge>
+        <feMergeNode in="s1"/>
+        <feMergeNode in="s2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <path d="M 32.00,33.00 L 30.33,48.56 L 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 51.49,72.01 L 56.20,65.29 L 54.00,62.79 L 42.40,41.87 L 46.08,39.83 Z" fill="url(#amberGrad)"/>
-  <path d="M 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 50.93,71.82 L 48.00,68.27 Z" fill="#92400E" opacity="0.32"/>
-  <path d="M 52.56,60.19 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.67,68.77 52.56,60.19 Z" fill="url(#foldShadowGrad)"/>
-  <path d="M 76.00,33.00 L 77.67,48.56 L 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 52.33,70.26 52.16,66.11 54.00,62.79 L 65.60,41.87 L 61.92,39.83 Z" fill="url(#emeraldGrad)"/>
-  <path d="M 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 50.86,71.89 53.16,75.05 57.20,73.37 L 59.56,68.02 Z" fill="#022C22" opacity="0.30"/>
-  <path d="M 76.00,33.00 L 64.46,38.60 L 67.26,38.00 L 74.63,35.46 L 76.39,43.06 L 77.37,45.76 Z" fill="#34D399" opacity="0.20"/>
-  <path d="M 52.85,33.60 L 55.15,33.60 L 55.15,52.20 L 52.85,52.20 Z" fill="#0F172A"/>
-  <path d="M 58.15,38.40 C 57.70,36.65 56.05,35.85 54.00,35.85 C 51.20,35.85 49.55,37.40 49.55,39.35 C 49.55,41.60 51.40,42.35 54.00,42.95 C 56.65,43.55 58.55,44.35 58.55,46.60 C 58.55,48.75 56.65,50.15 54.00,50.15 C 51.70,50.15 49.95,49.15 49.40,47.30" fill="none" stroke="#0F172A" stroke-width="2.80" stroke-linecap="butt"/>
+
+  <g filter="url(#vShadow2)">
+    <g clip-path="url(#clipAmber2)">
+      <path d="M 107.79,114.53 L 96.57,219.34 L 121.31,205.62 L 205.59,357.66 C 212.20,369.58 219.33,378.89 226.74,385.56 L 239.10,377.31 L 270.82,332.05 L 256.00,315.21 L 177.88,174.27 L 202.62,160.55 Z" fill="url(#amberVol)"/>
+      <path d="M 107.79,114.53 L 96.57,219.34 L 121.31,205.62 L 205.59,357.66 C 212.20,369.58 219.33,378.89 226.74,385.56" fill="none" stroke="#FCD34D" stroke-width="9.00" stroke-linejoin="round" opacity="0.26" filter="url(#softBlur4)"/>
+      <path d="M 107.79,114.53 L 96.57,219.34 L 121.31,205.62 L 205.59,357.66 C 212.20,369.58 219.33,378.89 226.74,385.56" fill="none" stroke="url(#amberRim)" stroke-width="2.20" stroke-linejoin="round"/>
+      <path d="M 107.79,114.53 L 202.62,160.55 L 177.88,174.27 L 256.00,315.21" fill="none" stroke="#451A03" stroke-width="10.00" stroke-linejoin="round" opacity="0.34" filter="url(#softBlur4)"/>
+      <path d="M 242.94,291.64 L 272.17,330.03 L 253.92,380.68 L 226.74,385.56 C 246.58,363.54 242.28,339.95 256.00,315.21 Z" fill="url(#foldGrad2)"/>
+      <path d="M 256.00,315.21 C 243.59,337.60 244.77,365.54 226.74,385.56" fill="none" stroke="#260C00" stroke-width="14.00" stroke-linecap="round" opacity="0.62" filter="url(#softBlur6)"/>
+    </g>
+
+    <g clip-path="url(#clipEmerald2)">
+      <path d="M 404.21,114.53 L 415.43,219.34 L 390.69,205.62 L 306.41,357.66 C 282.98,399.94 253.04,409.24 226.74,385.56 C 244.77,365.54 243.59,337.60 256.00,315.21 L 334.12,174.27 L 309.38,160.55 Z" fill="url(#emeraldVol)"/>
+      <path d="M 226.74,385.56 C 253.04,409.24 282.98,399.94 306.41,357.66 L 390.69,205.62 L 415.43,219.34 L 404.21,114.53" fill="none" stroke="#011A13" stroke-width="13.00" stroke-linejoin="round" opacity="0.68" filter="url(#softBlur6)"/>
+      <path d="M 226.74,385.56 C 244.77,365.54 243.59,337.60 256.00,315.21 L 334.12,174.27 L 309.38,160.55 L 404.21,114.53" fill="none" stroke="#34D399" stroke-width="10.00" stroke-linejoin="round" opacity="0.24" filter="url(#softBlur4)"/>
+      <path d="M 226.74,385.56 C 244.77,365.54 243.59,337.60 256.00,315.21 L 334.12,174.27 L 309.38,160.55 L 404.21,114.53" fill="none" stroke="url(#emeraldTopLight)" stroke-width="2.40" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <g filter="url(#dollarShadow2)">
+    <path d="M 248.25,118.57 L 263.75,118.57 L 263.75,243.87 L 248.25,243.87 Z" fill="url(#dollarGrad)"/>
+    <path d="M 283.96,150.91 C 280.93,139.12 269.81,133.73 256.00,133.73 C 237.14,133.73 226.02,144.17 226.02,157.31 C 226.02,172.46 238.48,177.52 256.00,181.56 C 273.85,185.60 286.65,190.99 286.65,206.15 C 286.65,220.63 273.85,230.06 256.00,230.06 C 240.51,230.06 228.72,223.33 225.01,210.86" fill="none" stroke="url(#dollarGrad)" stroke-width="18.86" stroke-linecap="butt"/>
+  </g>
 </svg>

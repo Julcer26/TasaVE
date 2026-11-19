@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Tasa VE Brand Asset Generator
-Generates canonical SVG masters, PNG exports (dark & transparent),
-Android VectorDrawables (adaptive foreground, monochrome, in-app mark),
+Tasa VE Brand Asset Generator (Proposal 2 — 3D Esculpido)
+Generates canonical SVG masters, multi-resolution PNG exports (dark, transparent, lightbg, monochrome),
+Android VectorDrawables (adaptive background/foreground/monochrome, in-app mark with clipped 3D bevels),
 legacy mipmap .webp launcher icons, and Play Store / Web assets.
 """
 
@@ -10,7 +10,7 @@ import math
 import os
 import shutil
 import subprocess
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BRAND_DIR = os.path.join(REPO_ROOT, "brand")
@@ -55,10 +55,6 @@ def add(p, v, s=1.0):
 def point_on_line(p0, direction, target_y):
     t = (target_y - p0[1]) / direction[1]
     return (p0[0] + direction[0] * t, target_y)
-
-
-def f(p, ox=0.0, oy=0.0):
-    return f"{p[0] + ox:.2f},{p[1] + oy:.2f}"
 
 
 def cubic(p0, p1, p2, p3, t):
@@ -115,7 +111,6 @@ C2_OUT = add(U_R_OUT, (-uR[0], -uR[1]), T_U_BEZ)
 
 t_apex = (CX - SHAFT_L_TOP_IN[0]) / SIN_A
 APEX_IN = (CX, SHAFT_L_TOP_IN[1] + t_apex * COS_A)
-U_BOTTOM = cubic(U_L_OUT, C1_OUT, C2_OUT, U_R_OUT, 0.5)
 
 amber_seg, emerald_seg = split_cubic(U_L_OUT, C1_OUT, C2_OUT, U_R_OUT, 0.22)
 U_SPLIT = amber_seg[3]
@@ -127,16 +122,11 @@ amber_top_in = add(APEX_IN, (2.2, 2.5))
 
 fold_c1 = add(U_SPLIT, N_SPLIT_IN, 4.0)
 fold_c2 = add(APEX_IN, (-uR[0], -uR[1]), 3.8)
-sh_top = point_on_line(SHAFT_L_TOP_IN, (-uL[0], -uL[1]), APEX_IN[1] - 2.6)
-sh_ctrl = add(U_SPLIT, N_SPLIT_IN, 6.0)
 
-# Sculpted emerald bottom-outer shading strip (follows lower U-turn -> right shaft outer edge smoothly)
-em_shade_u1 = add(U_R_OUT, (-COS_A, -SIN_A), 2.2)
-em_shade_c1 = add(emerald_seg[2], (-0.8, -2.0), 1.0)
-em_shade_c2 = add(emerald_seg[1], (-0.4, -1.7), 1.0)
-em_shade_tip_top = add(SHAFT_R_TOP_OUT, (-COS_A, -SIN_A), 1.5)
+fold_sh_c1 = add(U_SPLIT, N_SPLIT_IN, 4.4)
+fold_sh_c2 = add(APEX_IN, (-uR[0], -uR[1]), 4.2)
 
-# Uniform-channel monochrome left arm (~1.9u clean channel along entire fold!)
+# Uniform-channel monochrome left arm (~1.9u clean channel along entire fold)
 mono_amber_seg, _ = split_cubic(U_L_OUT, C1_OUT, C2_OUT, U_R_OUT, 0.175)
 mono_a_end = mono_amber_seg[3]
 mono_shift = (-1.9, -0.55)
@@ -145,206 +135,370 @@ mono_c2 = add(fold_c2, mono_shift, 1.0)
 mono_top_in = point_on_line(SHAFT_L_TOP_IN, (-uL[0], -uL[1]), APEX_IN[1] - 2.15)
 
 
-def build_paths(ox=0.0, oy=0.0):
+def build_paths(scale=1.0, ox=0.0, oy=0.0):
+    def pt(p, dx=0.0, dy=0.0):
+        return f"{(p[0] + dx) * scale + ox:.2f},{(p[1] + dy) * scale + oy:.2f}"
+
+    def xy(x, y):
+        return f"{x * scale + ox:.2f},{y * scale + oy:.2f}"
+
     amber_d = " ".join([
-        f"M {f(TIP_L, ox, oy)}",
-        f"L {f(WING_L_OUT, ox, oy)}",
-        f"L {f(SHAFT_L_TOP_OUT, ox, oy)}",
-        f"L {f(U_L_OUT, ox, oy)}",
-        f"C {f(amber_seg[1], ox, oy)} {f(amber_seg[2], ox, oy)} {f(U_SPLIT, ox, oy)}",
-        f"L {f(amber_mid_in, ox, oy)}",
-        f"L {f(amber_top_in, ox, oy)}",
-        f"L {f(APEX_IN, ox, oy)}",
-        f"L {f(SHAFT_L_TOP_IN, ox, oy)}",
-        f"L {f(WING_L_IN, ox, oy)}",
-        "Z",
-    ])
-
-    # Subtle lower-inner depth bevel along amber outer contour (tapers cleanly into shaft neck)
-    amber_depth_d = " ".join([
-        f"M {f(SHAFT_L_TOP_OUT, ox, oy)}",
-        f"L {f(U_L_OUT, ox, oy)}",
-        f"C {f(amber_seg[1], ox, oy)} {f(amber_seg[2], ox, oy)} {f(U_SPLIT, ox, oy)}",
-        f"L {f(add(U_SPLIT, N_SPLIT_IN, 1.9), ox, oy)}",
-        f"L {f(add(U_L_OUT, nL_in, 1.7), ox, oy)}",
-        "Z",
-    ])
-
-    shadow_d = " ".join([
-        f"M {f(sh_top, ox, oy)}",
-        f"L {f(APEX_IN, ox, oy)}",
-        f"L {f(amber_mid_in, ox, oy)}",
-        f"L {f(U_SPLIT, ox, oy)}",
-        f"Q {f(sh_ctrl, ox, oy)} {f(sh_top, ox, oy)}",
+        f"M {pt(TIP_L)}",
+        f"L {pt(WING_L_OUT)}",
+        f"L {pt(SHAFT_L_TOP_OUT)}",
+        f"L {pt(U_L_OUT)}",
+        f"C {pt(amber_seg[1])} {pt(amber_seg[2])} {pt(U_SPLIT)}",
+        f"L {pt(amber_mid_in)}",
+        f"L {pt(amber_top_in)}",
+        f"L {pt(APEX_IN)}",
+        f"L {pt(SHAFT_L_TOP_IN)}",
+        f"L {pt(WING_L_IN)}",
         "Z",
     ])
 
     emerald_d = " ".join([
-        f"M {f(TIP_R, ox, oy)}",
-        f"L {f(WING_R_OUT, ox, oy)}",
-        f"L {f(SHAFT_R_TOP_OUT, ox, oy)}",
-        f"L {f(U_R_OUT, ox, oy)}",
-        f"C {f(emerald_seg[2], ox, oy)} {f(emerald_seg[1], ox, oy)} {f(U_SPLIT, ox, oy)}",
-        f"C {f(fold_c1, ox, oy)} {f(fold_c2, ox, oy)} {f(APEX_IN, ox, oy)}",
-        f"L {f(SHAFT_R_TOP_IN, ox, oy)}",
-        f"L {f(WING_R_IN, ox, oy)}",
+        f"M {pt(TIP_R)}",
+        f"L {pt(WING_R_OUT)}",
+        f"L {pt(SHAFT_R_TOP_OUT)}",
+        f"L {pt(U_R_OUT)}",
+        f"C {pt(emerald_seg[2])} {pt(emerald_seg[1])} {pt(U_SPLIT)}",
+        f"C {pt(fold_c1)} {pt(fold_c2)} {pt(APEX_IN)}",
+        f"L {pt(SHAFT_R_TOP_IN)}",
+        f"L {pt(WING_R_IN)}",
         "Z",
     ])
 
-    # Subtle bottom-right depth plane on emerald U-loop & right outer edge (tapers cleanly into neck)
-    emerald_depth_d = " ".join([
-        f"M {f(SHAFT_R_TOP_OUT, ox, oy)}",
-        f"L {f(U_R_OUT, ox, oy)}",
-        f"C {f(emerald_seg[2], ox, oy)} {f(emerald_seg[1], ox, oy)} {f(U_SPLIT, ox, oy)}",
-        f"C {f(add(U_SPLIT, N_SPLIT_IN, 1.8), ox, oy)} {f(em_shade_c2, ox, oy)} {f(em_shade_c1, ox, oy)}",
-        f"L {f(em_shade_u1, ox, oy)}",
+    fold_shadow_band_d = " ".join([
+        f"M {pt(add(APEX_IN, (-uL[0], -uL[1]), -4.0))}",
+        f"L {pt(add(APEX_IN, (2.4, 2.2)))}",
+        f"L {pt(add(amber_mid_in, (2.2, 0.5)))}",
+        f"L {pt(U_SPLIT)}",
+        f"C {pt(fold_sh_c1)} {pt(fold_sh_c2)} {pt(APEX_IN)}",
         "Z",
     ])
 
-    # Crisp subtle top highlight strictly INSIDE the emerald arrowhead triangle
-    def mix(pA, pB, t):
-        return (pA[0] * (1.0 - t) + pB[0] * t, pA[1] * (1.0 - t) + pB[1] * t)
+    fold_seam_curve_d = " ".join([
+        f"M {pt(APEX_IN)}",
+        f"C {pt(fold_c2)} {pt(fold_c1)} {pt(U_SPLIT)}",
+    ])
 
-    hi_in = mix(TIP_R, WING_R_IN, 0.82)
-    hi_out = mix(TIP_R, WING_R_OUT, 0.82)
-    hi_mid = mix(TIP_R, NECK_R, 0.22)
-    hi_in_inner = mix(hi_mid, WING_R_IN, 0.58)
-    hi_out_inner = mix(hi_mid, WING_R_OUT, 0.58)
+    amber_lit_edge_d = " ".join([
+        f"M {pt(TIP_L)}",
+        f"L {pt(WING_L_OUT)}",
+        f"L {pt(SHAFT_L_TOP_OUT)}",
+        f"L {pt(U_L_OUT)}",
+        f"C {pt(amber_seg[1])} {pt(amber_seg[2])} {pt(U_SPLIT)}",
+    ])
 
-    emerald_hi_d = " ".join([
-        f"M {f(TIP_R, ox, oy)}",
-        f"L {f(hi_in, ox, oy)}",
-        f"L {f(hi_in_inner, ox, oy)}",
-        f"L {f(hi_mid, ox, oy)}",
-        f"L {f(hi_out_inner, ox, oy)}",
-        f"L {f(hi_out, ox, oy)}",
-        "Z",
+    amber_inner_edge_d = " ".join([
+        f"M {pt(TIP_L)}",
+        f"L {pt(WING_L_IN)}",
+        f"L {pt(SHAFT_L_TOP_IN)}",
+        f"L {pt(APEX_IN)}",
+    ])
+
+    emerald_dark_edge_d = " ".join([
+        f"M {pt(U_SPLIT)}",
+        f"C {pt(emerald_seg[1])} {pt(emerald_seg[2])} {pt(U_R_OUT)}",
+        f"L {pt(SHAFT_R_TOP_OUT)}",
+        f"L {pt(WING_R_OUT)}",
+        f"L {pt(TIP_R)}",
+    ])
+
+    emerald_lit_ridge_d = " ".join([
+        f"M {pt(U_SPLIT)}",
+        f"C {pt(fold_c1)} {pt(fold_c2)} {pt(APEX_IN)}",
+        f"L {pt(SHAFT_R_TOP_IN)}",
+        f"L {pt(WING_R_IN)}",
+        f"L {pt(TIP_R)}",
     ])
 
     mono_amber_d = " ".join([
-        f"M {f(TIP_L, ox, oy)}",
-        f"L {f(WING_L_OUT, ox, oy)}",
-        f"L {f(SHAFT_L_TOP_OUT, ox, oy)}",
-        f"L {f(U_L_OUT, ox, oy)}",
-        f"C {f(mono_amber_seg[1], ox, oy)} {f(mono_amber_seg[2], ox, oy)} {f(mono_a_end, ox, oy)}",
-        f"C {f(mono_c1, ox, oy)} {f(mono_c2, ox, oy)} {f(mono_top_in, ox, oy)}",
-        f"L {f(SHAFT_L_TOP_IN, ox, oy)}",
-        f"L {f(WING_L_IN, ox, oy)}",
+        f"M {pt(TIP_L)}",
+        f"L {pt(WING_L_OUT)}",
+        f"L {pt(SHAFT_L_TOP_OUT)}",
+        f"L {pt(U_L_OUT)}",
+        f"C {pt(mono_amber_seg[1])} {pt(mono_amber_seg[2])} {pt(mono_a_end)}",
+        f"C {pt(mono_c1)} {pt(mono_c2)} {pt(mono_top_in)}",
+        f"L {pt(SHAFT_L_TOP_IN)}",
+        f"L {pt(WING_L_IN)}",
         "Z",
     ])
 
-    # Dollar Sign & subtle shadow offset (+0.85, +1.45)
-    dollar_bar_d = (
-        f"M {52.85+ox:.2f},{33.60+oy:.2f} "
-        f"L {55.15+ox:.2f},{33.60+oy:.2f} "
-        f"L {55.15+ox:.2f},{52.20+oy:.2f} "
-        f"L {52.85+ox:.2f},{52.20+oy:.2f} Z"
-    )
-    dollar_s_d = (
-        f"M {58.15+ox:.2f},{38.40+oy:.2f} "
-        f"C {57.70+ox:.2f},{36.65+oy:.2f} {56.05+ox:.2f},{35.85+oy:.2f} {54.00+ox:.2f},{35.85+oy:.2f} "
-        f"C {51.20+ox:.2f},{35.85+oy:.2f} {49.55+ox:.2f},{37.40+oy:.2f} {49.55+ox:.2f},{39.35+oy:.2f} "
-        f"C {49.55+ox:.2f},{41.60+oy:.2f} {51.40+ox:.2f},{42.35+oy:.2f} {54.00+ox:.2f},{42.95+oy:.2f} "
-        f"C {56.65+ox:.2f},{43.55+oy:.2f} {58.55+ox:.2f},{44.35+oy:.2f} {58.55+ox:.2f},{46.60+oy:.2f} "
-        f"C {58.55+ox:.2f},{48.75+oy:.2f} {56.65+ox:.2f},{50.15+oy:.2f} {54.00+ox:.2f},{50.15+oy:.2f} "
-        f"C {51.70+ox:.2f},{50.15+oy:.2f} {49.95+ox:.2f},{49.15+oy:.2f} {49.40+ox:.2f},{47.30+oy:.2f}"
-    )
+    def make_dollar(dx=0.0, dy=0.0):
+        bar = (
+            f"M {xy(52.85 + dx, 33.60 + dy)} "
+            f"L {xy(55.15 + dx, 33.60 + dy)} "
+            f"L {xy(55.15 + dx, 52.20 + dy)} "
+            f"L {xy(52.85 + dx, 52.20 + dy)} Z"
+        )
+        s_path = (
+            f"M {xy(58.15 + dx, 38.40 + dy)} "
+            f"C {xy(57.70 + dx, 36.65 + dy)} {xy(56.05 + dx, 35.85 + dy)} {xy(54.00 + dx, 35.85 + dy)} "
+            f"C {xy(51.20 + dx, 35.85 + dy)} {xy(49.55 + dx, 37.40 + dy)} {xy(49.55 + dx, 39.35 + dy)} "
+            f"C {xy(49.55 + dx, 41.60 + dy)} {xy(51.40 + dx, 42.35 + dy)} {xy(54.00 + dx, 42.95 + dy)} "
+            f"C {xy(56.65 + dx, 43.55 + dy)} {xy(58.55 + dx, 44.35 + dy)} {xy(58.55 + dx, 46.60 + dy)} "
+            f"C {xy(58.55 + dx, 48.75 + dy)} {xy(56.65 + dx, 50.15 + dy)} {xy(54.00 + dx, 50.15 + dy)} "
+            f"C {xy(51.70 + dx, 50.15 + dy)} {xy(49.95 + dx, 49.15 + dy)} {xy(49.40 + dx, 47.30 + dy)}"
+        )
+        return bar, s_path
 
-    sx, sy = ox + 0.85, oy + 1.45
-    dollar_bar_shadow_d = (
-        f"M {52.85+sx:.2f},{33.60+sy:.2f} "
-        f"L {55.15+sx:.2f},{33.60+sy:.2f} "
-        f"L {55.15+sx:.2f},{52.20+sy:.2f} "
-        f"L {52.85+sx:.2f},{52.20+sy:.2f} Z"
-    )
-    dollar_s_shadow_d = (
-        f"M {58.15+sx:.2f},{38.40+sy:.2f} "
-        f"C {57.70+sx:.2f},{36.65+sy:.2f} {56.05+sx:.2f},{35.85+sy:.2f} {54.00+sx:.2f},{35.85+sy:.2f} "
-        f"C {51.20+sx:.2f},{35.85+sy:.2f} {49.55+sx:.2f},{37.40+sy:.2f} {49.55+sx:.2f},{39.35+sy:.2f} "
-        f"C {49.55+sx:.2f},{41.60+sy:.2f} {51.40+sx:.2f},{42.35+sy:.2f} {54.00+sx:.2f},{42.95+sy:.2f} "
-        f"C {56.65+sx:.2f},{43.55+sy:.2f} {58.55+sx:.2f},{44.35+sy:.2f} {58.55+sx:.2f},{46.60+sy:.2f} "
-        f"C {58.55+sx:.2f},{48.75+sy:.2f} {56.65+sx:.2f},{50.15+sy:.2f} {54.00+sx:.2f},{50.15+sy:.2f} "
-        f"C {51.70+sx:.2f},{50.15+sy:.2f} {49.95+sx:.2f},{49.15+sy:.2f} {49.40+sx:.2f},{47.30+sy:.2f}"
-    )
+    dollar_bar_d, dollar_s_d = make_dollar(0.0, 0.0)
+    dollar_bar_sh_far_d, dollar_s_sh_far_d = make_dollar(0.45, 1.50)
+    dollar_bar_sh_near_d, dollar_s_sh_near_d = make_dollar(0.18, 0.72)
+
+    def make_v_shadow(dx=0.0, dy=0.0):
+        am = " ".join([
+            f"M {pt(TIP_L, dx, dy)}",
+            f"L {pt(WING_L_OUT, dx, dy)}",
+            f"L {pt(SHAFT_L_TOP_OUT, dx, dy)}",
+            f"L {pt(U_L_OUT, dx, dy)}",
+            f"C {pt(amber_seg[1], dx, dy)} {pt(amber_seg[2], dx, dy)} {pt(U_SPLIT, dx, dy)}",
+            f"L {pt(amber_mid_in, dx, dy)}",
+            f"L {pt(amber_top_in, dx, dy)}",
+            f"L {pt(APEX_IN, dx, dy)}",
+            f"L {pt(SHAFT_L_TOP_IN, dx, dy)}",
+            f"L {pt(WING_L_IN, dx, dy)}",
+            "Z",
+        ])
+        em = " ".join([
+            f"M {pt(TIP_R, dx, dy)}",
+            f"L {pt(WING_R_OUT, dx, dy)}",
+            f"L {pt(SHAFT_R_TOP_OUT, dx, dy)}",
+            f"L {pt(U_R_OUT, dx, dy)}",
+            f"C {pt(emerald_seg[2], dx, dy)} {pt(emerald_seg[1], dx, dy)} {pt(U_SPLIT, dx, dy)}",
+            f"C {pt(fold_c1, dx, dy)} {pt(fold_c2, dx, dy)} {pt(APEX_IN, dx, dy)}",
+            f"L {pt(SHAFT_R_TOP_IN, dx, dy)}",
+            f"L {pt(WING_R_IN, dx, dy)}",
+            "Z",
+        ])
+        return am, em
+
+    v_sh_far_am, v_sh_far_em = make_v_shadow(0.10, 1.95)
+    v_sh_mid_am, v_sh_mid_em = make_v_shadow(0.25, 1.15)
+    v_sh_near_am, v_sh_near_em = make_v_shadow(0.18, 0.55)
 
     return {
         "amber_d": amber_d,
-        "amber_depth_d": amber_depth_d,
-        "shadow_d": shadow_d,
         "emerald_d": emerald_d,
-        "emerald_depth_d": emerald_depth_d,
-        "emerald_hi_d": emerald_hi_d,
+        "fold_shadow_band_d": fold_shadow_band_d,
+        "fold_seam_curve_d": fold_seam_curve_d,
+        "amber_lit_edge_d": amber_lit_edge_d,
+        "amber_inner_edge_d": amber_inner_edge_d,
+        "emerald_dark_edge_d": emerald_dark_edge_d,
+        "emerald_lit_ridge_d": emerald_lit_ridge_d,
         "mono_amber_d": mono_amber_d,
         "mono_em_d": emerald_d,
         "dollar_bar_d": dollar_bar_d,
         "dollar_s_d": dollar_s_d,
-        "dollar_bar_shadow_d": dollar_bar_shadow_d,
-        "dollar_s_shadow_d": dollar_s_shadow_d,
+        "dollar_bar_sh_far_d": dollar_bar_sh_far_d,
+        "dollar_s_sh_far_d": dollar_s_sh_far_d,
+        "dollar_bar_sh_near_d": dollar_bar_sh_near_d,
+        "dollar_s_sh_near_d": dollar_s_sh_near_d,
+        "v_sh_far_am": v_sh_far_am,
+        "v_sh_far_em": v_sh_far_em,
+        "v_sh_mid_am": v_sh_mid_am,
+        "v_sh_mid_em": v_sh_mid_em,
+        "v_sh_near_am": v_sh_near_am,
+        "v_sh_near_em": v_sh_near_em,
     }
 
 
-p108 = build_paths(0.0, 0.0)
-p76 = build_paths(-16.0, -16.0)
+S512 = 512.0 / 76.0
+p512 = build_paths(scale=S512, ox=-16.0 * S512, oy=-16.0 * S512)
+p108 = build_paths(scale=1.0, ox=0.0, oy=0.0)
+p76 = build_paths(scale=1.0, ox=-16.0, oy=-16.0)
 
 
-def make_svg(viewbox, width, height, include_bg=True, bg_rect=(0, 0, 108, 108), monochrome=False, dollar_color="#FFFFFF", paths=p108):
-    ox = -bg_rect[0] if bg_rect == (0, 0, 76, 76) else 0.0
-    oy = -bg_rect[1] if bg_rect == (0, 0, 76, 76) else 0.0
-    defs = ""
-    if not monochrome or include_bg:
-        defs = f"""  <defs>
-    <linearGradient id="bgGrad" x1="{bg_rect[0]}" y1="{bg_rect[1]}" x2="{bg_rect[0]+bg_rect[2]}" y2="{bg_rect[1]+bg_rect[3]}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0A101D"/>
-      <stop offset="100%" stop-color="#172133"/>
-    </linearGradient>
-    <linearGradient id="amberGrad" x1="{28+ox:.1f}" y1="{33+oy:.1f}" x2="{52+ox:.1f}" y2="{76+oy:.1f}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F59E0B"/>
-      <stop offset="55%" stop-color="#D97706"/>
-      <stop offset="100%" stop-color="#B45309"/>
-    </linearGradient>
-    <linearGradient id="foldShadowGrad" x1="{46+ox:.1f}" y1="{66+oy:.1f}" x2="{54+ox:.1f}" y2="{62+oy:.1f}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#78350F" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#78350F" stop-opacity="0.78"/>
-    </linearGradient>
-    <linearGradient id="emeraldGrad" x1="{46+ox:.1f}" y1="{78+oy:.1f}" x2="{80+ox:.1f}" y2="{33+oy:.1f}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#047857"/>
-      <stop offset="52%" stop-color="#059669"/>
-      <stop offset="100%" stop-color="#10B981"/>
-    </linearGradient>
-  </defs>\n"""
+def make_3d_svg(
+    viewport_size,
+    width,
+    height,
+    paths,
+    scale_to_512,
+    include_bg=True,
+    monochrome=False,
+    lightbg=False,
+    coord_offset=0.0,
+):
+    """Generates Proposal 2 (3D Esculpido) SVG at arbitrary viewport scale."""
+    u = scale_to_512  # ratio relative to 512px reference
 
-    bg_el = f'  <rect x="{bg_rect[0]}" y="{bg_rect[1]}" width="{bg_rect[2]}" height="{bg_rect[3]}" fill="url(#bgGrad)"/>\n' if include_bg else ""
+    def gp(x512, y512):
+        # Convert 512px reference coordinate back into current viewport coordinates
+        return f"{(x512 * u) + coord_offset:.2f}", f"{(y512 * u) + coord_offset:.2f}"
 
     if monochrome:
-        body = (
-            f'  <path d="{paths["mono_amber_d"]}" fill="#FFFFFF"/>\n'
-            f'  <path d="{paths["mono_em_d"]}" fill="#FFFFFF"/>\n'
-            f'  <path d="{paths["dollar_bar_d"]}" fill="#FFFFFF"/>\n'
-            f'  <path d="{paths["dollar_s_d"]}" fill="none" stroke="#FFFFFF" stroke-width="2.80" stroke-linecap="butt"/>\n'
-        )
+        sw = 2.80 * (viewport_size / 108.0 if viewport_size == 108.0 else S512)
+        return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {viewport_size:g} {viewport_size:g}" width="{width}" height="{height}">
+  <path d="{paths['mono_amber_d']}" fill="#FFFFFF"/>
+  <path d="{paths['mono_em_d']}" fill="#FFFFFF"/>
+  <path d="{paths['dollar_bar_d']}" fill="#FFFFFF"/>
+  <path d="{paths['dollar_s_d']}" fill="none" stroke="#FFFFFF" stroke-width="{sw:.2f}" stroke-linecap="butt"/>
+</svg>
+"""
+
+    # Stroke & filter scaling relative to 512px reference
+    k = u
+    sw_dollar = 18.86 * k
+
+    # Shadow intensities tuned for dark vs light background
+    v_amb_op = "0.28" if lightbg else "0.62"
+    v_key_op = "0.34" if lightbg else "0.70"
+    v_sh_col = "#0F172A" if lightbg else "#020617"
+    d_amb_op = "0.26" if lightbg else "0.76"
+    d_key_op = "0.22" if lightbg else "0.58"
+
+    if lightbg:
+        dollar_stops = """      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="75%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#334155"/>"""
     else:
-        dollar_shadow = ""
-        if dollar_color.upper() == "#FFFFFF":
-            dollar_shadow = (
-                f'  <path d="{paths["dollar_bar_shadow_d"]}" fill="#040812" opacity="0.48"/>\n'
-                f'  <path d="{paths["dollar_s_shadow_d"]}" fill="none" stroke="#040812" stroke-width="2.90" stroke-linecap="butt" opacity="0.48"/>\n'
-            )
-        body = (
-            f'  <path d="{paths["amber_d"]}" fill="url(#amberGrad)"/>\n'
-            f'  <path d="{paths["amber_depth_d"]}" fill="#92400E" opacity="0.32"/>\n'
-            f'  <path d="{paths["shadow_d"]}" fill="url(#foldShadowGrad)"/>\n'
-            f'  <path d="{paths["emerald_d"]}" fill="url(#emeraldGrad)"/>\n'
-            f'  <path d="{paths["emerald_depth_d"]}" fill="#022C22" opacity="0.30"/>\n'
-            f'  <path d="{paths["emerald_hi_d"]}" fill="#34D399" opacity="0.20"/>\n'
-            f'{dollar_shadow}'
-            f'  <path d="{paths["dollar_bar_d"]}" fill="{dollar_color}"/>\n'
-            f'  <path d="{paths["dollar_s_d"]}" fill="none" stroke="{dollar_color}" stroke-width="2.80" stroke-linecap="butt"/>\n'
+        dollar_stops = """      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="72%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>"""
+
+    bg_defs = ""
+    bg_nodes = ""
+    if include_bg:
+        bg_defs = f"""    <linearGradient id="bg2" x1="0" y1="0" x2="{viewport_size:g}" y2="{viewport_size:g}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#060A12"/>
+      <stop offset="60%" stop-color="#0A111F"/>
+      <stop offset="100%" stop-color="#111B2D"/>
+    </linearGradient>
+    <radialGradient id="ambientAura2" cx="{viewport_size/2:.2f}" cy="{viewport_size*0.4785:.2f}" r="{viewport_size*0.43:.2f}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#065F46" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#0F172A" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#060A12" stop-opacity="0"/>
+    </radialGradient>\n"""
+        bg_nodes = (
+            f'  <rect x="0" y="0" width="{viewport_size:g}" height="{viewport_size:g}" fill="url(#bg2)"/>\n'
+            f'  <circle cx="{viewport_size/2:.2f}" cy="{viewport_size*0.4785:.2f}" r="{viewport_size*0.43:.2f}" fill="url(#ambientAura2)"/>\n'
         )
 
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}" width="{width}" height="{height}">\n'
-        f"{defs}{bg_el}{body}</svg>\n"
-    )
+    am_x1, am_y1 = gp(115, 115)
+    am_x2, am_y2 = gp(262, 395)
+    rim_x1, rim_y1 = gp(100, 115)
+    rim_x2, rim_y2 = gp(235, 385)
+    fg_x1, fg_y1 = gp(215, 350)
+    fg_x2, fg_y2 = gp(255, 325)
+    em_x1, em_y1 = gp(245, 405)
+    em_x2, em_y2 = gp(405, 115)
+    et_x1, et_y1 = gp(245, 335)
+    et_x2, et_y2 = gp(405, 115)
+    dl_x1, dl_y1 = gp(256, 115)
+    dl_x2, dl_y2 = gp(256, 235)
+
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {viewport_size:g} {viewport_size:g}" width="{width}" height="{height}">
+  <defs>
+{bg_defs}    <linearGradient id="amberVol" x1="{am_x1}" y1="{am_y1}" x2="{am_x2}" y2="{am_y2}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EA8C00"/>
+      <stop offset="40%" stop-color="#C96400"/>
+      <stop offset="78%" stop-color="#9A4100"/>
+      <stop offset="100%" stop-color="#6B2B00"/>
+    </linearGradient>
+    <linearGradient id="amberRim" x1="{rim_x1}" y1="{rim_y1}" x2="{rim_x2}" y2="{rim_y2}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.58"/>
+      <stop offset="65%" stop-color="#F59E0B" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#B45309" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="foldGrad2" x1="{fg_x1}" y1="{fg_y1}" x2="{fg_x2}" y2="{fg_y2}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B1400" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#290D00" stop-opacity="0.82"/>
+    </linearGradient>
+
+    <linearGradient id="emeraldVol" x1="{em_x1}" y1="{em_y1}" x2="{em_x2}" y2="{em_y2}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#022C22"/>
+      <stop offset="22%" stop-color="#064E3B"/>
+      <stop offset="56%" stop-color="#047857"/>
+      <stop offset="86%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="emeraldTopLight" x1="{et_x1}" y1="{et_y1}" x2="{et_x2}" y2="{et_y2}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0"/>
+      <stop offset="55%" stop-color="#34D399" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#A7F3D0" stop-opacity="0.58"/>
+    </linearGradient>
+
+    <linearGradient id="dollarGrad" x1="{dl_x1}" y1="{dl_y1}" x2="{dl_x2}" y2="{dl_y2}" gradientUnits="userSpaceOnUse">
+{dollar_stops}
+    </linearGradient>
+
+    <clipPath id="clipAmber2">
+      <path d="{paths['amber_d']}"/>
+    </clipPath>
+    <clipPath id="clipEmerald2">
+      <path d="{paths['emerald_d']}"/>
+    </clipPath>
+
+    <filter id="vShadow2" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="{12*k:.2f}" result="blurAmb"/>
+      <feOffset in="blurAmb" dx="0" dy="{14*k:.2f}" result="offAmb"/>
+      <feFlood flood-color="#000000" flood-opacity="{v_amb_op}" result="colAmb"/>
+      <feComposite in="colAmb" in2="offAmb" operator="in" result="shAmb"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="{5*k:.2f}" result="blurKey"/>
+      <feOffset in="blurKey" dx="{2*k:.2f}" dy="{7*k:.2f}" result="offKey"/>
+      <feFlood flood-color="{v_sh_col}" flood-opacity="{v_key_op}" result="colKey"/>
+      <feComposite in="colKey" in2="offKey" operator="in" result="shKey"/>
+
+      <feMerge>
+        <feMergeNode in="shAmb"/>
+        <feMergeNode in="shKey"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softBlur6" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="{5.5*k:.2f}"/>
+    </filter>
+    <filter id="softBlur4" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="{3.5*k:.2f}"/>
+    </filter>
+
+    <filter id="dollarShadow2" x="-120%" y="-80%" width="340%" height="260%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="{9*k:.2f}" result="b1"/>
+      <feOffset in="b1" dx="{3*k:.2f}" dy="{10*k:.2f}" result="o1"/>
+      <feFlood flood-color="{v_sh_col}" flood-opacity="{d_amb_op}" result="c1"/>
+      <feComposite in="c1" in2="o1" operator="in" result="s1"/>
+
+      <feGaussianBlur in="SourceAlpha" stdDeviation="{3*k:.2f}" result="b2"/>
+      <feOffset in="b2" dx="{1*k:.2f}" dy="{4*k:.2f}" result="o2"/>
+      <feFlood flood-color="#000000" flood-opacity="{d_key_op}" result="c2"/>
+      <feComposite in="c2" in2="o2" operator="in" result="s2"/>
+
+      <feMerge>
+        <feMergeNode in="s1"/>
+        <feMergeNode in="s2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+{bg_nodes}  <g filter="url(#vShadow2)">
+    <g clip-path="url(#clipAmber2)">
+      <path d="{paths['amber_d']}" fill="url(#amberVol)"/>
+      <path d="{paths['amber_lit_edge_d']}" fill="none" stroke="#FCD34D" stroke-width="{9*k:.2f}" stroke-linejoin="round" opacity="0.26" filter="url(#softBlur4)"/>
+      <path d="{paths['amber_lit_edge_d']}" fill="none" stroke="url(#amberRim)" stroke-width="{2.2*k:.2f}" stroke-linejoin="round"/>
+      <path d="{paths['amber_inner_edge_d']}" fill="none" stroke="#451A03" stroke-width="{10*k:.2f}" stroke-linejoin="round" opacity="0.34" filter="url(#softBlur4)"/>
+      <path d="{paths['fold_shadow_band_d']}" fill="url(#foldGrad2)"/>
+      <path d="{paths['fold_seam_curve_d']}" fill="none" stroke="#260C00" stroke-width="{14*k:.2f}" stroke-linecap="round" opacity="0.62" filter="url(#softBlur6)"/>
+    </g>
+
+    <g clip-path="url(#clipEmerald2)">
+      <path d="{paths['emerald_d']}" fill="url(#emeraldVol)"/>
+      <path d="{paths['emerald_dark_edge_d']}" fill="none" stroke="#011A13" stroke-width="{13*k:.2f}" stroke-linejoin="round" opacity="0.68" filter="url(#softBlur6)"/>
+      <path d="{paths['emerald_lit_ridge_d']}" fill="none" stroke="#34D399" stroke-width="{10*k:.2f}" stroke-linejoin="round" opacity="0.24" filter="url(#softBlur4)"/>
+      <path d="{paths['emerald_lit_ridge_d']}" fill="none" stroke="url(#emeraldTopLight)" stroke-width="{2.4*k:.2f}" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <g filter="url(#dollarShadow2)">
+    <path d="{paths['dollar_bar_d']}" fill="url(#dollarGrad)"/>
+    <path d="{paths['dollar_s_d']}" fill="none" stroke="url(#dollarGrad)" stroke-width="{sw_dollar:.2f}" stroke-linecap="butt"/>
+  </g>
+</svg>
+"""
 
 
 def write_file(path, content):
@@ -360,12 +514,59 @@ def render_svg_png(svg_path, png_path, size):
 # ---------------------------------------------------------------------------
 # 2. Generate SVG & PNG Masters in brand/
 # ---------------------------------------------------------------------------
-svg_master_108 = make_svg("0 0 108 108", 1024, 1024, include_bg=True, bg_rect=(0, 0, 108, 108))
-svg_square = make_svg("16 16 76 76", 1024, 1024, include_bg=True, bg_rect=(16, 16, 76, 76))
-svg_emblem = make_svg("16 16 76 76", 1024, 1024, include_bg=False, bg_rect=(16, 16, 76, 76), dollar_color="#FFFFFF")
-svg_emblem_light = make_svg("16 16 76 76", 1024, 1024, include_bg=False, bg_rect=(16, 16, 76, 76), dollar_color="#0F172A")
-svg_mono = make_svg("0 0 108 108", 512, 512, include_bg=False, monochrome=True)
-svg_mono_sq = make_svg("16 16 76 76", 512, 512, include_bg=False, monochrome=True)
+svg_master_108 = make_3d_svg(
+    viewport_size=108.0,
+    width=1024,
+    height=1024,
+    paths=p108,
+    scale_to_512=76.0 / 512.0,
+    include_bg=True,
+    coord_offset=16.0,
+)
+svg_square = make_3d_svg(
+    viewport_size=512.0,
+    width=512,
+    height=512,
+    paths=p512,
+    scale_to_512=1.0,
+    include_bg=True,
+)
+svg_emblem = make_3d_svg(
+    viewport_size=512.0,
+    width=512,
+    height=512,
+    paths=p512,
+    scale_to_512=1.0,
+    include_bg=False,
+    lightbg=False,
+)
+svg_emblem_light = make_3d_svg(
+    viewport_size=512.0,
+    width=512,
+    height=512,
+    paths=p512,
+    scale_to_512=1.0,
+    include_bg=False,
+    lightbg=True,
+)
+svg_mono = make_3d_svg(
+    viewport_size=108.0,
+    width=512,
+    height=512,
+    paths=p108,
+    scale_to_512=76.0 / 512.0,
+    include_bg=False,
+    monochrome=True,
+)
+svg_mono_sq = make_3d_svg(
+    viewport_size=512.0,
+    width=512,
+    height=512,
+    paths=p512,
+    scale_to_512=1.0,
+    include_bg=False,
+    monochrome=True,
+)
 
 path_svg_master = os.path.join(BRAND_DIR, "tasave_logo_master_108.svg")
 path_svg_square = os.path.join(BRAND_DIR, "tasave_logo_square.svg")
@@ -379,7 +580,6 @@ write_file(path_svg_square, svg_square)
 write_file(path_svg_emblem, svg_emblem)
 write_file(path_svg_emblem_light, svg_emblem_light)
 write_file(path_svg_mono, svg_mono)
-
 write_file(path_svg_mono_sq, svg_mono_sq)
 
 png_1024 = os.path.join(BRAND_DIR, "tasave_logo_1024x1024.png")
@@ -402,105 +602,273 @@ os.remove(path_svg_mono_sq)
 shutil.copyfile(png_512, os.path.join(DOCS_ASSETS_DIR, "app_icon_512x512.png"))
 shutil.copyfile(png_emb_512, os.path.join(DOCS_ASSETS_DIR, "logo_tasave_transparent_512.png"))
 
+
 # ---------------------------------------------------------------------------
-# 3. Generate Android VectorDrawables & Adaptive Icon XMLs
+# 3. Generate Android VectorDrawables & Adaptive Icon XMLs (Clipped 3D Sculpt)
 # ---------------------------------------------------------------------------
-ic_fg_xml = f"""<?xml version="1.0" encoding="utf-8"?>
+def build_vector_drawable_3d(dp_size, paths, ox=0.0):
+    def c(v):
+        return f"{v + ox:.2f}"
+
+    return f"""<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="{dp_size}dp"
+    android:height="{dp_size}dp"
+    android:viewportWidth="{dp_size}"
+    android:viewportHeight="{dp_size}">
+
+    <!-- Multi-Layer Ambient + Directional Drop Shadow Behind V -->
+    <path
+        android:pathData="{paths['v_sh_far_am']}"
+        android:fillColor="#020617"
+        android:fillAlpha="0.22"
+        android:strokeColor="#020617"
+        android:strokeAlpha="0.14"
+        android:strokeWidth="2.4"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="{paths['v_sh_far_em']}"
+        android:fillColor="#020617"
+        android:fillAlpha="0.22"
+        android:strokeColor="#020617"
+        android:strokeAlpha="0.14"
+        android:strokeWidth="2.4"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="{paths['v_sh_mid_am']}"
+        android:fillColor="#020617"
+        android:fillAlpha="0.30"
+        android:strokeColor="#020617"
+        android:strokeAlpha="0.20"
+        android:strokeWidth="1.2"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="{paths['v_sh_mid_em']}"
+        android:fillColor="#020617"
+        android:fillAlpha="0.30"
+        android:strokeColor="#020617"
+        android:strokeAlpha="0.20"
+        android:strokeWidth="1.2"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="{paths['v_sh_near_am']}"
+        android:fillColor="#000000"
+        android:fillAlpha="0.36" />
+    <path
+        android:pathData="{paths['v_sh_near_em']}"
+        android:fillColor="#000000"
+        android:fillAlpha="0.36" />
+
+    <!-- Clipped Left Amber Arm (Volumetric Gradient + Soft Specular Rim + Fold Occlusion) -->
+    <group>
+        <clip-path android:pathData="{paths['amber_d']}" />
+        <path android:pathData="{paths['amber_d']}">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="{c(33.0)}"
+                    android:startY="{c(33.0)}"
+                    android:endX="{c(54.8)}"
+                    android:endY="{c(74.6)}"
+                    android:type="linear">
+                    <item android:offset="0" android:color="#EA8C00" />
+                    <item android:offset="0.4" android:color="#C96400" />
+                    <item android:offset="0.78" android:color="#9A4100" />
+                    <item android:offset="1" android:color="#6B2B00" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:pathData="{paths['amber_lit_edge_d']}"
+            android:strokeColor="#FCD34D"
+            android:strokeAlpha="0.22"
+            android:strokeWidth="1.35"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="{paths['amber_lit_edge_d']}"
+            android:strokeColor="#FDE68A"
+            android:strokeAlpha="0.48"
+            android:strokeWidth="0.36"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="{paths['amber_inner_edge_d']}"
+            android:strokeColor="#451A03"
+            android:strokeAlpha="0.30"
+            android:strokeWidth="1.50"
+            android:strokeLineJoin="round" />
+        <path android:pathData="{paths['fold_shadow_band_d']}">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="{c(47.9)}"
+                    android:startY="{c(68.0)}"
+                    android:endX="{c(53.8)}"
+                    android:endY="{c(64.2)}"
+                    android:type="linear">
+                    <item android:offset="0" android:color="#003B1400" />
+                    <item android:offset="1" android:color="#D1290D00" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:pathData="{paths['fold_seam_curve_d']}"
+            android:strokeColor="#260C00"
+            android:strokeAlpha="0.32"
+            android:strokeWidth="2.10"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="{paths['fold_seam_curve_d']}"
+            android:strokeColor="#260C00"
+            android:strokeAlpha="0.48"
+            android:strokeWidth="1.05"
+            android:strokeLineCap="round" />
+    </group>
+
+    <!-- Clipped Right Continuous Emerald Arm (Deep Volumetric + Dark Bevel + Lit Ridge) -->
+    <group>
+        <clip-path android:pathData="{paths['emerald_d']}" />
+        <path android:pathData="{paths['emerald_d']}">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="{c(52.4)}"
+                    android:startY="{c(76.1)}"
+                    android:endX="{c(76.1)}"
+                    android:endY="{c(33.0)}"
+                    android:type="linear">
+                    <item android:offset="0" android:color="#022C22" />
+                    <item android:offset="0.22" android:color="#064E3B" />
+                    <item android:offset="0.56" android:color="#047857" />
+                    <item android:offset="0.86" android:color="#059669" />
+                    <item android:offset="1" android:color="#10B981" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path
+            android:pathData="{paths['emerald_dark_edge_d']}"
+            android:strokeColor="#011A13"
+            android:strokeAlpha="0.48"
+            android:strokeWidth="2.00"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="{paths['emerald_dark_edge_d']}"
+            android:strokeColor="#011A13"
+            android:strokeAlpha="0.45"
+            android:strokeWidth="0.95"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="{paths['emerald_lit_ridge_d']}"
+            android:strokeColor="#34D399"
+            android:strokeAlpha="0.22"
+            android:strokeWidth="1.50"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="{paths['emerald_lit_ridge_d']}"
+            android:strokeColor="#A7F3D0"
+            android:strokeAlpha="0.50"
+            android:strokeWidth="0.38"
+            android:strokeLineJoin="round" />
+    </group>
+
+    <!-- Multi-Layer Soft Drop Shadow Behind Floating Dollar Sign -->
+    <path
+        android:pathData="{paths['dollar_bar_sh_far_d']}"
+        android:fillColor="#020617"
+        android:fillAlpha="0.28"
+        android:strokeColor="#020617"
+        android:strokeAlpha="0.18"
+        android:strokeWidth="1.30"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="{paths['dollar_s_sh_far_d']}"
+        android:strokeColor="#020617"
+        android:strokeAlpha="0.28"
+        android:strokeWidth="3.90"
+        android:strokeLineCap="butt" />
+    <path
+        android:pathData="{paths['dollar_bar_sh_near_d']}"
+        android:fillColor="#000000"
+        android:fillAlpha="0.44" />
+    <path
+        android:pathData="{paths['dollar_s_sh_near_d']}"
+        android:strokeColor="#000000"
+        android:strokeAlpha="0.44"
+        android:strokeWidth="2.95"
+        android:strokeLineCap="butt" />
+
+    <!-- Crisp Floating Geometric Dollar Sign with Soft Vertical Metallic Sheen -->
+    <path android:pathData="{paths['dollar_bar_d']}">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="{c(54.0)}"
+                android:startY="{c(33.1)}"
+                android:endX="{c(54.0)}"
+                android:endY="{c(50.9)}"
+                android:type="linear">
+                <item android:offset="0" android:color="#FFFFFF" />
+                <item android:offset="0.72" android:color="#F1F5F9" />
+                <item android:offset="1" android:color="#CBD5E1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="{paths['dollar_s_d']}"
+        android:strokeWidth="2.80"
+        android:strokeLineCap="butt">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="{c(54.0)}"
+                android:startY="{c(33.1)}"
+                android:endX="{c(54.0)}"
+                android:endY="{c(50.9)}"
+                android:type="linear">
+                <item android:offset="0" android:color="#FFFFFF" />
+                <item android:offset="0.72" android:color="#F1F5F9" />
+                <item android:offset="1" android:color="#CBD5E1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
+"""
+
+
+ic_bg_xml = """<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
-    <!-- Left Amber Arrow Arm (Deep Rich Amber Gold) -->
-    <path android:pathData="{p108['amber_d']}">
+    <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="28"
-                android:startY="33"
-                android:endX="52"
-                android:endY="76"
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108"
                 android:type="linear">
-                <item android:offset="0" android:color="#F59E0B" />
-                <item android:offset="0.55" android:color="#D97706" />
-                <item android:offset="1" android:color="#B45309" />
+                <item android:offset="0" android:color="#060A12" />
+                <item android:offset="0.6" android:color="#0A111F" />
+                <item android:offset="1" android:color="#111B2D" />
             </gradient>
         </aapt:attr>
     </path>
-
-    <!-- Amber Outer-Lower Edge Depth -->
-    <path
-        android:pathData="{p108['amber_depth_d']}"
-        android:fillColor="#92400E"
-        android:fillAlpha="0.32" />
-
-    <!-- Layered 3D Ribbon Fold Shadow at V-Vertex -->
-    <path android:pathData="{p108['shadow_d']}">
+    <path android:pathData="M54,6 A46.4,46.4 0 1,1 53.99,6 Z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="46"
-                android:startY="66"
-                android:endX="54"
-                android:endY="62"
-                android:type="linear">
-                <item android:offset="0" android:color="#2678350F" />
-                <item android:offset="1" android:color="#C778350F" />
+                android:centerX="54"
+                android:centerY="52.4"
+                android:gradientRadius="46.4"
+                android:type="radial">
+                <item android:offset="0" android:color="#38065F46" />
+                <item android:offset="0.6" android:color="#0F0F172A" />
+                <item android:offset="1" android:color="#00060A12" />
             </gradient>
         </aapt:attr>
     </path>
-
-    <!-- Right Continuous Emerald Arrow Arm (Deep Fintech Emerald) -->
-    <path android:pathData="{p108['emerald_d']}">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="46"
-                android:startY="78"
-                android:endX="80"
-                android:endY="33"
-                android:type="linear">
-                <item android:offset="0" android:color="#047857" />
-                <item android:offset="0.52" android:color="#059669" />
-                <item android:offset="1" android:color="#10B981" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Emerald Lower U-Loop & Outer Edge Depth Shading -->
-    <path
-        android:pathData="{p108['emerald_depth_d']}"
-        android:fillColor="#022C22"
-        android:fillAlpha="0.30" />
-
-    <!-- Subtle Top Rim Highlight on Emerald Arrowhead -->
-    <path
-        android:pathData="{p108['emerald_hi_d']}"
-        android:fillColor="#34D399"
-        android:fillAlpha="0.20" />
-
-    <!-- Soft Drop Shadow Behind Dollar Sign -->
-    <path
-        android:pathData="{p108['dollar_bar_shadow_d']}"
-        android:fillColor="#040812"
-        android:fillAlpha="0.48" />
-    <path
-        android:pathData="{p108['dollar_s_shadow_d']}"
-        android:strokeColor="#040812"
-        android:strokeAlpha="0.48"
-        android:strokeWidth="2.90"
-        android:strokeLineCap="butt" />
-
-    <!-- Crisp Upper-Center Geometric Dollar Sign -->
-    <path
-        android:pathData="{p108['dollar_bar_d']}"
-        android:fillColor="#FFFFFF" />
-    <path
-        android:pathData="{p108['dollar_s_d']}"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.80"
-        android:strokeLineCap="butt" />
 </vector>
 """
+
+ic_fg_xml = build_vector_drawable_3d(108, p108, ox=0.0)
+ic_brand_mark_xml = build_vector_drawable_3d(76, p76, ox=-16.0)
 
 ic_mono_xml = f"""<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -526,95 +894,6 @@ ic_mono_xml = f"""<?xml version="1.0" encoding="utf-8"?>
 </vector>
 """
 
-ic_brand_mark_xml = f"""<?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="76dp"
-    android:height="76dp"
-    android:viewportWidth="76"
-    android:viewportHeight="76">
-
-    <path android:pathData="{p76['amber_d']}">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="12"
-                android:startY="17"
-                android:endX="36"
-                android:endY="60"
-                android:type="linear">
-                <item android:offset="0" android:color="#F59E0B" />
-                <item android:offset="0.55" android:color="#D97706" />
-                <item android:offset="1" android:color="#B45309" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <path
-        android:pathData="{p76['amber_depth_d']}"
-        android:fillColor="#92400E"
-        android:fillAlpha="0.32" />
-
-    <path android:pathData="{p76['shadow_d']}">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="30"
-                android:startY="50"
-                android:endX="38"
-                android:endY="46"
-                android:type="linear">
-                <item android:offset="0" android:color="#2678350F" />
-                <item android:offset="1" android:color="#C778350F" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <path android:pathData="{p76['emerald_d']}">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="30"
-                android:startY="62"
-                android:endX="64"
-                android:endY="17"
-                android:type="linear">
-                <item android:offset="0" android:color="#047857" />
-                <item android:offset="0.52" android:color="#059669" />
-                <item android:offset="1" android:color="#10B981" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <path
-        android:pathData="{p76['emerald_depth_d']}"
-        android:fillColor="#022C22"
-        android:fillAlpha="0.30" />
-
-    <path
-        android:pathData="{p76['emerald_hi_d']}"
-        android:fillColor="#34D399"
-        android:fillAlpha="0.20" />
-
-    <path
-        android:pathData="{p76['dollar_bar_shadow_d']}"
-        android:fillColor="#040812"
-        android:fillAlpha="0.48" />
-    <path
-        android:pathData="{p76['dollar_s_shadow_d']}"
-        android:strokeColor="#040812"
-        android:strokeAlpha="0.48"
-        android:strokeWidth="2.90"
-        android:strokeLineCap="butt" />
-
-    <path
-        android:pathData="{p76['dollar_bar_d']}"
-        android:fillColor="#FFFFFF" />
-    <path
-        android:pathData="{p76['dollar_s_d']}"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.80"
-        android:strokeLineCap="butt" />
-</vector>
-"""
-
 adaptive_xml = """<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
@@ -623,6 +902,7 @@ adaptive_xml = """<?xml version="1.0" encoding="utf-8"?>
 </adaptive-icon>
 """
 
+write_file(os.path.join(RES_DIR, "drawable", "ic_launcher_background.xml"), ic_bg_xml)
 write_file(os.path.join(RES_DIR, "drawable", "ic_launcher_foreground.xml"), ic_fg_xml)
 write_file(os.path.join(RES_DIR, "drawable", "ic_launcher_monochrome.xml"), ic_mono_xml)
 write_file(os.path.join(RES_DIR, "drawable", "ic_brand_mark.xml"), ic_brand_mark_xml)
@@ -681,27 +961,35 @@ pix = fg.load()
 for y in range(H):
     for x in range(W):
         t = (x / W * 0.65 + y / H * 0.35)
-        r = int(10 + t * 13)
-        g = int(16 + t * 17)
-        b = int(29 + t * 22)
+        r = int(6 + t * 11)
+        g = int(10 + t * 17)
+        b = int(18 + t * 27)
         d_em = math.hypot(x - 235, y - 250)
-        if d_em < 260:
-            glow = ((1.0 - d_em / 260.0) ** 2) * 0.16
-            r = min(255, int(r + 5 * glow))
-            g = min(255, int(g + 150 * glow))
-            b = min(255, int(b + 105 * glow))
+        if d_em < 270:
+            glow = ((1.0 - d_em / 270.0) ** 2) * 0.18
+            r = min(255, int(r + 6 * glow))
+            g = min(255, int(g + 125 * glow))
+            b = min(255, int(b + 88 * glow))
         pix[x, y] = (r, g, b, 255)
+
+TILE = 280
+TX, TY = 92, 110
+tile_mask = Image.new("L", (TILE, TILE), 0)
+ImageDraw.Draw(tile_mask).rounded_rectangle([0, 0, TILE - 1, TILE - 1], radius=62, fill=255)
+
+# Soft elevation drop shadow behind icon tile
+tile_shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+shadow_shape = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 170))
+tile_shadow.paste(shadow_shape, (TX, TY + 12), tile_mask)
+tile_shadow = tile_shadow.filter(ImageFilter.GaussianBlur(18))
+fg = Image.alpha_composite(fg, tile_shadow)
 
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 draw = ImageDraw.Draw(overlay)
 
-TILE = 280
-TX, TY = 92, 110
 tile_img = src_square.resize((TILE, TILE), Image.Resampling.LANCZOS)
-tile_mask = Image.new("L", (TILE, TILE), 0)
-ImageDraw.Draw(tile_mask).rounded_rectangle([0, 0, TILE - 1, TILE - 1], radius=58, fill=255)
 fg.paste(tile_img, (TX, TY), tile_mask)
-draw.rounded_rectangle([TX, TY, TX + TILE, TY + TILE], radius=58, outline=(16, 185, 129, 95), width=3)
+draw.rounded_rectangle([TX, TY, TX + TILE, TY + TILE], radius=62, outline=(16, 185, 129, 85), width=2)
 
 font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 font_reg = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
@@ -716,7 +1004,7 @@ draw.text((RX, 224), "Cotizaciones y Calculadora en Tiempo Real", font=f_sub, fi
 pills = [
     ("Dólar BCV", (16, 185, 129), (16, 185, 129, 28), (52, 211, 153, 255)),
     ("Euro BCV", (59, 130, 246), (59, 130, 246, 28), (96, 165, 250, 255)),
-    ("USDT P2P", (217, 119, 6), (217, 119, 6, 28), (245, 158, 11, 255)),
+    ("USDT P2P", (234, 140, 0), (234, 140, 0, 28), (251, 191, 36, 255)),
 ]
 px_cursor = RX
 py_top = 294
@@ -733,4 +1021,4 @@ for label, border_rgb, fill_rgba, text_rgba in pills:
 fg = Image.alpha_composite(fg, overlay)
 fg.convert("RGB").save(os.path.join(DOCS_ASSETS_DIR, "feature_graphic_1024x500.png"), format="PNG", optimize=True)
 
-print("All rich-depth Tasa VE brand assets generated successfully!")
+print("All Proposal 2 (3D Esculpido) Tasa VE brand assets generated successfully!")

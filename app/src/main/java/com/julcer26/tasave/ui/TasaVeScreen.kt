@@ -214,7 +214,7 @@ fun TasaVeScreen(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF0F172A))
+                                .background(Color(0xFF070C16))
                                 .border(
                                     width = 1.5.dp,
                                     color = if (isDark) Color(0x5910B981) else Color(0x6610B981),
@@ -2362,7 +2362,7 @@ fun SleekSettingsDialog(
                         modifier = Modifier
                             .size(54.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFF0F172A))
+                            .background(Color(0xFF070C16))
                             .border(
                                 width = 1.dp,
                                 color = if (isDark) Color(0x4010B981) else Color(0x5510B981),
