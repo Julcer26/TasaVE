@@ -127,13 +127,19 @@ amber_top_in = add(APEX_IN, (2.2, 2.5))
 
 fold_c1 = add(U_SPLIT, N_SPLIT_IN, 4.0)
 fold_c2 = add(APEX_IN, (-uR[0], -uR[1]), 3.8)
-sh_top = point_on_line(SHAFT_L_TOP_IN, (-uL[0], -uL[1]), APEX_IN[1] - 2.0)
-sh_ctrl = add(U_SPLIT, N_SPLIT_IN, 5.2)
+sh_top = point_on_line(SHAFT_L_TOP_IN, (-uL[0], -uL[1]), APEX_IN[1] - 2.6)
+sh_ctrl = add(U_SPLIT, N_SPLIT_IN, 6.0)
+
+# Sculpted emerald bottom-outer shading strip (follows lower U-turn -> right shaft outer edge smoothly)
+em_shade_u1 = add(U_R_OUT, (-COS_A, -SIN_A), 2.2)
+em_shade_c1 = add(emerald_seg[2], (-0.8, -2.0), 1.0)
+em_shade_c2 = add(emerald_seg[1], (-0.4, -1.7), 1.0)
+em_shade_tip_top = add(SHAFT_R_TOP_OUT, (-COS_A, -SIN_A), 1.5)
 
 # Uniform-channel monochrome left arm (~1.9u clean channel along entire fold!)
 mono_amber_seg, _ = split_cubic(U_L_OUT, C1_OUT, C2_OUT, U_R_OUT, 0.175)
 mono_a_end = mono_amber_seg[3]
-mono_shift = (-1.9, -0.55)  # uniform left-upward offset parallel to emerald fold edge
+mono_shift = (-1.9, -0.55)
 mono_c1 = add(fold_c1, mono_shift, 1.0)
 mono_c2 = add(fold_c2, mono_shift, 1.0)
 mono_top_in = point_on_line(SHAFT_L_TOP_IN, (-uL[0], -uL[1]), APEX_IN[1] - 2.15)
@@ -151,6 +157,16 @@ def build_paths(ox=0.0, oy=0.0):
         f"L {f(APEX_IN, ox, oy)}",
         f"L {f(SHAFT_L_TOP_IN, ox, oy)}",
         f"L {f(WING_L_IN, ox, oy)}",
+        "Z",
+    ])
+
+    # Subtle lower-inner depth bevel along amber outer contour (tapers cleanly into shaft neck)
+    amber_depth_d = " ".join([
+        f"M {f(SHAFT_L_TOP_OUT, ox, oy)}",
+        f"L {f(U_L_OUT, ox, oy)}",
+        f"C {f(amber_seg[1], ox, oy)} {f(amber_seg[2], ox, oy)} {f(U_SPLIT, ox, oy)}",
+        f"L {f(add(U_SPLIT, N_SPLIT_IN, 1.9), ox, oy)}",
+        f"L {f(add(U_L_OUT, nL_in, 1.7), ox, oy)}",
         "Z",
     ])
 
@@ -175,6 +191,36 @@ def build_paths(ox=0.0, oy=0.0):
         "Z",
     ])
 
+    # Subtle bottom-right depth plane on emerald U-loop & right outer edge (tapers cleanly into neck)
+    emerald_depth_d = " ".join([
+        f"M {f(SHAFT_R_TOP_OUT, ox, oy)}",
+        f"L {f(U_R_OUT, ox, oy)}",
+        f"C {f(emerald_seg[2], ox, oy)} {f(emerald_seg[1], ox, oy)} {f(U_SPLIT, ox, oy)}",
+        f"C {f(add(U_SPLIT, N_SPLIT_IN, 1.8), ox, oy)} {f(em_shade_c2, ox, oy)} {f(em_shade_c1, ox, oy)}",
+        f"L {f(em_shade_u1, ox, oy)}",
+        "Z",
+    ])
+
+    # Crisp subtle top highlight strictly INSIDE the emerald arrowhead triangle
+    def mix(pA, pB, t):
+        return (pA[0] * (1.0 - t) + pB[0] * t, pA[1] * (1.0 - t) + pB[1] * t)
+
+    hi_in = mix(TIP_R, WING_R_IN, 0.82)
+    hi_out = mix(TIP_R, WING_R_OUT, 0.82)
+    hi_mid = mix(TIP_R, NECK_R, 0.22)
+    hi_in_inner = mix(hi_mid, WING_R_IN, 0.58)
+    hi_out_inner = mix(hi_mid, WING_R_OUT, 0.58)
+
+    emerald_hi_d = " ".join([
+        f"M {f(TIP_R, ox, oy)}",
+        f"L {f(hi_in, ox, oy)}",
+        f"L {f(hi_in_inner, ox, oy)}",
+        f"L {f(hi_mid, ox, oy)}",
+        f"L {f(hi_out_inner, ox, oy)}",
+        f"L {f(hi_out, ox, oy)}",
+        "Z",
+    ])
+
     mono_amber_d = " ".join([
         f"M {f(TIP_L, ox, oy)}",
         f"L {f(WING_L_OUT, ox, oy)}",
@@ -187,7 +233,7 @@ def build_paths(ox=0.0, oy=0.0):
         "Z",
     ])
 
-    # Exact translated Dollar sign
+    # Dollar Sign & subtle shadow offset (+0.85, +1.45)
     dollar_bar_d = (
         f"M {52.85+ox:.2f},{33.60+oy:.2f} "
         f"L {55.15+ox:.2f},{33.60+oy:.2f} "
@@ -204,14 +250,36 @@ def build_paths(ox=0.0, oy=0.0):
         f"C {51.70+ox:.2f},{50.15+oy:.2f} {49.95+ox:.2f},{49.15+oy:.2f} {49.40+ox:.2f},{47.30+oy:.2f}"
     )
 
+    sx, sy = ox + 0.85, oy + 1.45
+    dollar_bar_shadow_d = (
+        f"M {52.85+sx:.2f},{33.60+sy:.2f} "
+        f"L {55.15+sx:.2f},{33.60+sy:.2f} "
+        f"L {55.15+sx:.2f},{52.20+sy:.2f} "
+        f"L {52.85+sx:.2f},{52.20+sy:.2f} Z"
+    )
+    dollar_s_shadow_d = (
+        f"M {58.15+sx:.2f},{38.40+sy:.2f} "
+        f"C {57.70+sx:.2f},{36.65+sy:.2f} {56.05+sx:.2f},{35.85+sy:.2f} {54.00+sx:.2f},{35.85+sy:.2f} "
+        f"C {51.20+sx:.2f},{35.85+sy:.2f} {49.55+sx:.2f},{37.40+sy:.2f} {49.55+sx:.2f},{39.35+sy:.2f} "
+        f"C {49.55+sx:.2f},{41.60+sy:.2f} {51.40+sx:.2f},{42.35+sy:.2f} {54.00+sx:.2f},{42.95+sy:.2f} "
+        f"C {56.65+sx:.2f},{43.55+sy:.2f} {58.55+sx:.2f},{44.35+sy:.2f} {58.55+sx:.2f},{46.60+sy:.2f} "
+        f"C {58.55+sx:.2f},{48.75+sy:.2f} {56.65+sx:.2f},{50.15+sy:.2f} {54.00+sx:.2f},{50.15+sy:.2f} "
+        f"C {51.70+sx:.2f},{50.15+sy:.2f} {49.95+sx:.2f},{49.15+sy:.2f} {49.40+sx:.2f},{47.30+sy:.2f}"
+    )
+
     return {
         "amber_d": amber_d,
+        "amber_depth_d": amber_depth_d,
         "shadow_d": shadow_d,
         "emerald_d": emerald_d,
+        "emerald_depth_d": emerald_depth_d,
+        "emerald_hi_d": emerald_hi_d,
         "mono_amber_d": mono_amber_d,
         "mono_em_d": emerald_d,
         "dollar_bar_d": dollar_bar_d,
         "dollar_s_d": dollar_s_d,
+        "dollar_bar_shadow_d": dollar_bar_shadow_d,
+        "dollar_s_shadow_d": dollar_s_shadow_d,
     }
 
 
@@ -226,17 +294,22 @@ def make_svg(viewbox, width, height, include_bg=True, bg_rect=(0, 0, 108, 108), 
     if not monochrome or include_bg:
         defs = f"""  <defs>
     <linearGradient id="bgGrad" x1="{bg_rect[0]}" y1="{bg_rect[1]}" x2="{bg_rect[0]+bg_rect[2]}" y2="{bg_rect[1]+bg_rect[3]}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0F172A"/>
-      <stop offset="100%" stop-color="#1E293B"/>
+      <stop offset="0%" stop-color="#0A101D"/>
+      <stop offset="100%" stop-color="#172133"/>
     </linearGradient>
     <linearGradient id="amberGrad" x1="{28+ox:.1f}" y1="{33+oy:.1f}" x2="{52+ox:.1f}" y2="{76+oy:.1f}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FBBF24"/>
-      <stop offset="100%" stop-color="#F59E0B"/>
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="55%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="foldShadowGrad" x1="{46+ox:.1f}" y1="{66+oy:.1f}" x2="{54+ox:.1f}" y2="{62+oy:.1f}" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#78350F" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#78350F" stop-opacity="0.78"/>
     </linearGradient>
     <linearGradient id="emeraldGrad" x1="{46+ox:.1f}" y1="{78+oy:.1f}" x2="{80+ox:.1f}" y2="{33+oy:.1f}" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#059669"/>
-      <stop offset="45%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#34D399"/>
+      <stop offset="0%" stop-color="#047857"/>
+      <stop offset="52%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10B981"/>
     </linearGradient>
   </defs>\n"""
 
@@ -250,10 +323,20 @@ def make_svg(viewbox, width, height, include_bg=True, bg_rect=(0, 0, 108, 108), 
             f'  <path d="{paths["dollar_s_d"]}" fill="none" stroke="#FFFFFF" stroke-width="2.80" stroke-linecap="butt"/>\n'
         )
     else:
+        dollar_shadow = ""
+        if dollar_color.upper() == "#FFFFFF":
+            dollar_shadow = (
+                f'  <path d="{paths["dollar_bar_shadow_d"]}" fill="#040812" opacity="0.48"/>\n'
+                f'  <path d="{paths["dollar_s_shadow_d"]}" fill="none" stroke="#040812" stroke-width="2.90" stroke-linecap="butt" opacity="0.48"/>\n'
+            )
         body = (
             f'  <path d="{paths["amber_d"]}" fill="url(#amberGrad)"/>\n'
-            f'  <path d="{paths["shadow_d"]}" fill="#B45309" opacity="0.58"/>\n'
+            f'  <path d="{paths["amber_depth_d"]}" fill="#92400E" opacity="0.32"/>\n'
+            f'  <path d="{paths["shadow_d"]}" fill="url(#foldShadowGrad)"/>\n'
             f'  <path d="{paths["emerald_d"]}" fill="url(#emeraldGrad)"/>\n'
+            f'  <path d="{paths["emerald_depth_d"]}" fill="#022C22" opacity="0.30"/>\n'
+            f'  <path d="{paths["emerald_hi_d"]}" fill="#34D399" opacity="0.20"/>\n'
+            f'{dollar_shadow}'
             f'  <path d="{paths["dollar_bar_d"]}" fill="{dollar_color}"/>\n'
             f'  <path d="{paths["dollar_s_d"]}" fill="none" stroke="{dollar_color}" stroke-width="2.80" stroke-linecap="butt"/>\n'
         )
@@ -297,7 +380,6 @@ write_file(path_svg_emblem, svg_emblem)
 write_file(path_svg_emblem_light, svg_emblem_light)
 write_file(path_svg_mono, svg_mono)
 
-# Temp square mono for 512 PNG export
 write_file(path_svg_mono_sq, svg_mono_sq)
 
 png_1024 = os.path.join(BRAND_DIR, "tasave_logo_1024x1024.png")
@@ -317,7 +399,6 @@ render_svg_png(path_svg_emblem_light, png_emb_light_512, 512)
 render_svg_png(path_svg_mono_sq, png_mono_512, 512)
 os.remove(path_svg_mono_sq)
 
-# Copy web/store square icons to docs/assets/
 shutil.copyfile(png_512, os.path.join(DOCS_ASSETS_DIR, "app_icon_512x512.png"))
 shutil.copyfile(png_emb_512, os.path.join(DOCS_ASSETS_DIR, "logo_tasave_transparent_512.png"))
 
@@ -332,7 +413,7 @@ ic_fg_xml = f"""<?xml version="1.0" encoding="utf-8"?>
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Left Amber Arrow Arm (Original Tasa VE Gold) -->
+    <!-- Left Amber Arrow Arm (Deep Rich Amber Gold) -->
     <path android:pathData="{p108['amber_d']}">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -341,19 +422,35 @@ ic_fg_xml = f"""<?xml version="1.0" encoding="utf-8"?>
                 android:endX="52"
                 android:endY="76"
                 android:type="linear">
-                <item android:offset="0" android:color="#FBBF24" />
-                <item android:offset="1" android:color="#F59E0B" />
+                <item android:offset="0" android:color="#F59E0B" />
+                <item android:offset="0.55" android:color="#D97706" />
+                <item android:offset="1" android:color="#B45309" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Ribbon Fold Shadow at V-Vertex -->
+    <!-- Amber Outer-Lower Edge Depth -->
     <path
-        android:pathData="{p108['shadow_d']}"
-        android:fillColor="#B45309"
-        android:fillAlpha="0.58" />
+        android:pathData="{p108['amber_depth_d']}"
+        android:fillColor="#92400E"
+        android:fillAlpha="0.32" />
 
-    <!-- Right Continuous Emerald Arrow Arm (Original Tasa VE Emerald) -->
+    <!-- Layered 3D Ribbon Fold Shadow at V-Vertex -->
+    <path android:pathData="{p108['shadow_d']}">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="46"
+                android:startY="66"
+                android:endX="54"
+                android:endY="62"
+                android:type="linear">
+                <item android:offset="0" android:color="#2678350F" />
+                <item android:offset="1" android:color="#C778350F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Right Continuous Emerald Arrow Arm (Deep Fintech Emerald) -->
     <path android:pathData="{p108['emerald_d']}">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -362,14 +459,38 @@ ic_fg_xml = f"""<?xml version="1.0" encoding="utf-8"?>
                 android:endX="80"
                 android:endY="33"
                 android:type="linear">
-                <item android:offset="0" android:color="#059669" />
-                <item android:offset="0.45" android:color="#10B981" />
-                <item android:offset="1" android:color="#34D399" />
+                <item android:offset="0" android:color="#047857" />
+                <item android:offset="0.52" android:color="#059669" />
+                <item android:offset="1" android:color="#10B981" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Upper-Center Geometric Dollar Sign -->
+    <!-- Emerald Lower U-Loop & Outer Edge Depth Shading -->
+    <path
+        android:pathData="{p108['emerald_depth_d']}"
+        android:fillColor="#022C22"
+        android:fillAlpha="0.30" />
+
+    <!-- Subtle Top Rim Highlight on Emerald Arrowhead -->
+    <path
+        android:pathData="{p108['emerald_hi_d']}"
+        android:fillColor="#34D399"
+        android:fillAlpha="0.20" />
+
+    <!-- Soft Drop Shadow Behind Dollar Sign -->
+    <path
+        android:pathData="{p108['dollar_bar_shadow_d']}"
+        android:fillColor="#040812"
+        android:fillAlpha="0.48" />
+    <path
+        android:pathData="{p108['dollar_s_shadow_d']}"
+        android:strokeColor="#040812"
+        android:strokeAlpha="0.48"
+        android:strokeWidth="2.90"
+        android:strokeLineCap="butt" />
+
+    <!-- Crisp Upper-Center Geometric Dollar Sign -->
     <path
         android:pathData="{p108['dollar_bar_d']}"
         android:fillColor="#FFFFFF" />
@@ -405,7 +526,6 @@ ic_mono_xml = f"""<?xml version="1.0" encoding="utf-8"?>
 </vector>
 """
 
-# Tightly framed 76x76 in-app brand mark (translates 16,16 -> 0,0) for TopAppBar & Settings tile
 ic_brand_mark_xml = f"""<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -422,16 +542,31 @@ ic_brand_mark_xml = f"""<?xml version="1.0" encoding="utf-8"?>
                 android:endX="36"
                 android:endY="60"
                 android:type="linear">
-                <item android:offset="0" android:color="#FBBF24" />
-                <item android:offset="1" android:color="#F59E0B" />
+                <item android:offset="0" android:color="#F59E0B" />
+                <item android:offset="0.55" android:color="#D97706" />
+                <item android:offset="1" android:color="#B45309" />
             </gradient>
         </aapt:attr>
     </path>
 
     <path
-        android:pathData="{p76['shadow_d']}"
-        android:fillColor="#B45309"
-        android:fillAlpha="0.58" />
+        android:pathData="{p76['amber_depth_d']}"
+        android:fillColor="#92400E"
+        android:fillAlpha="0.32" />
+
+    <path android:pathData="{p76['shadow_d']}">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="50"
+                android:endX="38"
+                android:endY="46"
+                android:type="linear">
+                <item android:offset="0" android:color="#2678350F" />
+                <item android:offset="1" android:color="#C778350F" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
     <path android:pathData="{p76['emerald_d']}">
         <aapt:attr name="android:fillColor">
@@ -441,12 +576,33 @@ ic_brand_mark_xml = f"""<?xml version="1.0" encoding="utf-8"?>
                 android:endX="64"
                 android:endY="17"
                 android:type="linear">
-                <item android:offset="0" android:color="#059669" />
-                <item android:offset="0.45" android:color="#10B981" />
-                <item android:offset="1" android:color="#34D399" />
+                <item android:offset="0" android:color="#047857" />
+                <item android:offset="0.52" android:color="#059669" />
+                <item android:offset="1" android:color="#10B981" />
             </gradient>
         </aapt:attr>
     </path>
+
+    <path
+        android:pathData="{p76['emerald_depth_d']}"
+        android:fillColor="#022C22"
+        android:fillAlpha="0.30" />
+
+    <path
+        android:pathData="{p76['emerald_hi_d']}"
+        android:fillColor="#34D399"
+        android:fillAlpha="0.20" />
+
+    <path
+        android:pathData="{p76['dollar_bar_shadow_d']}"
+        android:fillColor="#040812"
+        android:fillAlpha="0.48" />
+    <path
+        android:pathData="{p76['dollar_s_shadow_d']}"
+        android:strokeColor="#040812"
+        android:strokeAlpha="0.48"
+        android:strokeWidth="2.90"
+        android:strokeLineCap="butt" />
 
     <path
         android:pathData="{p76['dollar_bar_d']}"
@@ -490,11 +646,10 @@ for folder, px in MIPMAP_SIZES.items():
     out_dir = os.path.join(RES_DIR, folder)
     os.makedirs(out_dir, exist_ok=True)
     ss = px * 4
-    pad = round(ss * 0.04)  # 4% outer transparent margin matching Android legacy icon spec
+    pad = round(ss * 0.04)
     inner_size = ss - 2 * pad
     scaled_bg = src_square.resize((inner_size, inner_size), Image.Resampling.LANCZOS)
 
-    # Rounded square icon (ic_launcher.webp)
     sq_canvas = Image.new("RGBA", (ss, ss), (0, 0, 0, 0))
     sq_mask = Image.new("L", (inner_size, inner_size), 0)
     ImageDraw.Draw(sq_mask).rounded_rectangle(
@@ -508,7 +663,6 @@ for folder, px in MIPMAP_SIZES.items():
     sq_out = sq_canvas.resize((px, px), Image.Resampling.LANCZOS)
     sq_out.save(os.path.join(out_dir, "ic_launcher.webp"), format="WEBP", quality=95, method=6)
 
-    # Circular icon (ic_launcher_round.webp)
     rd_canvas = Image.new("RGBA", (ss, ss), (0, 0, 0, 0))
     rd_mask = Image.new("L", (inner_size, inner_size), 0)
     ImageDraw.Draw(rd_mask).ellipse([0, 0, inner_size - 1, inner_size - 1], fill=255)
@@ -522,36 +676,33 @@ for folder, px in MIPMAP_SIZES.items():
 # 5. Generate Play Store & Web Feature Graphic (1024x500)
 # ---------------------------------------------------------------------------
 W, H = 1024, 500
-# Smooth diagonal slate-obsidian backdrop (#0B1221 -> #162235) + subtle radial accent glow
 fg = Image.new("RGBA", (W, H))
 pix = fg.load()
 for y in range(H):
     for x in range(W):
         t = (x / W * 0.65 + y / H * 0.35)
-        r = int(11 + t * 13)
-        g = int(18 + t * 18)
-        b = int(33 + t * 23)
+        r = int(10 + t * 13)
+        g = int(16 + t * 17)
+        b = int(29 + t * 22)
         d_em = math.hypot(x - 235, y - 250)
         if d_em < 260:
             glow = ((1.0 - d_em / 260.0) ** 2) * 0.16
-            r = min(255, int(r + 16 * glow))
-            g = min(255, int(g + 185 * glow))
-            b = min(255, int(b + 129 * glow))
+            r = min(255, int(r + 5 * glow))
+            g = min(255, int(g + 150 * glow))
+            b = min(255, int(b + 105 * glow))
         pix[x, y] = (r, g, b, 255)
 
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 draw = ImageDraw.Draw(overlay)
 
-# Left App Icon Tile (280x280 rounded squircle at x=92, y=110)
 TILE = 280
 TX, TY = 92, 110
 tile_img = src_square.resize((TILE, TILE), Image.Resampling.LANCZOS)
 tile_mask = Image.new("L", (TILE, TILE), 0)
 ImageDraw.Draw(tile_mask).rounded_rectangle([0, 0, TILE - 1, TILE - 1], radius=58, fill=255)
 fg.paste(tile_img, (TX, TY), tile_mask)
-draw.rounded_rectangle([TX, TY, TX + TILE, TY + TILE], radius=58, outline=(52, 211, 153, 95), width=3)
+draw.rounded_rectangle([TX, TY, TX + TILE, TY + TILE], radius=58, outline=(16, 185, 129, 95), width=3)
 
-# Right Typography Lockup
 font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 font_reg = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 f_title = ImageFont.truetype(font_bold, 76)
@@ -562,11 +713,10 @@ RX = 418
 draw.text((RX, 126), "Tasa VE", font=f_title, fill=(248, 250, 252, 255))
 draw.text((RX, 224), "Cotizaciones y Calculadora en Tiempo Real", font=f_sub, fill=(148, 163, 184, 255))
 
-# 3 Translucent Glass Currency Pills via explicit alpha compositing
 pills = [
     ("Dólar BCV", (16, 185, 129), (16, 185, 129, 28), (52, 211, 153, 255)),
     ("Euro BCV", (59, 130, 246), (59, 130, 246, 28), (96, 165, 250, 255)),
-    ("USDT P2P", (245, 158, 11), (245, 158, 11, 28), (251, 191, 36, 255)),
+    ("USDT P2P", (217, 119, 6), (217, 119, 6, 28), (245, 158, 11, 255)),
 ]
 px_cursor = RX
 py_top = 294
@@ -583,10 +733,4 @@ for label, border_rgb, fill_rgba, text_rgba in pills:
 fg = Image.alpha_composite(fg, overlay)
 fg.convert("RGB").save(os.path.join(DOCS_ASSETS_DIR, "feature_graphic_1024x500.png"), format="PNG", optimize=True)
 
-print("All Tasa VE brand assets generated successfully!")
-print("76x76 SVG paths for docs/app.js:")
-print("  amber_d:", p76["amber_d"])
-print("  shadow_d:", p76["shadow_d"])
-print("  emerald_d:", p76["emerald_d"])
-print("  dollar_bar_d:", p76["dollar_bar_d"])
-print("  dollar_s_d:", p76["dollar_s_d"])
+print("All rich-depth Tasa VE brand assets generated successfully!")

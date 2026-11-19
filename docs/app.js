@@ -8,7 +8,6 @@
     EUR_BCV: { label: "EUR BCV", symbol: "€", rate: 985.3240, tomorrow: 990.1150, decimals: 4 },
     USDT: { label: "USDT Binance", symbol: "₮", rate: 1024.50, tomorrow: 1024.50, decimals: 2 }
   };
-  const COP_PER_USD = 4180;
 
   // Theme Toggle
   const root = document.documentElement;
@@ -67,7 +66,6 @@
     tomorrowBcv: false,
     amount: 25,
     vesToForeign: false,
-    modifierPct: 0,
     // OCR
     ocrIndex: 0,
     ocrSamples: [
@@ -156,10 +154,6 @@
     const rawVal = Number(state.amount) || 0;
     const vesVal = state.vesToForeign ? rawVal : rawVal * activeRate;
     const foreignVal = state.vesToForeign ? (activeRate > 0 ? rawVal / activeRate : 0) : rawVal;
-    const modFactor = 1 + state.modifierPct / 100;
-    const finalVes = vesVal * modFactor;
-    const finalForeign = foreignVal * modFactor;
-    const copEq = Math.round(foreignVal * COP_PER_USD);
 
     stageEl.innerHTML = `
       <div class="sim-topbar">
@@ -188,27 +182,19 @@
         </div>
         <div class="sim-sub-row">
           <span>Tasa: Bs. ${fmtMoney(activeRate, info.decimals)}</span>
-          <span id="sim-conv-cop">COP ref: ${copEq.toLocaleString("en-US")}</span>
+          <span>${state.rateKey === "USDT" ? "P2P Tiempo Real" : (state.tomorrowBcv ? "Tasa Mañana" : "BCV Oficial")}</span>
         </div>
       </div>
 
       <div class="sim-card">
         <span class="sim-label">${state.vesToForeign ? "Equivalente en " + info.label : "Resultado en Bolívares"}</span>
         <div class="sim-big-result" id="sim-conv-result">
-          ${state.vesToForeign ? `${info.symbol} ${fmtMoney(finalForeign, 2)}` : `Bs. ${fmtMoney(finalVes, 2)}`}
+          ${state.vesToForeign ? `${info.symbol} ${fmtMoney(foreignVal, 2)}` : `Bs. ${fmtMoney(vesVal, 2)}`}
         </div>
-        <div class="sim-sub-row" id="sim-conv-mod" style="color:#F59E0B;font-weight:700;${state.modifierPct === 0 ? "display:none;" : ""}">
-          <span>Ajuste ${state.modifierPct > 0 ? "+" : ""}${state.modifierPct}% aplicado</span>
-          <span>${info.symbol} ${fmtMoney(finalForeign, 2)}</span>
+        <div class="sim-sub-row" id="sim-conv-equiv">
+          <span>USD BCV: $${fmtMoney(RATES.USD_BCV.rate > 0 ? vesVal / RATES.USD_BCV.rate : 0, 2)}</span>
+          <span>EUR BCV: €${fmtMoney(RATES.EUR_BCV.rate > 0 ? vesVal / RATES.EUR_BCV.rate : 0, 2)}</span>
         </div>
-      </div>
-
-      <div class="sim-pill-row" aria-label="Ajustes rápidos de porcentaje">
-        ${[-10, -20, 16, 3, 10, 0].map((pct) => `
-          <button type="button" class="sim-chip is-amber ${state.modifierPct === pct && pct !== 0 ? "is-selected" : ""}" data-mod="${pct}">
-            ${pct === 0 ? "Sin ajuste" : (pct === 16 ? "+IVA 16%" : (pct === 3 ? "+IGTF 3%" : (pct > 0 ? `+${pct}%` : `${pct}%`)))}
-          </button>
-        `).join("")}
       </div>
     `;
 
@@ -216,20 +202,13 @@
       const val = Number(state.amount) || 0;
       const vVal = state.vesToForeign ? val : val * activeRate;
       const fVal = state.vesToForeign ? (activeRate > 0 ? val / activeRate : 0) : val;
-      const factor = 1 + state.modifierPct / 100;
-      const fVes = vVal * factor;
-      const fFor = fVal * factor;
-      const cEq = Math.round(fVal * COP_PER_USD);
       const resEl = stageEl.querySelector("#sim-conv-result");
-      const copEl = stageEl.querySelector("#sim-conv-cop");
-      const modEl = stageEl.querySelector("#sim-conv-mod");
+      const eqEl = stageEl.querySelector("#sim-conv-equiv");
       if (resEl) {
-        resEl.textContent = state.vesToForeign ? `${info.symbol} ${fmtMoney(fFor, 2)}` : `Bs. ${fmtMoney(fVes, 2)}`;
+        resEl.textContent = state.vesToForeign ? `${info.symbol} ${fmtMoney(fVal, 2)}` : `Bs. ${fmtMoney(vVal, 2)}`;
       }
-      if (copEl) copEl.textContent = `COP ref: ${cEq.toLocaleString("en-US")}`;
-      if (modEl) {
-        modEl.style.display = state.modifierPct === 0 ? "none" : "flex";
-        modEl.innerHTML = `<span>Ajuste ${state.modifierPct > 0 ? "+" : ""}${state.modifierPct}% aplicado</span><span>${info.symbol} ${fmtMoney(fFor, 2)}</span>`;
+      if (eqEl) {
+        eqEl.innerHTML = `<span>USD BCV: $${fmtMoney(RATES.USD_BCV.rate > 0 ? vVal / RATES.USD_BCV.rate : 0, 2)}</span><span>EUR BCV: €${fmtMoney(RATES.EUR_BCV.rate > 0 ? vVal / RATES.EUR_BCV.rate : 0, 2)}</span>`;
       }
     }
 
@@ -254,14 +233,6 @@
       setAutoplay(false);
       state.amount = parseFloat(e.target.value) || 0;
       updateConverterOutputs();
-    });
-    stageEl.querySelectorAll("[data-mod]").forEach((el) => {
-      el.addEventListener("click", () => {
-        setAutoplay(false);
-        const val = Number(el.getAttribute("data-mod"));
-        state.modifierPct = state.modifierPct === val ? 0 : val;
-        renderConverter();
-      });
     });
   }
 
@@ -500,12 +471,33 @@ Descarga Tasa VE: https://tasave.net`;
       <div class="png-mini-card">
         <div class="png-logo-lockup">
           <span class="png-badge-tile" aria-hidden="true">
-            <svg viewBox="0 0 76 76" width="22" height="22" fill="none">
-              <path d="M 16.00,17.00 L 14.33,32.56 L 18.01,30.52 L 30.52,53.09 C 31.50,54.86 32.56,56.24 33.66,57.23 L 35.49,56.01 L 40.20,49.29 L 38.00,46.79 L 26.40,25.87 L 30.08,23.83 Z" fill="#F59E0B"></path>
-              <path d="M 36.89,44.79 L 38.00,46.79 L 35.49,56.01 L 33.66,57.23 Q 37.14,53.37 36.89,44.79 Z" fill="#B45309" opacity="0.58"></path>
-              <path d="M 60.00,17.00 L 61.67,32.56 L 57.99,30.52 L 45.48,53.09 C 42.00,59.37 37.56,60.75 33.66,57.23 C 36.33,54.26 36.16,50.11 38.00,46.79 L 49.60,25.87 L 45.92,23.83 Z" fill="#10B981"></path>
-              <path d="M 36.85,17.60 L 39.15,17.60 L 39.15,36.20 L 36.85,36.20 Z" fill="#FFFFFF"></path>
-              <path d="M 42.15,22.40 C 41.70,20.65 40.05,19.85 38.00,19.85 C 35.20,19.85 33.55,21.40 33.55,23.35 C 33.55,25.60 35.40,26.35 38.00,26.95 C 40.65,27.55 42.55,28.35 42.55,30.60 C 42.55,32.75 40.65,34.15 38.00,34.15 C 35.70,34.15 33.95,33.15 33.40,31.30" stroke="#FFFFFF" stroke-width="2.80" stroke-linecap="butt"></path>
+            <svg viewBox="16 16 76 76" width="22" height="22" fill="none">
+              <defs>
+                <linearGradient id="badgeAmberGrad" x1="28.0" y1="33.0" x2="52.0" y2="76.0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#F59E0B"></stop>
+                  <stop offset="55%" stop-color="#D97706"></stop>
+                  <stop offset="100%" stop-color="#B45309"></stop>
+                </linearGradient>
+                <linearGradient id="badgeFoldShadow" x1="46.0" y1="66.0" x2="54.0" y2="62.0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#78350F" stop-opacity="0.15"></stop>
+                  <stop offset="100%" stop-color="#78350F" stop-opacity="0.78"></stop>
+                </linearGradient>
+                <linearGradient id="badgeEmeraldGrad" x1="46.0" y1="78.0" x2="80.0" y2="33.0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#047857"></stop>
+                  <stop offset="52%" stop-color="#059669"></stop>
+                  <stop offset="100%" stop-color="#10B981"></stop>
+                </linearGradient>
+              </defs>
+              <path d="M 32.00,33.00 L 30.33,48.56 L 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 51.49,72.01 L 56.20,65.29 L 54.00,62.79 L 42.40,41.87 L 46.08,39.83 Z" fill="url(#badgeAmberGrad)"></path>
+              <path d="M 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 50.93,71.82 L 48.00,68.27 Z" fill="#92400E" opacity="0.32"></path>
+              <path d="M 52.56,60.19 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.67,68.77 52.56,60.19 Z" fill="url(#badgeFoldShadow)"></path>
+              <path d="M 76.00,33.00 L 77.67,48.56 L 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 52.33,70.26 52.16,66.11 54.00,62.79 L 65.60,41.87 L 61.92,39.83 Z" fill="url(#badgeEmeraldGrad)"></path>
+              <path d="M 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 50.86,71.89 53.16,75.05 57.20,73.37 L 59.56,68.02 Z" fill="#022C22" opacity="0.30"></path>
+              <path d="M 76.00,33.00 L 64.46,38.60 L 67.26,38.00 L 74.63,35.46 L 76.39,43.06 L 77.37,45.76 Z" fill="#34D399" opacity="0.20"></path>
+              <path d="M 53.70,35.05 L 56.00,35.05 L 56.00,53.65 L 53.70,53.65 Z" fill="#040812" opacity="0.48"></path>
+              <path d="M 59.00,39.85 C 58.55,38.10 56.90,37.30 54.85,37.30 C 52.05,37.30 50.40,38.85 50.40,40.80 C 50.40,43.05 52.25,43.80 54.85,44.40 C 57.50,45.00 59.40,45.80 59.40,48.05 C 59.40,50.20 57.50,51.60 54.85,51.60 C 52.55,51.60 50.80,50.60 50.25,48.75" stroke="#040812" stroke-width="2.90" stroke-linecap="butt" opacity="0.48"></path>
+              <path d="M 52.85,33.60 L 55.15,33.60 L 55.15,52.20 L 52.85,52.20 Z" fill="#FFFFFF"></path>
+              <path d="M 58.15,38.40 C 57.70,36.65 56.05,35.85 54.00,35.85 C 51.20,35.85 49.55,37.40 49.55,39.35 C 49.55,41.60 51.40,42.35 54.00,42.95 C 56.65,43.55 58.55,44.35 58.55,46.60 C 58.55,48.75 56.65,50.15 54.00,50.15 C 51.70,50.15 49.95,49.15 49.40,47.30" stroke="#FFFFFF" stroke-width="2.80" stroke-linecap="butt"></path>
             </svg>
           </span>
           <span>Tasa VE</span>

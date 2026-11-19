@@ -172,17 +172,11 @@ class UltraMathAndBillingTest {
     }
 
     @Test
-    fun percentModifierAndCopCrossRatesComputeAccurately() {
+    fun percentModifierComputesAccurately() {
         assertEquals(90.0, UltraMath.applyPercentModifier(100.0, -10.0), 0.0001)
         assertEquals(116.0, UltraMath.applyPercentModifier(100.0, 16.0), 0.0001)
         assertEquals(103.0, UltraMath.applyPercentModifier(100.0, 3.0), 0.0001)
         assertEquals(0.0, UltraMath.applyPercentModifier(0.0, 16.0), 0.0001)
-
-        // 48.00 Bs/$ and 4000 COP/$ => 0.012 Bs/COP
-        val vesPerCop = UltraMath.calculateVesPerCop(vesPerUsd = 48.0, copPerUsd = 4000.0)
-        assertEquals(0.012, vesPerCop, 0.00001)
-        assertEquals(4000.0, UltraMath.calculateCopFromVes(vesAmount = 48.0, vesPerUsd = 48.0, copPerUsd = 4000.0), 0.01)
-        assertEquals(0.0, UltraMath.calculateVesPerCop(vesPerUsd = 48.0, copPerUsd = 0.0), 0.0001)
     }
 
     @Test

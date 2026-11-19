@@ -85,8 +85,6 @@ class TasaVeRepository(
                 usdBcv = cached.usdBcv,
                 eurBcv = cached.eurBcv,
                 usdtParalelo = cached.usdtParalelo,
-                copPerUsd = cached.copPerUsd,
-                copDate = cached.copDate,
                 nextUsdBcv = cached.nextUsdBcv,
                 nextEurBcv = cached.nextEurBcv,
                 nextBcvDateIso = cached.nextBcvDateIso,
@@ -102,26 +100,11 @@ class TasaVeRepository(
                 val bcvDetailedDeferred = async {
                     runCatching { apiService.getBcvDetailed() }.getOrNull()
                 }
-                val copDeferred = async {
-                    val trm = runCatching { apiService.getColombianTrm() }.getOrNull()
-                    if (trm != null && trm.valor > 0.0) {
-                        trm.valor to (formatDate(trm.fechaActualizacion) ?: "TRM")
-                    } else {
-                        val openEr = runCatching { apiService.getOpenErUsd() }.getOrNull()
-                        val copVal = openEr?.rates?.get("COP")
-                        if (copVal != null && copVal > 0.0) {
-                            copVal to getCurrentDateString()
-                        } else {
-                            null
-                        }
-                    }
-                }
 
                 val usdResponse = usdDeferred.await()
                 val eurResponse = eurDeferred.await()
                 val usdtResponse = usdtDeferred.await()
                 val bcvDetailed = bcvDetailedDeferred.await()
-                val copPair = copDeferred.await()
 
                 val todayCaracas = todayCaracasIsoDate()
                 val resolvedBcv = resolveBcvTodayAndNext(
@@ -135,9 +118,6 @@ class TasaVeRepository(
                 val eurDate = formatDate(eurResponse.fechaActualizacion) ?: getCurrentDateString()
                 val usdtDate = formatDate(usdtResponse.fechaActualizacion) ?: getCurrentDateString()
 
-                val copPerUsd = copPair?.first ?: cacheHelper.getCachedCopPerUsd()
-                val copDate = copPair?.second ?: "TRM"
-
                 cacheHelper.saveRates(
                     usd = resolvedBcv.todayUsd,
                     usdDate = usdDate,
@@ -149,8 +129,6 @@ class TasaVeRepository(
                     eurEffectiveIso = resolvedBcv.todayEffectiveIso,
                     usdChangePct = resolvedBcv.usdChangePct,
                     eurChangePct = resolvedBcv.eurChangePct,
-                    copPerUsd = copPerUsd,
-                    copDate = copDate,
                     nextUsd = resolvedBcv.nextUsd,
                     nextEur = resolvedBcv.nextEur,
                     nextBcvDateIso = resolvedBcv.nextEffectiveIso
@@ -215,8 +193,6 @@ class TasaVeRepository(
                     usdBcv = usdRate,
                     eurBcv = eurRate,
                     usdtParalelo = usdtRate,
-                    copPerUsd = copPerUsd,
-                    copDate = copDate,
                     nextUsdBcv = nextUsdRate,
                     nextEurBcv = nextEurRate,
                     nextBcvDateIso = resolvedBcv.nextEffectiveIso,
@@ -230,8 +206,6 @@ class TasaVeRepository(
                 usdBcv = cached.usdBcv.copy(isLocalOffline = true),
                 eurBcv = cached.eurBcv.copy(isLocalOffline = true),
                 usdtParalelo = cached.usdtParalelo.copy(isLocalOffline = true),
-                copPerUsd = cached.copPerUsd,
-                copDate = cached.copDate,
                 nextUsdBcv = cached.nextUsdBcv?.copy(isLocalOffline = true),
                 nextEurBcv = cached.nextEurBcv?.copy(isLocalOffline = true),
                 nextBcvDateIso = cached.nextBcvDateIso,
@@ -443,8 +417,6 @@ sealed class TasaVeRatesResult {
         val usdBcv: RateInfo,
         val eurBcv: RateInfo,
         val usdtParalelo: RateInfo,
-        val copPerUsd: Double = LocalStorageHelper.FALLBACK_COP_PER_USD,
-        val copDate: String = "TRM",
         val nextUsdBcv: RateInfo? = null,
         val nextEurBcv: RateInfo? = null,
         val nextBcvDateIso: String? = null,

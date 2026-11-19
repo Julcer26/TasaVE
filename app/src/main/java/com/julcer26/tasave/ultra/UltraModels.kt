@@ -207,17 +207,6 @@ object UltraMath {
         return (amount * (1.0 + percentModifier / 100.0)).coerceAtLeast(0.0)
     }
 
-    fun calculateVesPerCop(vesPerUsd: Double, copPerUsd: Double): Double {
-        if (vesPerUsd <= 0.0 || copPerUsd <= 0.0) return 0.0
-        return vesPerUsd / copPerUsd
-    }
-
-    fun calculateCopFromVes(vesAmount: Double, vesPerUsd: Double, copPerUsd: Double): Double {
-        val vesPerCop = calculateVesPerCop(vesPerUsd, copPerUsd)
-        if (vesPerCop <= 0.0 || vesAmount <= 0.0) return 0.0
-        return vesAmount / vesPerCop
-    }
-
     fun canAddCartItem(currentDistinctCount: Int, isUltraUser: Boolean): Boolean {
         return isUltraUser || currentDistinctCount < FREE_CART_MAX_ITEMS
     }

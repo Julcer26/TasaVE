@@ -24,10 +24,4 @@ interface DolarApiService {
 
     @GET
     suspend fun getBcvDetailed(@Url url: String = "https://rates.dolarvzla.com/bcv/current.json"): DolarVzlaBcvResponse
-
-    @GET
-    suspend fun getColombianTrm(@Url url: String = "https://co.dolarapi.com/v1/trm"): ColombianTrmResponse
-
-    @GET
-    suspend fun getOpenErUsd(@Url url: String = "https://open.er-api.com/v6/latest/USD"): OpenErUsdResponse
 }

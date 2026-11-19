@@ -2684,7 +2684,7 @@ fun PlansComparisonDialog(
 
                     val rows = listOf(
                         listOf("Calculadora + 4 decimales", "✓", "✓"),
-                        listOf("BCV Mañana + COP + Ajuste %", "✓", "✓"),
+                        listOf("BCV Mañana + Tendencias", "✓", "✓"),
                         listOf("Brecha + Gráficos históricos", "✓", "✓"),
                         listOf("Pago Mixto + Tarjeta PNG", "✓", "✓"),
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),

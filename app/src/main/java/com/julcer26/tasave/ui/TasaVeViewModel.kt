@@ -3,7 +3,6 @@ package com.julcer26.tasave.ui
 import android.app.Activity
 import android.app.Application
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -26,8 +25,6 @@ data class TasaVeUiState(
     val usdBcv: RateInfo? = null,
     val eurBcv: RateInfo? = null,
     val usdtParalelo: RateInfo? = null,
-    val copPerUsd: Double = LocalStorageHelper.FALLBACK_COP_PER_USD,
-    val copDate: String = "TRM",
     val nextUsdBcv: RateInfo? = null,
     val nextEurBcv: RateInfo? = null,
     val nextBcvDateIso: String? = null,
@@ -126,12 +123,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     var previewTomorrowBcv by mutableStateOf(false)
         private set
 
-    var activePercentModifier by mutableDoubleStateOf(0.0)
-        private set
-
-    var copUseUsdtBase by mutableStateOf(false)
-        private set
-
     init {
         _themeMode.value = repository.getLocalTheme()
 
@@ -141,8 +132,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             usdBcv = cached.usdBcv,
             eurBcv = cached.eurBcv,
             usdtParalelo = cached.usdtParalelo,
-            copPerUsd = cached.copPerUsd,
-            copDate = cached.copDate,
             nextUsdBcv = cached.nextUsdBcv,
             nextEurBcv = cached.nextEurBcv,
             nextBcvDateIso = cached.nextBcvDateIso,
@@ -195,8 +184,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                         usdBcv = result.usdBcv,
                         eurBcv = result.eurBcv,
                         usdtParalelo = result.usdtParalelo,
-                        copPerUsd = result.copPerUsd,
-                        copDate = result.copDate,
                         nextUsdBcv = result.nextUsdBcv,
                         nextEurBcv = result.nextEurBcv,
                         nextBcvDateIso = result.nextBcvDateIso,
@@ -238,17 +225,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         recalculateVES()
     }
 
-    fun selectPercentModifier(percent: Double) {
-        activePercentModifier = if (activePercentModifier == percent) 0.0 else percent
-    }
-
-    fun toggleCopBaseRate() {
-        copUseUsdtBase = !copUseUsdtBase
-        if (selectedRateKey == "COP") {
-            recalculateVES()
-        }
-    }
-
     fun getEffectiveUsdBcv(): RateInfo? {
         val state = _uiState.value
         return if (previewTomorrowBcv && state.nextUsdBcv != null) state.nextUsdBcv else state.usdBcv
@@ -257,25 +233,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     fun getEffectiveEurBcv(): RateInfo? {
         val state = _uiState.value
         return if (previewTomorrowBcv && state.nextEurBcv != null) state.nextEurBcv else state.eurBcv
-    }
-
-    fun getCopRateInfo(): RateInfo? {
-        val state = _uiState.value
-        val baseVesPerUsd = if (copUseUsdtBase) {
-            state.usdtParalelo?.rate ?: getEffectiveUsdBcv()?.rate ?: 0.0
-        } else {
-            getEffectiveUsdBcv()?.rate ?: 0.0
-        }
-        val vesPerCop = UltraMath.calculateVesPerCop(baseVesPerUsd, state.copPerUsd)
-        if (vesPerCop <= 0.0) return null
-        return RateInfo(
-            key = "COP",
-            label = if (copUseUsdtBase) "COP (Base USDT)" else "COP (Base BCV)",
-            symbol = "COP",
-            rate = vesPerCop,
-            dateUpdated = state.copDate,
-            isLocalOffline = state.isOfflineError
-        )
     }
 
     fun updateForeignAmount(input: String) {
@@ -391,7 +348,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         val rate = when (rateKey) {
             "EUR_BCV" -> getEffectiveEurBcv()?.rate
             "USDT" -> _uiState.value.usdtParalelo?.rate
-            "COP" -> getCopRateInfo()?.rate
             else -> usdBcvRate
         } ?: getSelectedRateValue().takeIf { it > 0 } ?: 1.0
 
@@ -557,17 +513,10 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun saveConversionToHistory(): Boolean {
-        val fValRaw = parseDouble(foreignAmount) ?: return false
-        val vValRaw = parseDouble(vesAmount) ?: return false
+        val fVal = parseDouble(foreignAmount) ?: return false
+        val vVal = parseDouble(vesAmount) ?: return false
         val rate = getSelectedRateValue()
         if (rate <= 0.0) return false
-
-        val fVal = if (activePercentModifier != 0.0) {
-            UltraMath.applyPercentModifier(fValRaw, activePercentModifier)
-        } else fValRaw
-        val vVal = if (activePercentModifier != 0.0) {
-            UltraMath.applyPercentModifier(vValRaw, activePercentModifier)
-        } else vValRaw
 
         val rateObj = getSelectedRateInfo() ?: return false
 
@@ -596,12 +545,10 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             "$" -> "USD_BCV"
             "€" -> "EUR_BCV"
             "₮" -> "USDT"
-            "COP" -> "COP"
             else -> when (item.currencyTo) {
                 "$" -> "USD_BCV"
                 "€" -> "EUR_BCV"
                 "₮" -> "USDT"
-                "COP" -> "COP"
                 else -> null
             }
         }
@@ -609,7 +556,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             selectedRateKey = matchingRate
         }
 
-        activePercentModifier = 0.0
         if (item.currencyFrom == "Bs.") {
             isVesAsInput = true
             vesAmount = String.format(Locale.US, "%.2f", item.amountFrom)
@@ -637,7 +583,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             "USD_BCV" -> getEffectiveUsdBcv()
             "EUR_BCV" -> getEffectiveEurBcv()
             "USDT" -> state.usdtParalelo
-            "COP" -> getCopRateInfo()
             else -> null
         }
     }

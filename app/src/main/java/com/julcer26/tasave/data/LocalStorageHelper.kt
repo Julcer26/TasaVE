@@ -21,8 +21,6 @@ data class CachedRatesBundle(
     val usdBcv: RateInfo,
     val eurBcv: RateInfo,
     val usdtParalelo: RateInfo,
-    val copPerUsd: Double,
-    val copDate: String,
     val nextUsdBcv: RateInfo? = null,
     val nextEurBcv: RateInfo? = null,
     val nextBcvDateIso: String? = null
@@ -47,9 +45,6 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_USDT_RATE = "usdt_rate"
         private const val KEY_USDT_RATE_EXACT = "usdt_rate_exact"
         private const val KEY_USDT_DATE = "usdt_date"
-
-        private const val KEY_COP_PER_USD_EXACT = "cop_per_usd_exact"
-        private const val KEY_COP_DATE = "cop_date"
 
         private const val KEY_NEXT_USD_BCV_EXACT = "next_usd_bcv_exact"
         private const val KEY_NEXT_EUR_BCV_EXACT = "next_eur_bcv_exact"
@@ -95,7 +90,6 @@ class LocalStorageHelper(context: Context) {
         const val FALLBACK_USD = 850.00
         const val FALLBACK_EUR = 950.00
         const val FALLBACK_USDT = 1000.00
-        const val FALLBACK_COP_PER_USD = 3310.00
     }
 
     fun isCacheExpired(): Boolean {
@@ -119,8 +113,6 @@ class LocalStorageHelper(context: Context) {
         eurEffectiveIso: String? = null,
         usdChangePct: Double? = null,
         eurChangePct: Double? = null,
-        copPerUsd: Double? = null,
-        copDate: String? = null,
         nextUsd: Double? = null,
         nextEur: Double? = null,
         nextBcvDateIso: String? = null
@@ -141,11 +133,6 @@ class LocalStorageHelper(context: Context) {
             putFloat(KEY_USDT_RATE, usdt.toFloat())
             putString(KEY_USDT_RATE_EXACT, usdt.toString())
             putString(KEY_USDT_DATE, usdtDate)
-
-            if (copPerUsd != null && copPerUsd > 0.0) {
-                putString(KEY_COP_PER_USD_EXACT, copPerUsd.toString())
-                if (!copDate.isNullOrBlank()) putString(KEY_COP_DATE, copDate)
-            }
 
             if (nextUsd != null && nextUsd > 0.0 && nextEur != null && nextEur > 0.0 && !nextBcvDateIso.isNullOrBlank()) {
                 putString(KEY_NEXT_USD_BCV_EXACT, nextUsd.toString())
@@ -191,9 +178,6 @@ class LocalStorageHelper(context: Context) {
         val usdt = readExactDouble(KEY_USDT_RATE_EXACT, KEY_USDT_RATE, FALLBACK_USDT)
         val usdtDate = prefs.getString(KEY_USDT_DATE, "N/D") ?: "N/D"
 
-        val copPerUsd = readExactDouble(KEY_COP_PER_USD_EXACT, null, FALLBACK_COP_PER_USD)
-        val copDate = prefs.getString(KEY_COP_DATE, "TRM") ?: "TRM"
-
         val isLocalOffline = !hasCachedData()
 
         val usdInfo = RateInfo("USD_BCV", "Dólar BCV", "$", usd, usdDate, isLocalOffline, usdEff, usdPct)
@@ -221,15 +205,11 @@ class LocalStorageHelper(context: Context) {
             usdBcv = usdInfo,
             eurBcv = eurInfo,
             usdtParalelo = usdtInfo,
-            copPerUsd = copPerUsd,
-            copDate = copDate,
             nextUsdBcv = nextUsdInfo,
             nextEurBcv = nextEurInfo,
             nextBcvDateIso = if (validNext) nextDateIso else null
         )
     }
-
-    fun getCachedCopPerUsd(): Double = readExactDouble(KEY_COP_PER_USD_EXACT, null, FALLBACK_COP_PER_USD)
 
     private fun todayCaracasIsoDate(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)

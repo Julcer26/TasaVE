@@ -106,7 +106,7 @@ fun PriceScannerDialog(
     }
 
     var activeRateKey by remember(selectedRateKey) {
-        mutableStateOf(if (selectedRateKey == "COP") "USD_BCV" else selectedRateKey)
+        mutableStateOf(selectedRateKey)
     }
     var detectedPrices by remember { mutableStateOf<List<DetectedPrice>>(emptyList()) }
     var selectedPrice by remember { mutableStateOf<DetectedPrice?>(null) }

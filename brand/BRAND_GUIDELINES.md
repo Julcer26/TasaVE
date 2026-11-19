@@ -12,11 +12,11 @@ El isotipo oficial de **Tasa VE** sintetiza la **“V”** de Venezuela y de val
 ## 2. Paleta Cromática Oficial
 | Rol | Hexadecimal | Uso |
 | :--- | :--- | :--- |
-| **Fondo Principal (Obsidian Dark)** | `#0F172A` → `#1E293B` (gradiente diagonal) | Fondo de ícono, tiles de cabecera, banners y tarjetones dark |
-| **Ámbar Principal (Brazo Izquierdo)** | `#FBBF24` → `#F59E0B` | Brazo izquierdo ascendente |
-| **Sombra de Pliegue** | `#B45309` (`58%` opacidad) | Transición inferior en el vértice de la “V” |
-| **Esmeralda Principal (Brazo Derecho)** | `#059669` → `#10B981` → `#34D399` | Brazo continuo inferior y derecho |
-| **Símbolo `$` (Sobre Fondo Oscuro)** | `#FFFFFF` | Versión principal, ícono de app, web dark |
+| **Fondo Principal (Obsidian Dark)** | `#0A101D` → `#172133` (gradiente diagonal) | Fondo de ícono, tiles de cabecera, banners y tarjetones dark |
+| **Ámbar Profundo (Brazo Izquierdo)** | `#F59E0B` → `#D97706` → `#B45309` | Brazo izquierdo ascendente con bisel interior `#92400E` (`32%`) |
+| **Sombra de Pliegue 3D** | `#78350F` (`15%` → `78%` opacidad) | Pliegue inferior en el vértice de la “V” para sensación de cinta doblada |
+| **Esmeralda Profundo (Brazo Derecho)** | `#047857` → `#059669` → `#10B981` | Brazo continuo con plano de profundidad `#022C22` (`30%`) y brillo `#34D399` (`20%`) |
+| **Símbolo `$` (Sobre Fondo Oscuro)** | `#FFFFFF` + sombra `#040812` (`48%`) | Versión principal, ícono de app y web dark con elevación sutil |
 | **Símbolo `$` (Sobre Fondo Claro)** | `#0F172A` | Papelería blanca, facturas o flyers claros |
 
 ---

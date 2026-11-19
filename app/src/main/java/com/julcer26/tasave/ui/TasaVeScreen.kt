@@ -357,63 +357,130 @@ fun TasaVeScreen(
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = if (isDark) Color(0xF0121216) else Color(0xF5FFFFFF),
-                tonalElevation = 0.dp
+            val navItems = listOf(
+                Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, AppTab.CONVERTER.label),
+                Triple(AppTab.CART, Icons.Default.ShoppingCart, AppTab.CART.label),
+                Triple(AppTab.MARKET, Icons.Default.ShowChart, AppTab.MARKET.label),
+                Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, AppTab.CHECKOUT.label)
+            )
+            val dockContainerColor = if (isDark) Color(0xEB0D131D) else Color(0xFAFFFFFF)
+            val dockBorderColor = if (isDark) Color(0x3834D399) else Color(0x1E0F172A)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center
             ) {
-                val navItems = listOf(
-                    Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, AppTab.CONVERTER.label),
-                    Triple(AppTab.CART, Icons.Default.ShoppingCart, AppTab.CART.label),
-                    Triple(AppTab.MARKET, Icons.Default.ShowChart, AppTab.MARKET.label),
-                    Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, AppTab.CHECKOUT.label)
-                )
-                navItems.forEach { (tab, icon, label) ->
-                    val selected = currentTab == tab
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            if (currentTab != tab) {
-                                currentTab = tab
-                                if (tab != AppTab.CONVERTER) {
-                                    interstitialAdManager.maybeShowAfterAction(
-                                        activity = activity,
-                                        isAdFree = isAdsDisabled,
-                                        appLaunchCount = viewModel.appLaunchCount
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    color = dockContainerColor,
+                    border = BorderStroke(1.dp, dockBorderColor),
+                    shadowElevation = if (isDark) 16.dp else 12.dp,
+                    tonalElevation = 0.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        navItems.forEach { (tab, icon, label) ->
+                            val selected = currentTab == tab
+                            val pillBg by animateColorAsState(
+                                targetValue = if (selected) {
+                                    if (isDark) Color(0x2B10B981) else Color(0x1F059669)
+                                } else {
+                                    Color.Transparent
+                                },
+                                animationSpec = tween(durationMillis = 200),
+                                label = "floatingNavPillBg"
+                            )
+                            val pillBorder = if (selected) {
+                                if (isDark) Color(0x5234D399) else Color(0x40059669)
+                            } else {
+                                Color.Transparent
+                            }
+                            val itemTint by animateColorAsState(
+                                targetValue = if (selected) {
+                                    if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                                } else {
+                                    textSecondary
+                                },
+                                animationSpec = tween(durationMillis = 200),
+                                label = "floatingNavItemTint"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(pillBg)
+                                    .border(1.dp, pillBorder, RoundedCornerShape(22.dp))
+                                    .clickable {
+                                        if (currentTab != tab) {
+                                            currentTab = tab
+                                            if (tab != AppTab.CONVERTER) {
+                                                interstitialAdManager.maybeShowAfterAction(
+                                                    activity = activity,
+                                                    isAdFree = isAdsDisabled,
+                                                    appLaunchCount = viewModel.appLaunchCount
+                                                )
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    if (tab == AppTab.CART && cartItems.isNotEmpty()) {
+                                        BadgedBox(
+                                            badge = {
+                                                Badge(
+                                                    containerColor = Color(0xFF10B981),
+                                                    contentColor = Color.Black
+                                                ) {
+                                                    Text(
+                                                        text = "${cartItems.sumOf { it.quantity }}",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = label,
+                                                tint = itemTint,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    } else {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = label,
+                                            tint = itemTint,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                        color = itemTint,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
-                        },
-                        icon = {
-                            if (tab == AppTab.CART && cartItems.isNotEmpty()) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(containerColor = Color(0xFF10B981), contentColor = Color.Black) {
-                                            Text("${cartItems.sumOf { it.quantity }}", fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                ) {
-                                    Icon(imageVector = icon, contentDescription = label)
-                                }
-                            } else {
-                                Icon(imageVector = icon, contentDescription = label)
-                            }
-                        },
-                        label = {
-                            Text(
-                                text = label,
-                                fontSize = 10.5.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                maxLines = 1
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
-                            selectedTextColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
-                            indicatorColor = if (isDark) Color(0x2610B981) else Color(0x1F059669),
-                            unselectedIconColor = textSecondary,
-                            unselectedTextColor = textSecondary
-                        )
-                    )
+                        }
+                    }
                 }
             }
         }
@@ -630,7 +697,6 @@ fun TasaVeScreen(
             // 1. DATE HEADER & RATE SELECTOR
             val effectiveUsdBcv = viewModel.getEffectiveUsdBcv()
             val effectiveEurBcv = viewModel.getEffectiveEurBcv()
-            val copInfo = viewModel.getCopRateInfo()
             val representativeDate = effectiveUsdBcv?.dateUpdated
                 ?: effectiveEurBcv?.dateUpdated
                 ?: uiState.usdtParalelo?.dateUpdated
@@ -740,80 +806,6 @@ fun TasaVeScreen(
                                 copyToClipboard(context, formatted)
                                 Toast.makeText(context, "$customLabel copiado: Bs. $formatted", Toast.LENGTH_SHORT).show()
                             }
-                        )
-                    }
-                }
-
-                // Full-width Colombian Peso (COP) cross-rate card
-                val isCopSelected = viewModel.selectedRateKey == "COP"
-                val copAccent = Color(0xFF8B5CF6)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            if (isCopSelected) {
-                                if (isDark) Color(0x1F8B5CF6) else Color(0x148B5CF6)
-                            } else {
-                                if (isDark) Color(0x0F222226) else Color(0x1FFFFFFF)
-                            }
-                        )
-                        .border(
-                            width = if (isCopSelected) 1.6.dp else 1.dp,
-                            color = if (isCopSelected) copAccent else if (isDark) Color(0x1AFFFFFF) else Color(0x1F000000),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .clickable {
-                            viewModel.selectRate("COP")
-                            copInfo?.let {
-                                val formatted = String.format(Locale.US, "%.4f", it.rate)
-                                copyToClipboard(context, formatted)
-                                Toast.makeText(context, "COP copiado: Bs. $formatted", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        Text(
-                            text = "🇨🇴 Peso Colombiano (COP)",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary
-                        )
-                        Text(
-                            text = "TRM ${String.format(Locale.US, "%,.2f", uiState.copPerUsd)}/$ • ${uiState.copDate}",
-                            fontSize = 10.sp,
-                            color = textSecondary
-                        )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0x268B5CF6))
-                                .clickable { viewModel.toggleCopBaseRate() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = if (viewModel.copUseUsdtBase) "Base USDT" else "Base BCV",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color(0xFFC4B5FD) else Color(0xFF6D28D9)
-                            )
-                        }
-                        Text(
-                            text = "Bs. ${String.format(Locale.US, "%.4f", copInfo?.rate ?: 0.0)}/COP",
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = textPrimary
                         )
                     }
                 }
@@ -1192,112 +1184,8 @@ fun TasaVeScreen(
                         }
                     }
 
-                    // Quick Percent Modifier Pills (-10%, -20%, +IVA 16%, +IGTF 3%, +10%, 0%)
-                    val modifierPills = listOf(
-                        -10.0 to "-10%",
-                        -20.0 to "-20%",
-                        16.0 to "+IVA 16%",
-                        3.0 to "+IGTF 3%",
-                        10.0 to "+10%"
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        modifierPills.forEach { (pct, label) ->
-                            val selected = viewModel.activePercentModifier == pct
-                            FilterChip(
-                                selected = selected,
-                                onClick = { viewModel.selectPercentModifier(pct) },
-                                shape = RoundedCornerShape(14.dp),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(0x2EF59E0B),
-                                    selectedLabelColor = Color(0xFFF59E0B)
-                                ),
-                                label = {
-                                    Text(
-                                        text = label,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            )
-                        }
-                        if (viewModel.activePercentModifier != 0.0) {
-                            FilterChip(
-                                selected = false,
-                                onClick = { viewModel.selectPercentModifier(viewModel.activePercentModifier) },
-                                shape = RoundedCornerShape(14.dp),
-                                label = {
-                                    Text(
-                                        text = "0% (Limpiar)",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            )
-                        }
-                    }
-
                     val parsedVes = viewModel.vesAmount.toDoubleOrNull() ?: 0.0
                     val parsedForeign = viewModel.foreignAmount.toDoubleOrNull() ?: 0.0
-                    val activeMod = viewModel.activePercentModifier
-
-                    // Adjusted Summary Banner when a % modifier is active
-                    if (activeMod != 0.0 && parsedVes > 0.0) {
-                        val adjVes = UltraMath.applyPercentModifier(parsedVes, activeMod)
-                        val adjForeign = UltraMath.applyPercentModifier(parsedForeign, activeMod)
-                        val sign = if (activeMod > 0) "+" else ""
-                        val modFmt = if (activeMod % 1.0 == 0.0) "${activeMod.toInt()}%" else String.format(Locale.US, "%.1f%%", activeMod)
-                        val sym = currentRateInfo?.symbol ?: "$"
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0x24F59E0B))
-                                .border(1.dp, Color(0x55F59E0B), RoundedCornerShape(14.dp))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
-                                Text(
-                                    text = "Ajuste ($sign$modFmt) • Base: $sym${String.format(Locale.US, "%.2f", parsedForeign)}",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFF59E0B)
-                                )
-                                Text(
-                                    text = "Total Final: $sym${String.format(Locale.US, "%.2f", adjForeign)} • Bs. ${String.format(Locale.US, "%,.2f", adjVes)}",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = textPrimary
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    val copyVal = "$sym${String.format(Locale.US, "%.2f", adjForeign)} / Bs. ${String.format(Locale.US, "%.2f", adjVes)}"
-                                    copyToClipboard(context, copyVal)
-                                    Toast.makeText(context, "Total ajustado copiado", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copiar total ajustado",
-                                    tint = Color(0xFFF59E0B),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
-                    }
 
                     // Actions: Guardar en Historial y Ver Historial
                     Row(
@@ -1350,12 +1238,6 @@ fun TasaVeScreen(
                     val bcvUsdRate = effectiveUsdBcv?.rate ?: 0.0
                     val bcvEurRate = effectiveEurBcv?.rate ?: 0.0
                     val parallelUsdtRate = uiState.usdtParalelo?.rate ?: 0.0
-                    val baseUsdForCop = if (viewModel.copUseUsdtBase && parallelUsdtRate > 0.0) {
-                        parallelUsdtRate
-                    } else {
-                        bcvUsdRate
-                    }
-                    val copEquivVal = UltraMath.calculateCopFromVes(parsedVes, baseUsdForCop, uiState.copPerUsd)
 
                     // Visual PNG Share Card Button
                     if (parsedVes > 0.0) {
@@ -1365,21 +1247,11 @@ fun TasaVeScreen(
                                 val sym = currentRateInfo?.symbol ?: "$"
                                 val foreignStr = "$sym ${String.format(Locale.US, "%,.2f", parsedForeign)}"
                                 val vesStr = "Bs. ${String.format(Locale.US, "%,.2f", parsedVes)}"
-                                val modSign = if (activeMod > 0) "+" else ""
-                                val modLabel = if (activeMod != 0.0) {
-                                    "$modSign" + (if (activeMod % 1.0 == 0.0) "${activeMod.toInt()}%" else String.format(Locale.US, "%.1f%%", activeMod))
-                                } else null
-                                val adjTotalStr = if (activeMod != 0.0) {
-                                    val adjF = UltraMath.applyPercentModifier(parsedForeign, activeMod)
-                                    val adjV = UltraMath.applyPercentModifier(parsedVes, activeMod)
-                                    "$sym ${String.format(Locale.US, "%,.2f", adjF)} • Bs. ${String.format(Locale.US, "%,.2f", adjV)}"
-                                } else null
 
                                 val eqList = buildList {
                                     if (bcvUsdRate > 0) add("Dólar BCV" to "$${String.format(Locale.US, "%.2f", parsedVes / bcvUsdRate)}")
                                     if (bcvEurRate > 0) add("Euro BCV" to "€${String.format(Locale.US, "%.2f", parsedVes / bcvEurRate)}")
                                     if (parallelUsdtRate > 0) add("USDT Binance" to "₮${String.format(Locale.US, "%.2f", parsedVes / parallelUsdtRate)}")
-                                    if (copEquivVal > 0) add("Peso Col. (COP)" to "${String.format(Locale.US, "%,.0f", copEquivVal)} COP")
                                 }
 
                                 ShareCardGenerator.shareCalculationCard(
@@ -1392,8 +1264,8 @@ fun TasaVeScreen(
                                     rateLabel = currentRateInfo?.label ?: "Tasa BCV",
                                     rateDisplay = "Bs. ${String.format(Locale.US, rateDecimals, currentRateInfo?.rate ?: 0.0)}",
                                     updatedAt = currentRateInfo?.dateUpdated,
-                                    modifierText = modLabel,
-                                    adjustedTotalText = adjTotalStr,
+                                    modifierText = null,
+                                    adjustedTotalText = null,
                                     equivalences = eqList,
                                     isTomorrowBcv = viewModel.previewTomorrowBcv
                                 )
@@ -1549,32 +1421,6 @@ fun TasaVeScreen(
                                         text = "Tasa: ${String.format(Locale.US, "%.2f", parallelUsdtRate)}",
                                         fontSize = 8.sp,
                                         color = textSecondary.copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
-
-                            // 4. Colombian Peso (COP) Equivalence Pill
-                            if (copEquivVal > 0.0) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0x1F8B5CF6))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "🇨🇴 Peso Colombiano (${if (viewModel.copUseUsdtBase) "Base USDT" else "Base BCV"})",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = textSecondary
-                                    )
-                                    Text(
-                                        text = "${String.format(Locale.US, "%,.0f", copEquivVal)} COP",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = textPrimary
                                     )
                                 }
                             }
@@ -2648,21 +2494,21 @@ private fun LegalCenterDialog(
     val privacySections = remember {
         listOf(
             "1. Origen y actualización de los datos" to
-                "Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM e históricos para gráficos) provienen de APIs públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN, Banco de la República ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
+                "Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo e históricos para gráficos) provienen de APIs públicas (ve.dolarapi.com y rates.dolarvzla.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
             "2. Información que recopilamos" to
                 "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay: alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos, titular y correo/ID digital) se guardan únicamente de forma local en tu dispositivo.",
             "3. Uso de la información" to
-                "Los datos locales se usan exclusivamente para calcular conversiones, ajustes porcentuales, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, Widget, tarjetas visuales PNG generadas temporalmente en caché (shared_cards) y resúmenes de cobro que tú eliges copiar o compartir.",
+                "Los datos locales se usan exclusivamente para calcular conversiones, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, Widget, tarjetas visuales PNG generadas temporalmente en caché (shared_cards) y resúmenes de cobro que tú eliges copiar o compartir.",
             "4. Enlaces externos y compartición" to
                 "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en el caché local compartido por FileProvider sin subirse a servidores externos. Las consultas a las APIs de tasas solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
             "5. Seguridad de los datos" to
                 "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
             "6. Publicidad, anuncios bonificados y suscripción Ultra" to
-                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra o activar 12 h sin banners ni intersticiales). Muestra banners adaptativos e intersticiales ocasionales tras acciones clave (nunca al abrir la app). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
+                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra o activar 12 h sin banners ni intersticiales). Muestra banners adaptativos e intersticiales ocasionales tras acciones clave (nunca al abrir la app). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
             "7. Permisos del sistema" to
                 "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y suscripción Ultra en Google Play.",
             "8. Uso de tecnologías de terceros" to
-                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI, DolarVzla, Open ER-API).",
+                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI y DolarVzla).",
             "9. Cambios en esta política" to
                 "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
@@ -2675,9 +2521,9 @@ private fun LegalCenterDialog(
             "1. Naturaleza y No Afiliación Oficial" to
                 "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad financiera alguna.",
             "2. Catálogo de Bancos, Cobros, Escáner e Impuestos" to
-                "La lista de códigos bancarios (0134 Banesco, etc.) y los perfiles de Pago Móvil, Cuenta Bancaria, Zelle y Binance Pay son solo plantillas de texto/imagen para facilitar tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha, COP y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
+                "La lista de códigos bancarios (0134 Banesco, etc.) y los perfiles de Pago Móvil, Cuenta Bancaria, Zelle y Binance Pay son solo plantillas de texto/imagen para facilitar tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
             "3. Fuentes de Datos y Descargo" to
-                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
+                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com y rates.dolarvzla.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
             "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
                 "El Plan Gratuito ofrece las funciones principales con banners, intersticiales ocasionales tras acciones y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado, o pase de 12 h sin anuncios por 1 video), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, Alertas y Widget.",
             "5. Reembolsos, Restauración y Contacto" to

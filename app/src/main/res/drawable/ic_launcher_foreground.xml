@@ -6,7 +6,7 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Left Amber Arrow Arm (Original Tasa VE Gold) -->
+    <!-- Left Amber Arrow Arm (Deep Rich Amber Gold) -->
     <path android:pathData="M 32.00,33.00 L 30.33,48.56 L 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 51.49,72.01 L 56.20,65.29 L 54.00,62.79 L 42.40,41.87 L 46.08,39.83 Z">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -15,19 +15,35 @@
                 android:endX="52"
                 android:endY="76"
                 android:type="linear">
-                <item android:offset="0" android:color="#FBBF24" />
-                <item android:offset="1" android:color="#F59E0B" />
+                <item android:offset="0" android:color="#F59E0B" />
+                <item android:offset="0.55" android:color="#D97706" />
+                <item android:offset="1" android:color="#B45309" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Ribbon Fold Shadow at V-Vertex -->
+    <!-- Amber Outer-Lower Edge Depth -->
     <path
-        android:pathData="M 52.89,60.79 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.14,69.37 52.89,60.79 Z"
-        android:fillColor="#B45309"
-        android:fillAlpha="0.58" />
+        android:pathData="M 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 50.93,71.82 L 48.00,68.27 Z"
+        android:fillColor="#92400E"
+        android:fillAlpha="0.32" />
 
-    <!-- Right Continuous Emerald Arrow Arm (Original Tasa VE Emerald) -->
+    <!-- Layered 3D Ribbon Fold Shadow at V-Vertex -->
+    <path android:pathData="M 52.56,60.19 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.67,68.77 52.56,60.19 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="46"
+                android:startY="66"
+                android:endX="54"
+                android:endY="62"
+                android:type="linear">
+                <item android:offset="0" android:color="#2678350F" />
+                <item android:offset="1" android:color="#C778350F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Right Continuous Emerald Arrow Arm (Deep Fintech Emerald) -->
     <path android:pathData="M 76.00,33.00 L 77.67,48.56 L 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 52.33,70.26 52.16,66.11 54.00,62.79 L 65.60,41.87 L 61.92,39.83 Z">
         <aapt:attr name="android:fillColor">
             <gradient
@@ -36,14 +52,38 @@
                 android:endX="80"
                 android:endY="33"
                 android:type="linear">
-                <item android:offset="0" android:color="#059669" />
-                <item android:offset="0.45" android:color="#10B981" />
-                <item android:offset="1" android:color="#34D399" />
+                <item android:offset="0" android:color="#047857" />
+                <item android:offset="0.52" android:color="#059669" />
+                <item android:offset="1" android:color="#10B981" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Upper-Center Geometric Dollar Sign -->
+    <!-- Emerald Lower U-Loop & Outer Edge Depth Shading -->
+    <path
+        android:pathData="M 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 50.86,71.89 53.16,75.05 57.20,73.37 L 59.56,68.02 Z"
+        android:fillColor="#022C22"
+        android:fillAlpha="0.30" />
+
+    <!-- Subtle Top Rim Highlight on Emerald Arrowhead -->
+    <path
+        android:pathData="M 76.00,33.00 L 64.46,38.60 L 67.26,38.00 L 74.63,35.46 L 76.39,43.06 L 77.37,45.76 Z"
+        android:fillColor="#34D399"
+        android:fillAlpha="0.20" />
+
+    <!-- Soft Drop Shadow Behind Dollar Sign -->
+    <path
+        android:pathData="M 53.70,35.05 L 56.00,35.05 L 56.00,53.65 L 53.70,53.65 Z"
+        android:fillColor="#040812"
+        android:fillAlpha="0.48" />
+    <path
+        android:pathData="M 59.00,39.85 C 58.55,38.10 56.90,37.30 54.85,37.30 C 52.05,37.30 50.40,38.85 50.40,40.80 C 50.40,43.05 52.25,43.80 54.85,44.40 C 57.50,45.00 59.40,45.80 59.40,48.05 C 59.40,50.20 57.50,51.60 54.85,51.60 C 52.55,51.60 50.80,50.60 50.25,48.75"
+        android:strokeColor="#040812"
+        android:strokeAlpha="0.48"
+        android:strokeWidth="2.90"
+        android:strokeLineCap="butt" />
+
+    <!-- Crisp Upper-Center Geometric Dollar Sign -->
     <path
         android:pathData="M 52.85,33.60 L 55.15,33.60 L 55.15,52.20 L 52.85,52.20 Z"
         android:fillColor="#FFFFFF" />

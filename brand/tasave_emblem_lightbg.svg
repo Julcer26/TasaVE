@@ -1,22 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="16 16 76 76" width="1024" height="1024">
   <defs>
     <linearGradient id="bgGrad" x1="16" y1="16" x2="92" y2="92" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0F172A"/>
-      <stop offset="100%" stop-color="#1E293B"/>
+      <stop offset="0%" stop-color="#0A101D"/>
+      <stop offset="100%" stop-color="#172133"/>
     </linearGradient>
     <linearGradient id="amberGrad" x1="28.0" y1="33.0" x2="52.0" y2="76.0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FBBF24"/>
-      <stop offset="100%" stop-color="#F59E0B"/>
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="55%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="foldShadowGrad" x1="46.0" y1="66.0" x2="54.0" y2="62.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#78350F" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#78350F" stop-opacity="0.78"/>
     </linearGradient>
     <linearGradient id="emeraldGrad" x1="46.0" y1="78.0" x2="80.0" y2="33.0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#059669"/>
-      <stop offset="45%" stop-color="#10B981"/>
-      <stop offset="100%" stop-color="#34D399"/>
+      <stop offset="0%" stop-color="#047857"/>
+      <stop offset="52%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10B981"/>
     </linearGradient>
   </defs>
   <path d="M 32.00,33.00 L 30.33,48.56 L 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 51.49,72.01 L 56.20,65.29 L 54.00,62.79 L 42.40,41.87 L 46.08,39.83 Z" fill="url(#amberGrad)"/>
-  <path d="M 52.89,60.79 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.14,69.37 52.89,60.79 Z" fill="#B45309" opacity="0.58"/>
+  <path d="M 34.01,46.52 L 46.52,69.09 C 47.50,70.86 48.56,72.24 49.66,73.23 L 50.93,71.82 L 48.00,68.27 Z" fill="#92400E" opacity="0.32"/>
+  <path d="M 52.56,60.19 L 54.00,62.79 L 51.49,72.01 L 49.66,73.23 Q 53.67,68.77 52.56,60.19 Z" fill="url(#foldShadowGrad)"/>
   <path d="M 76.00,33.00 L 77.67,48.56 L 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 52.33,70.26 52.16,66.11 54.00,62.79 L 65.60,41.87 L 61.92,39.83 Z" fill="url(#emeraldGrad)"/>
+  <path d="M 73.99,46.52 L 61.48,69.09 C 58.00,75.37 53.56,76.75 49.66,73.23 C 50.86,71.89 53.16,75.05 57.20,73.37 L 59.56,68.02 Z" fill="#022C22" opacity="0.30"/>
+  <path d="M 76.00,33.00 L 64.46,38.60 L 67.26,38.00 L 74.63,35.46 L 76.39,43.06 L 77.37,45.76 Z" fill="#34D399" opacity="0.20"/>
   <path d="M 52.85,33.60 L 55.15,33.60 L 55.15,52.20 L 52.85,52.20 Z" fill="#0F172A"/>
   <path d="M 58.15,38.40 C 57.70,36.65 56.05,35.85 54.00,35.85 C 51.20,35.85 49.55,37.40 49.55,39.35 C 49.55,41.60 51.40,42.35 54.00,42.95 C 56.65,43.55 58.55,44.35 58.55,46.60 C 58.55,48.75 56.65,50.15 54.00,50.15 C 51.70,50.15 49.95,49.15 49.40,47.30" fill="none" stroke="#0F172A" stroke-width="2.80" stroke-linecap="butt"/>
 </svg>
