@@ -55,8 +55,8 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 ---
 
 ## 6. Publicidad, anuncios bonificados y suscripción Ultra
-- **Versión gratuita (AdMob):** Incluye calculadora con 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra banners publicitarios gestionados por Google Mobile Ads y ofrece la opción **voluntaria** de ver un anuncio bonificado (*Rewarded Ad*) para desbloquear **+5 escaneos adicionales** en el día.
-- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners y bonificados) y desbloquea de forma ilimitada todas las funciones: **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **Alertas locales de variación de tasa** y **Widget de pantalla de inicio**.
+- **Versión gratuita (AdMob):** Incluye calculadora con 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
+- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **Alertas locales de variación de tasa** y **Widget de pantalla de inicio**.
 - **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*.
 - **Seguridad de pagos:** Todas las transacciones son procesadas exclusivamente por **Google Play Billing**; el desarrollador nunca accede a tarjetas, cuentas ni credenciales financieras.
 
@@ -73,7 +73,7 @@ Tasa VE solicita únicamente los permisos estrictamente necesarios:
 
 ## 8. Uso de tecnologías de terceros
 La aplicación integra los siguientes SDKs y servicios oficiales certificados:
-- **Google Mobile Ads (AdMob):** Entrega de banners y anuncios bonificados opcionales en la versión gratuita y prevención de fraude publicitario; puede procesar el ID de publicidad de Android (GAID), dirección IP anonimizada y diagnósticos técnicos. ([Política de Google Ads](https://policies.google.com/technologies/ads))
+- **Google Mobile Ads (AdMob):** Entrega de banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales en la versión gratuita y prevención de fraude publicitario; puede procesar el ID de publicidad de Android (GAID), dirección IP anonimizada y diagnósticos técnicos. ([Política de Google Ads](https://policies.google.com/technologies/ads))
 - **Google Play Billing Library:** Procesamiento seguro de compras dentro de la app y suscripciones mediante tokens anónimos de confirmación. ([Términos de Google Play](https://play.google.com/intl/es_es/about/play-terms/))
 - **Google ML Kit (Text Recognition):** Reconocimiento óptico de caracteres (OCR) ejecutado **100 % en el dispositivo** para leer precios con la cámara. El SDK puede intercambiar métricas técnicas mínimas de diagnóstico o descarga de modelos con Google.
 - **APIs Públicas de Tasas (`ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com`, `open.er-api.com`):** Fuentes públicas de consulta de cotizaciones e históricos de referencia.

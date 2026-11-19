@@ -14,16 +14,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Non-intrusive Rewarded Ad helper for granting +5 bonus camera scans per day
- * when free users opt in voluntarily.
- * Uses official Google AdMob test Rewarded Ad Unit ID in development builds.
+ * Rewarded Ad helper for granting voluntary benefits (+5 daily camera scans
+ * or 12-hour ad-free pass).
+ * Resolves test vs production Rewarded Ad Unit IDs automatically via [AdUnits].
  */
 class RewardedAdManager(
-    private val adUnitId: String = TEST_REWARDED_AD_UNIT_ID
+    private val customAdUnitId: String? = null
 ) {
     companion object {
         private const val TAG = "RewardedAdManager"
-        const val TEST_REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
     }
 
     private var rewardedAd: RewardedAd? = null
@@ -34,12 +33,14 @@ class RewardedAdManager(
 
     fun preload(context: Context) {
         if (rewardedAd != null || loadingInFlight) return
+        val unitId = customAdUnitId ?: AdUnits.rewardedAdUnitId(context) ?: return
+
         loadingInFlight = true
         _isLoading.value = true
 
         RewardedAd.load(
             context.applicationContext,
-            adUnitId,
+            unitId,
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
@@ -75,6 +76,12 @@ class RewardedAdManager(
             return
         }
 
+        val unitId = customAdUnitId ?: AdUnits.rewardedAdUnitId(activity)
+        if (unitId == null) {
+            onError("Los anuncios bonificados aún no están configurados para producción.")
+            return
+        }
+
         if (loadingInFlight) {
             onError("Cargando anuncio... Intenta en un segundo.")
             return
@@ -84,7 +91,7 @@ class RewardedAdManager(
         _isLoading.value = true
         RewardedAd.load(
             activity.applicationContext,
-            adUnitId,
+            unitId,
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {

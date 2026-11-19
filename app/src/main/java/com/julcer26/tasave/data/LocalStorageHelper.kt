@@ -83,6 +83,8 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_REMOTE_HISTORY_JSON = "ultra_remote_history_json"
         private const val KEY_REMOTE_HISTORY_TS = "ultra_remote_history_ts"
         private const val KEY_DEBUG_TIER = "debug_tier_override"
+        private const val KEY_APP_LAUNCH_COUNT = "app_launch_count"
+        private const val KEY_AD_FREE_PASS_UNTIL_MS = "rewarded_ad_free_until_ms"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -575,5 +577,25 @@ class LocalStorageHelper(context: Context) {
             .putString(KEY_PM_DOC, info.documentId.trim())
             .putString(KEY_PM_PHONE, info.phone.trim())
             .apply()
+    }
+
+    fun getAppLaunchCount(): Int = prefs.getInt(KEY_APP_LAUNCH_COUNT, 0)
+
+    fun incrementAndGetAppLaunchCount(): Int {
+        val next = getAppLaunchCount() + 1
+        prefs.edit().putInt(KEY_APP_LAUNCH_COUNT, next).apply()
+        return next
+    }
+
+    fun getAdFreePassUntilMs(): Long = prefs.getLong(KEY_AD_FREE_PASS_UNTIL_MS, 0L)
+
+    fun grantAdFreePassHours(hours: Int = 12, nowMs: Long = System.currentTimeMillis()): Long {
+        val until = maxOf(getAdFreePassUntilMs(), nowMs) + hours * 3_600_000L
+        prefs.edit().putLong(KEY_AD_FREE_PASS_UNTIL_MS, until).apply()
+        return until
+    }
+
+    fun isAdFreePassActive(nowMs: Long = System.currentTimeMillis()): Boolean {
+        return getAdFreePassUntilMs() > nowMs
     }
 }

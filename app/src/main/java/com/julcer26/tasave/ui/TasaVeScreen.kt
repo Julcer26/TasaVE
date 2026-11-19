@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import com.julcer26.tasave.ads.InterstitialAdManager
 import com.julcer26.tasave.ads.RewardedAdManager
 import com.julcer26.tasave.ads.TopBannerAd
 import com.julcer26.tasave.data.TasaVeRepository
@@ -104,12 +105,18 @@ fun TasaVeScreen(
     val paymentProfiles by viewModel.paymentProfiles.collectAsStateWithLifecycle()
     val selectedPaymentProfileId by viewModel.selectedPaymentProfileId.collectAsStateWithLifecycle()
 
+    val adFreePassUntilMs by viewModel.adFreePassUntilMs.collectAsStateWithLifecycle()
+    val isAdFreePassActive = adFreePassUntilMs > System.currentTimeMillis()
+    val isAdsDisabled = isUltraUser || isAdFreePassActive
+
     val rewardedAdManager = remember { RewardedAdManager() }
     val isRewardedAdLoading by rewardedAdManager.isLoading.collectAsStateWithLifecycle()
+    val interstitialAdManager = remember { InterstitialAdManager() }
 
-    LaunchedEffect(isUltraUser) {
-        if (!isUltraUser) {
+    LaunchedEffect(isAdsDisabled) {
+        if (!isAdsDisabled) {
             rewardedAdManager.preload(context)
+            interstitialAdManager.preload(context, isAdFree = false)
         }
     }
 
@@ -121,7 +128,25 @@ fun TasaVeScreen(
     var showHistory by remember { mutableStateOf(false) }
     var showScanner by remember { mutableStateOf(false) }
     var scannerForCart by remember { mutableStateOf(false) }
+    var scannedDuringDialog by remember { mutableStateOf(false) }
     var showPlansDialog by remember { mutableStateOf(false) }
+
+    val triggerWatchAdFreePass: () -> Unit = {
+        rewardedAdManager.showOrLoad(
+            activity = activity,
+            onRewarded = {
+                viewModel.grantAdFreePass12Hours()
+                Toast.makeText(
+                    context,
+                    "¡Pase de 12 horas sin anuncios activado!",
+                    Toast.LENGTH_LONG
+                ).show()
+            },
+            onError = { msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 
     LaunchedEffect(purchaseStatus) {
         purchaseStatus?.let {
@@ -346,7 +371,18 @@ fun TasaVeScreen(
                     val selected = currentTab == tab
                     NavigationBarItem(
                         selected = selected,
-                        onClick = { currentTab = tab },
+                        onClick = {
+                            if (currentTab != tab) {
+                                currentTab = tab
+                                if (tab != AppTab.CONVERTER) {
+                                    interstitialAdManager.maybeShowAfterAction(
+                                        activity = activity,
+                                        isAdFree = isAdsDisabled,
+                                        appLaunchCount = viewModel.appLaunchCount
+                                    )
+                                }
+                            }
+                        },
                         icon = {
                             if (tab == AppTab.CART && cartItems.isNotEmpty()) {
                                 BadgedBox(
@@ -395,6 +431,7 @@ fun TasaVeScreen(
                     CartTab(
                         isDark = isDark,
                         isUltraUser = isUltraUser,
+                        isAdFreePassActive = isAdFreePassActive,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
                         cartItems = cartItems,
@@ -423,6 +460,7 @@ fun TasaVeScreen(
                     MarketTab(
                         isDark = isDark,
                         isUltraUser = isUltraUser,
+                        isAdFreePassActive = isAdFreePassActive,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
                         snapshots = rateSnapshots,
@@ -438,6 +476,7 @@ fun TasaVeScreen(
                     CheckoutTab(
                         isDark = isDark,
                         isUltraUser = isUltraUser,
+                        isAdFreePassActive = isAdFreePassActive,
                         ultraPrice = ultraMonthlyPrice,
                         uiState = uiState,
                         effectiveUsdBcv = viewModel.getEffectiveUsdBcv(),
@@ -459,10 +498,11 @@ fun TasaVeScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Non-intrusive Top Banner Ad (hidden for Ultra users)
+            // Non-intrusive Top Banner Ad (hidden for Ultra users or 12h ad-free pass holders)
             TopBannerAd(
                 isDark = isDark,
-                isUltraUser = isUltraUser
+                isUltraUser = isUltraUser,
+                isAdFreePassActive = isAdFreePassActive
             )
 
             // Relocated sleek Ultra banner
@@ -1269,6 +1309,11 @@ fun TasaVeScreen(
                                 val saved = viewModel.saveConversionToHistory()
                                 if (saved) {
                                     Toast.makeText(context, "Conversión guardada en el historial", Toast.LENGTH_SHORT).show()
+                                    interstitialAdManager.maybeShowAfterAction(
+                                        activity = activity,
+                                        isAdFree = isAdsDisabled,
+                                        appLaunchCount = viewModel.appLaunchCount
+                                    )
                                 } else {
                                     Toast.makeText(context, "Ingresa un monto para guardar el cálculo", Toast.LENGTH_SHORT).show()
                                 }
@@ -1660,6 +1705,8 @@ fun TasaVeScreen(
         SleekSettingsDialog(
             isDark = isDark,
             isUltraUser = isUltraUser,
+            isAdFreePassActive = isAdFreePassActive,
+            isRewardedAdLoading = isRewardedAdLoading,
             debugTier = debugTier,
             ultraMonthlyPrice = ultraMonthlyPrice,
             onDismiss = { showSettings = false },
@@ -1669,6 +1716,7 @@ fun TasaVeScreen(
                 showSettings = false
                 showPlansDialog = true
             },
+            onWatchAdFreePass = triggerWatchAdFreePass,
             onRestorePurchases = {
                 viewModel.restorePurchases()
             }
@@ -1679,6 +1727,8 @@ fun TasaVeScreen(
         PlansComparisonDialog(
             isDark = isDark,
             isUltraUser = isUltraUser,
+            isAdFreePassActive = isAdFreePassActive,
+            isRewardedAdLoading = isRewardedAdLoading,
             ultraMonthlyPrice = ultraMonthlyPrice,
             ultraYearlyPrice = ultraYearlyPrice,
             onPurchaseUltraMonthly = {
@@ -1695,6 +1745,7 @@ fun TasaVeScreen(
                     Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
                 }
             },
+            onWatchAdFreePass = triggerWatchAdFreePass,
             onRestorePurchases = {
                 viewModel.restorePurchases()
             },
@@ -1733,22 +1784,36 @@ fun TasaVeScreen(
                 if (scannerForCart) {
                     val added = viewModel.addCartItem("Producto escaneado", amount, isVes, rateKey, fromScanner = true)
                     if (added) {
+                        scannedDuringDialog = true
                         Toast.makeText(context, "Producto agregado al carrito", Toast.LENGTH_SHORT).show()
                     } else {
+                        scannedDuringDialog = false
                         showScanner = false
                         Toast.makeText(context, "Límite de 5 productos gratis en el carrito", Toast.LENGTH_SHORT).show()
                         showPlansDialog = true
                     }
                 } else {
+                    scannedDuringDialog = true
                     viewModel.applyScannedPrice(amount, isVes, rateKey)
                     Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
                 }
             },
             onUpgradeUltra = {
+                scannedDuringDialog = false
                 showScanner = false
                 showPlansDialog = true
             },
-            onDismiss = { showScanner = false }
+            onDismiss = {
+                showScanner = false
+                if (scannedDuringDialog) {
+                    scannedDuringDialog = false
+                    interstitialAdManager.maybeShowAfterAction(
+                        activity = activity,
+                        isAdFree = isAdsDisabled,
+                        appLaunchCount = viewModel.appLaunchCount
+                    )
+                }
+            }
         )
     }
 }
@@ -2064,12 +2129,15 @@ fun HistoryDialog(
 fun SleekSettingsDialog(
     isDark: Boolean,
     isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
+    isRewardedAdLoading: Boolean = false,
     debugTier: UserTier,
     ultraMonthlyPrice: String,
     onDismiss: () -> Unit,
     onToggleTheme: () -> Unit,
     onSelectDebugTier: (UserTier) -> Unit,
     onOpenPlans: () -> Unit,
+    onWatchAdFreePass: (() -> Unit)? = null,
     onRestorePurchases: () -> Unit
 ) {
     val context = LocalContext.current
@@ -2253,6 +2321,71 @@ fun SleekSettingsDialog(
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold
                             )
+                        }
+
+                        if (!isUltraUser && onWatchAdFreePass != null) {
+                            if (isAdFreePassActive) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0x1F10B981))
+                                        .border(1.dp, Color(0x4D10B981), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFF34D399),
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Text(
+                                        text = "Pase 12h sin anuncios activo",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF34D399)
+                                    )
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = onWatchAdFreePass,
+                                    enabled = !isRewardedAdLoading,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    border = BorderStroke(1.dp, Color(0x4D10B981))
+                                ) {
+                                    if (isRewardedAdLoading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(14.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color(0xFF34D399)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Cargando video...",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF34D399)
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayCircle,
+                                            contentDescription = null,
+                                            tint = Color(0xFF34D399),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "12h sin anuncios (Ver 1 video)",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF34D399)
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         if (!isUltraUser) {
@@ -2525,11 +2658,11 @@ private fun LegalCenterDialog(
             "5. Seguridad de los datos" to
                 "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
             "6. Publicidad, anuncios bonificados y suscripción Ultra" to
-                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra) con anuncios no invasivos. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
+                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, COP, ajustes %, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra o activar 12 h sin banners ni intersticiales). Muestra banners adaptativos e intersticiales ocasionales tras acciones clave (nunca al abrir la app). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
             "7. Permisos del sistema" to
                 "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y suscripción Ultra en Google Play.",
             "8. Uso de tecnologías de terceros" to
-                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI, DolarVzla, Open ER-API).",
+                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI, DolarVzla, Open ER-API).",
             "9. Cambios en esta política" to
                 "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
@@ -2546,7 +2679,7 @@ private fun LegalCenterDialog(
             "3. Fuentes de Datos y Descargo" to
                 "Las tasas se consultan de fuentes públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
             "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
-                "El Plan Gratuito ofrece las funciones principales con anuncios no invasivos y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, Alertas y Widget.",
+                "El Plan Gratuito ofrece las funciones principales con banners, intersticiales ocasionales tras acciones y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado, o pase de 12 h sin anuncios por 1 video), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, Alertas y Widget.",
             "5. Reembolsos, Restauración y Contacto" to
                 "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: soporte@tasave.net."
         )

@@ -75,6 +75,7 @@ private val PurpleZelle = Color(0xFFA855F7)
 fun CartTab(
     isDark: Boolean,
     isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
     ultraPrice: String,
     uiState: TasaVeUiState,
     cartItems: List<CartItem>,
@@ -124,7 +125,7 @@ fun CartTab(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser)
+        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser, isAdFreePassActive = isAdFreePassActive)
 
         // Summary Header Card
         Column(
@@ -765,6 +766,7 @@ private fun CartItemEditorDialog(
 fun MarketTab(
     isDark: Boolean,
     isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
     ultraPrice: String,
     uiState: TasaVeUiState,
     snapshots: List<RateSnapshot>,
@@ -829,7 +831,7 @@ fun MarketTab(
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser)
+        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser, isAdFreePassActive = isAdFreePassActive)
         // 1. Brecha Cambiaria Card
         Column(
             modifier = Modifier
@@ -1535,6 +1537,7 @@ fun MarketTab(
 fun CheckoutTab(
     isDark: Boolean,
     isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
     ultraPrice: String,
     uiState: TasaVeUiState,
     effectiveUsdBcv: RateInfo? = uiState.usdBcv,
@@ -1643,7 +1646,7 @@ fun CheckoutTab(
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser)
+        TopBannerAd(isDark = isDark, isUltraUser = isUltraUser, isAdFreePassActive = isAdFreePassActive)
 
         // Rate Selector
         Row(
@@ -2605,10 +2608,13 @@ private fun BankPickerDialog(
 fun PlansComparisonDialog(
     isDark: Boolean,
     isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
+    isRewardedAdLoading: Boolean = false,
     ultraMonthlyPrice: String,
     ultraYearlyPrice: String,
     onPurchaseUltraMonthly: () -> Unit,
     onPurchaseUltraYearly: () -> Unit,
+    onWatchAdFreePass: (() -> Unit)? = null,
     onRestorePurchases: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -2684,7 +2690,7 @@ fun PlansComparisonDialog(
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
-                        listOf("Sin publicidad", "—", "✓"),
+                        listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Alertas + Widget inicio", "—", "✓")
                     )
                     rows.forEach { cols ->
@@ -2746,6 +2752,63 @@ fun PlansComparisonDialog(
                                 border = BorderStroke(1.dp, AmberUltra)
                             ) {
                                 Text(ultraYearlyPrice, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = AmberUltra)
+                            }
+                        }
+                    }
+                }
+
+                if (!isUltraUser && onWatchAdFreePass != null) {
+                    if (isAdFreePassActive) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Color(0x1F10B981))
+                                .border(1.dp, Color(0x4D10B981), RoundedCornerShape(14.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = EmeraldLight,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "Pase 12h sin anuncios activo en este dispositivo",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = EmeraldLight
+                            )
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = onWatchAdFreePass,
+                            enabled = !isRewardedAdLoading,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 42.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0x4D10B981))
+                        ) {
+                            if (isRewardedAdLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(14.dp),
+                                    strokeWidth = 2.dp,
+                                    color = EmeraldLight
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Cargando video...", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = EmeraldLight)
+                            } else {
+                                Icon(Icons.Default.PlayCircle, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "12h sin banners ni pausas (Ver 1 video)",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldLight
+                                )
                             }
                         }
                     }

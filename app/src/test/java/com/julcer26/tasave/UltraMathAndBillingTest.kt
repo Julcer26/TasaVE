@@ -236,5 +236,107 @@ class UltraMathAndBillingTest {
         assertNull(sameDay.nextEur)
         assertNull(sameDay.nextEffectiveIso)
     }
+
+    @Test
+    fun interstitialPolicy_respectsGracePeriodCooldownSessionCapAndAdFree() {
+        val now = 1_000_000L
+        val cooldown = com.julcer26.tasave.ads.InterstitialPolicy.COOLDOWN_MS
+
+        // Suppressed during first 2 launches (new user grace period)
+        assertFalse(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = false,
+                appLaunchCount = 1,
+                sessionShownCount = 0,
+                lastShownElapsedMs = -1L,
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+        assertFalse(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = false,
+                appLaunchCount = 2,
+                sessionShownCount = 0,
+                lastShownElapsedMs = -1L,
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+
+        // Allowed from launch 3 onwards when ad is loaded
+        assertTrue(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = false,
+                appLaunchCount = 3,
+                sessionShownCount = 0,
+                lastShownElapsedMs = -1L,
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+
+        // Suppressed when Ultra or 12h Ad-Free Pass is active
+        assertFalse(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = true,
+                appLaunchCount = 10,
+                sessionShownCount = 0,
+                lastShownElapsedMs = -1L,
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+
+        // Suppressed before 4-minute cooldown, allowed at/after cooldown
+        assertFalse(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = false,
+                appLaunchCount = 5,
+                sessionShownCount = 1,
+                lastShownElapsedMs = now - (cooldown - 1_000L),
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+        assertTrue(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = false,
+                appLaunchCount = 5,
+                sessionShownCount = 1,
+                lastShownElapsedMs = now - cooldown,
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+
+        // Suppressed at session cap (3 interstitials/session)
+        assertFalse(
+            com.julcer26.tasave.ads.InterstitialPolicy.shouldShow(
+                isAdFree = false,
+                appLaunchCount = 5,
+                sessionShownCount = com.julcer26.tasave.ads.InterstitialPolicy.MAX_PER_SESSION,
+                lastShownElapsedMs = now - (cooldown * 2),
+                nowElapsedMs = now,
+                hasLoadedAd = true
+            )
+        )
+    }
+
+    @Test
+    fun adUnits_sanitizeProdId_rejectsBlankAndGoogleTestIds() {
+        assertNull(com.julcer26.tasave.ads.AdUnits.sanitizeProdId(""))
+        assertNull(com.julcer26.tasave.ads.AdUnits.sanitizeProdId("   "))
+        assertNull(
+            com.julcer26.tasave.ads.AdUnits.sanitizeProdId(
+                com.julcer26.tasave.ads.AdUnits.TEST_BANNER_AD_UNIT_ID
+            )
+        )
+        assertEquals(
+            "ca-app-pub-1192254236776922/4135771180",
+            com.julcer26.tasave.ads.AdUnits.sanitizeProdId("  ca-app-pub-1192254236776922/4135771180  ")
+        )
+    }
 }
+
 

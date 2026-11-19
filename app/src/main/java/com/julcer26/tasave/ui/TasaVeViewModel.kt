@@ -66,6 +66,17 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _remainingFreeScans = MutableStateFlow(localStorageHelper.getRemainingFreeScans())
     val remainingFreeScans: StateFlow<Int> = _remainingFreeScans.asStateFlow()
 
+    val appLaunchCount: Int = localStorageHelper.incrementAndGetAppLaunchCount()
+
+    private val _adFreePassUntilMs = MutableStateFlow(localStorageHelper.getAdFreePassUntilMs())
+    val adFreePassUntilMs: StateFlow<Long> = _adFreePassUntilMs.asStateFlow()
+
+    fun grantAdFreePass12Hours(): Long {
+        val until = localStorageHelper.grantAdFreePassHours(12)
+        _adFreePassUntilMs.value = until
+        return until
+    }
+
     // Shopping Cart State
     private val _cartItems = MutableStateFlow(localStorageHelper.getCartItems())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
