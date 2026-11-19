@@ -80,6 +80,7 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_DEBUG_TIER = "debug_tier_override"
         private const val KEY_APP_LAUNCH_COUNT = "app_launch_count"
         private const val KEY_AD_FREE_PASS_UNTIL_MS = "rewarded_ad_free_until_ms"
+        private const val KEY_CUSTOM_BRAND_NAME = "ultra_custom_brand_name"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -577,5 +578,14 @@ class LocalStorageHelper(context: Context) {
 
     fun isAdFreePassActive(nowMs: Long = System.currentTimeMillis()): Boolean {
         return getAdFreePassUntilMs() > nowMs
+    }
+
+    fun getCustomBrandName(): String {
+        return prefs.getString(KEY_CUSTOM_BRAND_NAME, "") ?: ""
+    }
+
+    fun saveCustomBrandName(name: String) {
+        val cleaned = name.trim().take(40)
+        prefs.edit().putString(KEY_CUSTOM_BRAND_NAME, cleaned).apply()
     }
 }

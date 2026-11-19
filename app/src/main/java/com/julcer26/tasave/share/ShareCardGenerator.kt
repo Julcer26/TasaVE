@@ -3,13 +3,17 @@ package com.julcer26.tasave.share
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import android.net.Uri
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -21,6 +25,88 @@ import java.io.FileOutputStream
 import java.util.Locale
 
 object ShareCardGenerator {
+
+    const val WEB_URL = "https://tasave.net"
+    const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.julcer26.tasave"
+    const val CUSTOM_BRAND_LOGO_FILENAME = "custom_brand_logo.png"
+
+    fun buildDownloadLinksBlock(): String = buildString {
+        appendLine("Descarga Tasa VE:")
+        appendLine("Web: $WEB_URL")
+        append("Google Play: $PLAY_STORE_URL")
+    }
+
+    fun getCustomBrandLogoFile(context: Context): File? {
+        val file = File(context.filesDir, CUSTOM_BRAND_LOGO_FILENAME)
+        return if (file.exists() && file.length() > 0L) file else null
+    }
+
+    fun deleteCustomBrandLogo(context: Context): Boolean {
+        val file = File(context.filesDir, CUSTOM_BRAND_LOGO_FILENAME)
+        return !file.exists() || file.delete()
+    }
+
+    fun importCustomBrandLogo(context: Context, uri: Uri): Boolean {
+        return runCatching {
+            val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, boundsOpts)
+            }
+            val srcW = boundsOpts.outWidth
+            val srcH = boundsOpts.outHeight
+            if (srcW <= 0 || srcH <= 0) return false
+
+            var sampleSize = 1
+            while ((srcW / sampleSize) > 1024 && (srcH / sampleSize) > 1024) {
+                sampleSize *= 2
+            }
+
+            val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+            val decoded = context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, decodeOpts)
+            } ?: return false
+
+            val normalized = cropAndScaleSquareBitmap(decoded, targetSize = 512)
+            if (normalized !== decoded) {
+                decoded.recycle()
+            }
+
+            val outFile = File(context.filesDir, CUSTOM_BRAND_LOGO_FILENAME)
+            FileOutputStream(outFile).use { fos ->
+                normalized.compress(Bitmap.CompressFormat.PNG, 100, fos)
+            }
+            normalized.recycle()
+            outFile.exists() && outFile.length() > 0L
+        }.getOrDefault(false)
+    }
+
+    internal fun cropAndScaleSquareBitmap(source: Bitmap, targetSize: Int = 512): Bitmap {
+        val size = minOf(source.width, source.height).coerceAtLeast(1)
+        val x = ((source.width - size) / 2).coerceAtLeast(0)
+        val y = ((source.height - size) / 2).coerceAtLeast(0)
+        val cropped = if (source.width == source.height) {
+            source
+        } else {
+            Bitmap.createBitmap(source, x, y, size, size)
+        }
+        if (cropped.width == targetSize && cropped.height == targetSize) {
+            return cropped
+        }
+        val scaled = Bitmap.createScaledBitmap(cropped, targetSize, targetSize, true)
+        if (cropped !== source && cropped !== scaled) {
+            cropped.recycle()
+        }
+        return scaled
+    }
+
+    internal fun extractBrandInitials(brandName: String): String {
+        val parts = brandName.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+        return when {
+            parts.isEmpty() -> "TV"
+            parts.size == 1 -> parts[0].take(2).uppercase(Locale.getDefault())
+            else -> "${parts[0].first()}${parts[1].first()}".uppercase(Locale.getDefault())
+        }
+    }
 
     fun shareCalculationCard(
         context: Context,
@@ -189,7 +275,7 @@ object ShareCardGenerator {
                     appendLine("Ajuste ($modifierText): $adjustedTotalText")
                 }
                 appendLine()
-                append("Descarga Tasa VE: https://tasave.net")
+                append(buildDownloadLinksBlock())
             }.trim()
 
             shareBitmap(context, bitmap, caption)
@@ -211,7 +297,9 @@ object ShareCardGenerator {
         statusUsd: Double,
         statusVes: Double,
         profile: PaymentMethodProfile?,
-        captionText: String? = null
+        captionText: String? = null,
+        customBrandName: String? = null,
+        customBrandLogoFile: File? = null
     ) {
         runCatching {
             val hasTotal = totalUsd > 0.005
@@ -248,20 +336,32 @@ object ShareCardGenerator {
             canvas.drawRoundRect(outerRect, 48f, 48f, cardPaint)
             canvas.drawRoundRect(outerRect, 48f, 48f, borderPaint)
 
+            val customLogoBitmap = runCatching {
+                customBrandLogoFile?.takeIf { it.exists() && it.length() > 0L }?.let {
+                    BitmapFactory.decodeFile(it.absolutePath)
+                }
+            }.getOrNull()
+
             val rateFmt = if (rateLabel.contains("USDT", ignoreCase = true)) "%.2f" else "%.4f"
             val pillLabel = if (hasTotal) "RESUMEN DE COBRO" else "DATOS DE COBRO"
-            drawCenteredBrandHeader(
-                context = context,
-                canvas = canvas,
-                width = width,
-                isDark = isDark,
-                textPrimary = textPrimary,
-                textSecondary = textSecondary,
-                pillText = pillLabel,
-                pillTextColor = emeraldLight,
-                pillBgColor = Color.parseColor("#2410B981"),
-                subtitle = "$rateLabel: Bs. ${String.format(Locale.US, rateFmt, rateValue)}"
-            )
+            try {
+                drawCenteredBrandHeader(
+                    context = context,
+                    canvas = canvas,
+                    width = width,
+                    isDark = isDark,
+                    textPrimary = textPrimary,
+                    textSecondary = textSecondary,
+                    pillText = pillLabel,
+                    pillTextColor = emeraldLight,
+                    pillBgColor = Color.parseColor("#2410B981"),
+                    subtitle = "$rateLabel: Bs. ${String.format(Locale.US, rateFmt, rateValue)}",
+                    customBrandName = customBrandName,
+                    customBrandLogo = customLogoBitmap
+                )
+            } finally {
+                customLogoBitmap?.recycle()
+            }
 
             val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = subCardBg }
             var currentY = 326f
@@ -369,7 +469,8 @@ object ShareCardGenerator {
 
             val fallbackCaption = buildString {
                 if (hasTotal) {
-                    appendLine("*Tasa VE • Resumen de Cobro*")
+                    val headerName = customBrandName?.trim()?.takeIf { it.isNotBlank() } ?: "Tasa VE"
+                    appendLine("*$headerName • Resumen de Cobro*")
                     appendLine("Total: $${String.format(Locale.US, "%.2f", totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", totalVes)}")
                     appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, rateValue)}")
                 }
@@ -378,7 +479,7 @@ object ShareCardGenerator {
                     profileLines.forEach { appendLine(it) }
                 }
                 if (isNotEmpty()) appendLine()
-                append("Descarga Tasa VE: https://tasave.net")
+                append(buildDownloadLinksBlock())
             }.trim()
 
             shareBitmap(
@@ -401,45 +502,122 @@ object ShareCardGenerator {
         pillText: String,
         pillTextColor: Int,
         pillBgColor: Int,
-        subtitle: String
+        subtitle: String,
+        customBrandName: String? = null,
+        customBrandLogo: Bitmap? = null
     ) {
+        val cleanedName = customBrandName?.trim().orEmpty()
+        val hasCustomBrand = customBrandLogo != null || cleanedName.isNotEmpty()
+
         val brandPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = textPrimary
             textSize = 50f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
-        val iconSize = 68f
+        val iconSize = if (hasCustomBrand && cleanedName.isEmpty()) 76f else 68f
         val gap = 18f
-        val textWidth = brandPaint.measureText("Tasa VE")
-        val lockupWidth = iconSize + gap + textWidth
-        val startX = (width - lockupWidth) / 2f
-        val iconTop = 92f
+        val iconTop = if (hasCustomBrand && cleanedName.isEmpty()) 88f else 92f
+        val maxTextWidth = width - 240f - iconSize - gap
 
-        // Deep Obsidian Rounded App Icon Tile
-        val tileRect = RectF(startX, iconTop, startX + iconSize, iconTop + iconSize)
-        val tileFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#070C16") }
-        val tileStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.parseColor("#5510B981")
-            style = Paint.Style.STROKE
-            strokeWidth = 2.5f
+        if (!hasCustomBrand) {
+            val textWidth = brandPaint.measureText("Tasa VE")
+            val lockupWidth = iconSize + gap + textWidth
+            val startX = (width - lockupWidth) / 2f
+
+            // Deep Obsidian Rounded App Icon Tile
+            val tileRect = RectF(startX, iconTop, startX + iconSize, iconTop + iconSize)
+            val tileFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#070C16") }
+            val tileStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#5510B981")
+                style = Paint.Style.STROKE
+                strokeWidth = 2.5f
+            }
+            canvas.drawRoundRect(tileRect, 18f, 18f, tileFill)
+            canvas.drawRoundRect(tileRect, 18f, 18f, tileStroke)
+
+            // Canonical Tasa VE Folded-V + Dollar Vector Mark (ic_brand_mark.xml)
+            ContextCompat.getDrawable(context, R.drawable.ic_brand_mark)?.let { mark ->
+                val inset = 6
+                mark.setBounds(
+                    startX.toInt() + inset,
+                    iconTop.toInt() + inset,
+                    (startX + iconSize).toInt() - inset,
+                    (iconTop + iconSize).toInt() - inset
+                )
+                mark.draw(canvas)
+            }
+
+            // Bold "Tasa VE" Wordmark next to emblem
+            canvas.drawText("Tasa VE", startX + iconSize + gap, iconTop + 50f, brandPaint)
+        } else {
+            // Fit custom business name smoothly so long names never overflow
+            var fittedName = cleanedName
+            if (fittedName.isNotEmpty()) {
+                var size = 48f
+                brandPaint.textSize = size
+                while (brandPaint.measureText(fittedName) > maxTextWidth && size > 30f) {
+                    size -= 2f
+                    brandPaint.textSize = size
+                }
+                while (brandPaint.measureText(fittedName) > maxTextWidth && fittedName.length > 4) {
+                    fittedName = fittedName.dropLast(2).trimEnd() + "…"
+                }
+            }
+
+            val textWidth = if (fittedName.isNotEmpty()) brandPaint.measureText(fittedName) else 0f
+            val lockupWidth = if (fittedName.isNotEmpty()) iconSize + gap + textWidth else iconSize
+            val startX = (width - lockupWidth) / 2f
+            val tileRect = RectF(startX, iconTop, startX + iconSize, iconTop + iconSize)
+
+            if (customBrandLogo != null) {
+                val tileFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = if (isDark) Color.parseColor("#0F172A") else Color.parseColor("#F8FAFC")
+                }
+                canvas.drawRoundRect(tileRect, 18f, 18f, tileFill)
+
+                val saveCount = canvas.save()
+                val clipPath = Path().apply {
+                    addRoundRect(tileRect, 18f, 18f, Path.Direction.CW)
+                }
+                canvas.clipPath(clipPath)
+                val srcRect = Rect(0, 0, customBrandLogo.width, customBrandLogo.height)
+                val imgPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+                canvas.drawBitmap(customBrandLogo, srcRect, tileRect, imgPaint)
+                canvas.restoreToCount(saveCount)
+
+                val tileStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = if (isDark) Color.parseColor("#4410B981") else Color.parseColor("#CBD5E1")
+                    style = Paint.Style.STROKE
+                    strokeWidth = 2f
+                }
+                canvas.drawRoundRect(tileRect, 18f, 18f, tileStroke)
+            } else {
+                // Monogram tile when the business sets only a custom name
+                val tileFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#070C16") }
+                val tileStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = Color.parseColor("#6610B981")
+                    style = Paint.Style.STROKE
+                    strokeWidth = 2.5f
+                }
+                canvas.drawRoundRect(tileRect, 18f, 18f, tileFill)
+                canvas.drawRoundRect(tileRect, 18f, 18f, tileStroke)
+
+                val initials = extractBrandInitials(cleanedName)
+                val monoPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = Color.parseColor("#34D399")
+                    textSize = 27f
+                    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                    textAlign = Paint.Align.CENTER
+                }
+                val baselineY = tileRect.centerY() - ((monoPaint.descent() + monoPaint.ascent()) / 2f)
+                canvas.drawText(initials, tileRect.centerX(), baselineY, monoPaint)
+            }
+
+            if (fittedName.isNotEmpty()) {
+                val textY = tileRect.centerY() - ((brandPaint.descent() + brandPaint.ascent()) / 2f)
+                canvas.drawText(fittedName, startX + iconSize + gap, textY, brandPaint)
+            }
         }
-        canvas.drawRoundRect(tileRect, 18f, 18f, tileFill)
-        canvas.drawRoundRect(tileRect, 18f, 18f, tileStroke)
-
-        // Canonical Tasa VE Folded-V + Dollar Vector Mark (ic_brand_mark.xml)
-        ContextCompat.getDrawable(context, R.drawable.ic_brand_mark)?.let { mark ->
-            val inset = 6
-            mark.setBounds(
-                startX.toInt() + inset,
-                iconTop.toInt() + inset,
-                (startX + iconSize).toInt() - inset,
-                (iconTop + iconSize).toInt() - inset
-            )
-            mark.draw(canvas)
-        }
-
-        // Bold "Tasa VE" Wordmark next to emblem
-        canvas.drawText("Tasa VE", startX + iconSize + gap, iconTop + 50f, brandPaint)
 
         // Subtle Header Divider
         val divPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

@@ -331,6 +331,20 @@ class UltraMathAndBillingTest {
             com.julcer26.tasave.ads.AdUnits.sanitizeProdId("  ca-app-pub-1192254236776922/4135771180  ")
         )
     }
+
+    @Test
+    fun shareCardGenerator_downloadLinks_includeWebAndPlayStore() {
+        val block = com.julcer26.tasave.share.ShareCardGenerator.buildDownloadLinksBlock()
+        assertTrue(block.contains("https://tasave.net"))
+        assertTrue(block.contains("https://play.google.com/store/apps/details?id=com.julcer26.tasave"))
+    }
+
+    @Test
+    fun shareCardGenerator_extractBrandInitials_handlesSingleAndMultiWord() {
+        assertEquals("TV", com.julcer26.tasave.share.ShareCardGenerator.extractBrandInitials("  "))
+        assertEquals("BO", com.julcer26.tasave.share.ShareCardGenerator.extractBrandInitials("Bodega"))
+        assertEquals("BL", com.julcer26.tasave.share.ShareCardGenerator.extractBrandInitials("Bodega La Esquina"))
+    }
 }
 
 

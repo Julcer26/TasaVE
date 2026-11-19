@@ -8,11 +8,15 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,8 +45,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -1547,6 +1553,11 @@ fun CheckoutTab(
     onSelectProfile: (Long?) -> Unit,
     onSaveProfile: (PaymentMethodProfile) -> Boolean,
     onDeleteProfile: (Long) -> Unit,
+    customBrandName: String = "",
+    customBrandLogoRevision: Long = 0L,
+    onSaveCustomBrandName: (String) -> Unit = {},
+    onImportCustomBrandLogo: (Uri) -> Boolean = { false },
+    onRemoveCustomBrandLogo: () -> Unit = {},
     onOpenPlans: () -> Unit
 ) {
     val context = LocalContext.current
@@ -1562,6 +1573,16 @@ fun CheckoutTab(
 
     var editingProfile by remember { mutableStateOf<PaymentMethodProfile?>(null) }
     var showProfileDialog by remember { mutableStateOf(false) }
+    var showBrandDialog by remember { mutableStateOf(false) }
+
+    val customLogoFile = remember(customBrandLogoRevision, isUltraUser) {
+        if (isUltraUser) ShareCardGenerator.getCustomBrandLogoFile(context) else null
+    }
+    val customLogoPreviewBitmap = remember(customLogoFile?.absolutePath, customBrandLogoRevision) {
+        runCatching {
+            customLogoFile?.let { BitmapFactory.decodeFile(it.absolutePath)?.asImageBitmap() }
+        }.getOrNull()
+    }
 
     val selectedProfile = remember(paymentProfiles, selectedProfileId) {
         paymentProfiles.firstOrNull { it.id == selectedProfileId }
@@ -1587,10 +1608,11 @@ fun CheckoutTab(
         UltraMath.calculateMixedPayment(totalUsd, cashUsd, paidVes, activeRate)
     }
 
-    val shareSummaryText = remember(result, rateLabel, rateFmt, activeRate, selectedProfile) {
+    val shareSummaryText = remember(result, rateLabel, rateFmt, activeRate, selectedProfile, isUltraUser, customBrandName) {
         buildString {
             if (result.totalUsd > 0.005) {
-                appendLine("*Tasa VE • Resumen de Cobro*")
+                val brandHeader = if (isUltraUser && customBrandName.isNotBlank()) customBrandName.trim() else "Tasa VE"
+                appendLine("*$brandHeader • Resumen de Cobro*")
                 appendLine("Total: $${String.format(Locale.US, "%.2f", result.totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", result.totalVes)}")
                 appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, activeRate)}")
                 if (result.paidForeignUsd > 0 || result.paidVes > 0) {
@@ -1634,7 +1656,7 @@ fun CheckoutTab(
                 }
             }
             if (isNotEmpty()) appendLine()
-            append("Descarga Tasa VE: https://tasave.net")
+            append(ShareCardGenerator.buildDownloadLinksBlock())
         }.trim()
     }
 
@@ -1992,6 +2014,115 @@ fun CheckoutTab(
             }
         }
 
+        // Custom Brand Header Card for Checkout PNG Cards (Ultra / Business)
+        val hasCustomBrandConfigured = isUltraUser && (customLogoPreviewBitmap != null || customBrandName.isNotBlank())
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(cardBg)
+                .border(
+                    width = 1.dp,
+                    color = if (hasCustomBrandConfigured) Color(0x4D10B981) else borderCol,
+                    shape = RoundedCornerShape(18.dp)
+                )
+                .clickable {
+                    if (isUltraUser) {
+                        showBrandDialog = true
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Personaliza tu logo en tarjetas con Tasa VE Ultra.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onOpenPlans()
+                    }
+                }
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(if (isDark) Color(0xFF070C16) else Color(0xFFF1F5F9))
+                    .border(1.dp, Color(0x4D10B981), RoundedCornerShape(11.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (customLogoPreviewBitmap != null) {
+                    Image(
+                        bitmap = customLogoPreviewBitmap,
+                        contentDescription = "Logo personalizado",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Storefront,
+                        contentDescription = null,
+                        tint = if (isUltraUser) EmeraldLight else AmberUltra,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = if (hasCustomBrandConfigured) {
+                            customBrandName.ifBlank { "Logo propio activo" }
+                        } else {
+                            "Logo propio en Tarjeta PNG"
+                        },
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (!isUltraUser) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x2EF59E0B))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "ULTRA",
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = AmberUltra
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = if (hasCustomBrandConfigured) {
+                        "Se muestra arriba en la tarjeta • Pie Tasa VE abajo"
+                    } else if (isUltraUser) {
+                        "Sube tu logo (PNG/JPG 1:1 ≥ 512 px) y nombre comercial"
+                    } else {
+                        "Muestra tu marca arriba manteniendo el pie de Tasa VE"
+                    },
+                    fontSize = 10.5.sp,
+                    color = textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Icon(
+                imageVector = if (isUltraUser) Icons.Default.Edit else Icons.Default.Lock,
+                contentDescription = "Configurar marca",
+                tint = if (isUltraUser) EmeraldLight else AmberUltra,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
         // Copy, Visual PNG Card & WhatsApp Share Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -2034,7 +2165,9 @@ fun CheckoutTab(
                         statusUsd = if (isChange) result.changeUsd else result.remainingUsd,
                         statusVes = if (isChange) result.changeVes else result.remainingVes,
                         profile = selectedProfile,
-                        captionText = shareSummaryText
+                        captionText = shareSummaryText,
+                        customBrandName = if (isUltraUser) customBrandName.takeIf { it.isNotBlank() } else null,
+                        customBrandLogoFile = if (isUltraUser) customLogoFile else null
                     )
                 },
                 modifier = Modifier
@@ -2069,6 +2202,32 @@ fun CheckoutTab(
         }
     }
 
+    if (showBrandDialog) {
+        CustomBrandDialog(
+            isDark = isDark,
+            initialBrandName = customBrandName,
+            logoPreviewBitmap = customLogoPreviewBitmap,
+            onDismiss = { showBrandDialog = false },
+            onSaveName = { name ->
+                onSaveCustomBrandName(name)
+                showBrandDialog = false
+                Toast.makeText(context, "Marca de tarjeta actualizada", Toast.LENGTH_SHORT).show()
+            },
+            onPickLogo = { uri ->
+                val imported = onImportCustomBrandLogo(uri)
+                Toast.makeText(
+                    context,
+                    if (imported) "Logo guardado (512×512 px)" else "No se pudo leer esa imagen",
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            onRemoveLogo = {
+                onRemoveCustomBrandLogo()
+                Toast.makeText(context, "Logo personalizado eliminado", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
     if (showProfileDialog) {
         PaymentProfileEditorDialog(
             isDark = isDark,
@@ -2089,6 +2248,230 @@ fun CheckoutTab(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun CustomBrandDialog(
+    isDark: Boolean,
+    initialBrandName: String,
+    logoPreviewBitmap: androidx.compose.ui.graphics.ImageBitmap?,
+    onDismiss: () -> Unit,
+    onSaveName: (String) -> Unit,
+    onPickLogo: (Uri) -> Unit,
+    onRemoveLogo: () -> Unit
+) {
+    val dialogBg = if (isDark) Color(0xFF141418) else Color.White
+    val subCardBg = if (isDark) Color(0xFF1B1C22) else Color(0xFFF8FAFC)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    var brandName by remember(initialBrandName) { mutableStateOf(initialBrandName) }
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            onPickLogo(uri)
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, Color(0x3310B981), RoundedCornerShape(24.dp))
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Marca en Tarjeta de Cobro",
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Reemplaza la cabecera superior; el pie de Tasa VE se mantiene abajo.",
+                            fontSize = 10.5.sp,
+                            color = textSecondary
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Live Header Preview
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(subCardBg)
+                        .border(1.dp, Color(0x2610B981), RoundedCornerShape(16.dp))
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF070C16))
+                            .border(1.dp, Color(0x5510B981), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (logoPreviewBitmap != null) {
+                            Image(
+                                bitmap = logoPreviewBitmap,
+                                contentDescription = "Vista previa logo",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            val initials = ShareCardGenerator.extractBrandInitials(
+                                brandName.ifBlank { "Tasa VE" }
+                            )
+                            Text(
+                                text = initials,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = EmeraldLight
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = brandName.trim().ifBlank {
+                            if (logoPreviewBitmap != null) "Solo logo centrado" else "Tasa VE (predeterminado)"
+                        },
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                OutlinedTextField(
+                    value = brandName,
+                    onValueChange = { if (it.length <= 40) brandName = it },
+                    label = { Text("Nombre de tu negocio o marca") },
+                    placeholder = { Text("Ej. Bodega La Esquina") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color(0x4D10B981))
+                    ) {
+                        Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (logoPreviewBitmap != null) "Cambiar logo" else "Subir logo",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight
+                        )
+                    }
+
+                    if (logoPreviewBitmap != null) {
+                        OutlinedButton(
+                            onClick = onRemoveLogo,
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0x4DEF4444))
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = "Quitar logo", modifier = Modifier.size(16.dp), tint = Color(0xFFEF4444))
+                        }
+                    }
+                }
+
+                // Clear specifications box so user logos look crisp
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (isDark) Color(0x1410B981) else Color(0x0F059669))
+                        .border(1.dp, Color(0x3310B981), RoundedCornerShape(14.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "RECOMENDACIONES PARA TU LOGO",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldLight,
+                        letterSpacing = 0.6.sp
+                    )
+                    Text(
+                        text = "• Formato ideal: PNG con fondo transparente (también JPG o WebP).",
+                        fontSize = 10.5.sp,
+                        color = textSecondary
+                    )
+                    Text(
+                        text = "• Proporción cuadrada 1:1 (se recorta al centro automáticamente).",
+                        fontSize = 10.5.sp,
+                        color = textSecondary
+                    )
+                    Text(
+                        text = "• Tamaño mínimo recomendado: 512 × 512 px para máxima nitidez.",
+                        fontSize = 10.5.sp,
+                        color = textSecondary
+                    )
+                    Text(
+                        text = "• Evita textos diminutos; un isotipo limpio luce mejor.",
+                        fontSize = 10.5.sp,
+                        color = textSecondary
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            brandName = ""
+                            onRemoveLogo()
+                            onSaveName("")
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Restablecer", color = textSecondary, fontSize = 12.sp)
+                    }
+                    Button(
+                        onClick = { onSaveName(brandName) },
+                        modifier = Modifier.weight(1.3f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                    ) {
+                        Text("Guardar marca", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -2691,7 +3074,8 @@ fun PlansComparisonDialog(
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
-                        listOf("Alertas + Widget inicio", "—", "✓")
+                        listOf("Alertas + Widget inicio", "—", "✓"),
+                        listOf("Logo propio en Tarjeta PNG", "—", "✓")
                     )
                     rows.forEach { cols ->
                         Row(
@@ -2726,7 +3110,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio. Cancela cuando quieras.",
+                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

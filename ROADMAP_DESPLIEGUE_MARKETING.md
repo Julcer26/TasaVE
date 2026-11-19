@@ -1,8 +1,9 @@
 # Roadmap de Despliegue, Marketing y Tasa VE Business
 
-**Última actualización:** 18 de noviembre de 2026  
+**Última actualización:** 19 de noviembre de 2026  
 **Rama de desarrollo actual:** `feat/v1.2-ultra`  
-**Dominio oficial:** `https://tasave.net` • **Soporte:** `soporte@tasave.net`
+**Dominio oficial:** `https://tasave.net` • **Soporte:** `soporte@tasave.net`  
+**Redes oficiales:** Instagram [`@tasa.ve`](https://www.instagram.com/tasa.ve/) • TikTok [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)
 
 ---
 
@@ -13,7 +14,7 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor 4 decimales, BCV Hoy/Mañana, USDT paralelo, Brecha y Gráficos, Pago Mixto + Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
-| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, Alertas locales de tasa y Widget de pantalla de inicio. |
+| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y Widget de pantalla de inicio. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
 > **Regla de oro:** *Business* nunca debe cobrarse como un "extra aparte sobre Ultra". En Google Play Billing se ofertan como planes independientes donde *Business* desbloquea automáticamente todos los beneficios de *Ultra*.
@@ -26,8 +27,8 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 1. **Unidades reales de AdMob (`app/src/main/res/values/strings.xml`):**
    - `admob_app_id`: `ca-app-pub-1192254236776922~3391721063` *(configurado)*.
    - `admob_banner_ad_unit_id`: `ca-app-pub-1192254236776922/4135771180` *(configurado)*.
-   - **Pendiente:** Crear en la consola de AdMob una unidad **Intersticial** y una **Bonificada (Rewarded)** y pegar sus IDs en `admob_interstitial_ad_unit_id` y `admob_rewarded_ad_unit_id`.
-   - Verificar que `https://tasave.net/app-ads.txt` esté publicado y accesible.
+   - **Pendiente (tras superar prueba cerrada):** Crear en la consola de AdMob una unidad **Intersticial** y una **Bonificada (Rewarded)** y pegar sus IDs en `admob_interstitial_ad_unit_id` y `admob_rewarded_ad_unit_id`.
+   - Verificar que `https://tasave.net/app-ads.txt` esté publicado y accesible *(ya activo)*.
 2. **Suscripciones en Google Play Console:**
    - Crear producto de suscripción **`tasave_ultra_monthly`** con plan base mensual de **\$0.99 USD** (oferta opcional: 3 o 7 días de prueba gratis).
    - Crear producto de suscripción **`tasave_ultra_yearly`** con plan base anual de **\$7.99 USD** (~33 % de ahorro).
@@ -64,17 +65,20 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
   6. Widget de pantalla de inicio + Alertas de tasa.
 
 ### 3.2 Motor Viral Integrado (Loop de Adquisición por WhatsApp)
-Cada vez que un usuario comparte una **Tarjeta PNG** o un resumen de **Cobro / Pago Móvil** por WhatsApp, incluye un formato limpio con el enlace oficial `https://tasave.net`.
+Cada vez que un usuario comparte una **Tarjeta PNG** o un resumen de **Cobro / Pago Móvil** por WhatsApp, incluye un formato limpio con ambos enlaces oficiales (`https://tasave.net` y `https://play.google.com/store/apps/details?id=com.julcer26.tasave`), mientras el pie de la tarjeta visual conserva `Generado con Tasa VE • https://tasave.net` incluso cuando un usuario Ultra personaliza la cabecera con su propio logo.
 - **Efecto multiplicador:** quien recibe una tarjeta clara con el cálculo y los datos de pago tiende a preguntar *"¿qué app usas?"* o hacer clic directo para instalarla.
 - **Landing (`tasave.net`):** ya publicada en `docs/`; en cuanto Google Play apruebe la ficha pública, reemplazar el CTA de descarga de APK/lista de espera por el botón oficial de Google Play Store.
 
-### 3.3 Estrategia de Contenido Corto (TikTok, Instagram Reels, YouTube Shorts)
-Videos verticales de 15 a 25 segundos resolviendo problemas cotidianos reales en Venezuela (sin sobreproducción, grabando la pantalla real del teléfono):
-1. **"No pierdas dinero con el vuelto en Pago Móvil":** muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. en 5 segundos.
-2. **"Escanea el precio en el súper sin sacar la cuenta a mano":** apunta la cámara a un producto en \$ y ve el total instantáneo en Bs. BCV.
-3. **"Mira la tasa BCV de mañana antes que los demás":** muestra el selector *BCV Hoy vs Mañana* y las alertas automáticas.
-4. **"Cobra como un negocio pro por WhatsApp":** genera la *Tarjeta PNG* con tus datos de Pago Móvil/Zelle/Binance en 1 toque.
-5. **Canales y alianzas micro:** grupos de emprendedores, tiendas de Instagram, repartidores/delivery y bodegas locales regalando códigos/pases promocionales en lanzamientos.
+### 3.3 Estrategia de Contenido Corto en `@tasa.ve` (Instagram Reels y TikTok)
+- **Cuentas oficiales activas:**
+  - **Instagram:** [`@tasa.ve`](https://www.instagram.com/tasa.ve/)
+  - **TikTok:** [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)
+- **Guiones de videos verticales (15 a 25 segundos)** resolviendo problemas cotidianos reales en Venezuela (sin sobreproducción, grabando la pantalla real del teléfono):
+  1. **"No pierdas dinero con el vuelto en Pago Móvil":** muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. en 5 segundos.
+  2. **"Escanea el precio en el súper sin sacar la cuenta a mano":** apunta la cámara a un producto en \$ y ve el total instantáneo en Bs. BCV.
+  3. **"Mira la tasa BCV de mañana antes que los demás":** muestra el selector *BCV Hoy vs Mañana* y las alertas automáticas.
+  4. **"Cobra por WhatsApp con el logo de tu negocio":** genera la *Tarjeta PNG personalizada* (Ultra) con tus datos de Pago Móvil/Zelle/Binance en 1 toque.
+  5. **Canales y alianzas micro:** grupos de emprendedores, tiendas de Instagram, repartidores/delivery y bodegas locales regalando códigos/pases promocionales en lanzamientos.
 
 ---
 

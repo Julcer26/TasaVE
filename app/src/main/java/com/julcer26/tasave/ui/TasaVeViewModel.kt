@@ -2,6 +2,7 @@ package com.julcer26.tasave.ui
 
 import android.app.Activity
 import android.app.Application
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.julcer26.tasave.billing.BillingManager
 import com.julcer26.tasave.data.*
+import com.julcer26.tasave.share.ShareCardGenerator
 import com.julcer26.tasave.ultra.*
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -106,6 +108,13 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             ?: _paymentProfiles.value.firstOrNull()?.id
     )
     val selectedPaymentProfileId: StateFlow<Long?> = _selectedPaymentProfileId.asStateFlow()
+
+    // Custom Brand Logo & Name for Ultra / Business Share Cards
+    private val _customBrandName = MutableStateFlow(localStorageHelper.getCustomBrandName())
+    val customBrandName: StateFlow<String> = _customBrandName.asStateFlow()
+
+    private val _customBrandLogoRevision = MutableStateFlow(0L)
+    val customBrandLogoRevision: StateFlow<Long> = _customBrandLogoRevision.asStateFlow()
 
     // Selection & Dynamic Calculator state
     var selectedRateKey by mutableStateOf("USD_BCV")
@@ -510,6 +519,25 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     fun savePagoMovilInfo(info: PagoMovilInfo) {
         _pagoMovilInfo.value = info
         localStorageHelper.savePagoMovilInfo(info)
+    }
+
+    fun saveCustomBrandName(name: String) {
+        val cleaned = name.trim().take(40)
+        _customBrandName.value = cleaned
+        localStorageHelper.saveCustomBrandName(cleaned)
+    }
+
+    fun importCustomBrandLogo(uri: Uri): Boolean {
+        val ok = ShareCardGenerator.importCustomBrandLogo(getApplication(), uri)
+        if (ok) {
+            _customBrandLogoRevision.value += 1L
+        }
+        return ok
+    }
+
+    fun removeCustomBrandLogo() {
+        ShareCardGenerator.deleteCustomBrandLogo(getApplication())
+        _customBrandLogoRevision.value += 1L
     }
 
     fun saveConversionToHistory(): Boolean {

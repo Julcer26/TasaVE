@@ -104,6 +104,8 @@ fun TasaVeScreen(
     val alertSettings by viewModel.alertSettings.collectAsStateWithLifecycle()
     val paymentProfiles by viewModel.paymentProfiles.collectAsStateWithLifecycle()
     val selectedPaymentProfileId by viewModel.selectedPaymentProfileId.collectAsStateWithLifecycle()
+    val customBrandName by viewModel.customBrandName.collectAsStateWithLifecycle()
+    val customBrandLogoRevision by viewModel.customBrandLogoRevision.collectAsStateWithLifecycle()
 
     val adFreePassUntilMs by viewModel.adFreePassUntilMs.collectAsStateWithLifecycle()
     val isAdFreePassActive = adFreePassUntilMs > System.currentTimeMillis()
@@ -553,6 +555,11 @@ fun TasaVeScreen(
                         onSelectProfile = { viewModel.selectPaymentProfile(it) },
                         onSaveProfile = { viewModel.savePaymentProfile(it) },
                         onDeleteProfile = { viewModel.deletePaymentProfile(it) },
+                        customBrandName = customBrandName,
+                        customBrandLogoRevision = customBrandLogoRevision,
+                        onSaveCustomBrandName = { viewModel.saveCustomBrandName(it) },
+                        onImportCustomBrandLogo = { viewModel.importCustomBrandLogo(it) },
+                        onRemoveCustomBrandLogo = { viewModel.removeCustomBrandLogo() },
                         onOpenPlans = { showPlansDialog = true }
                     )
                 }

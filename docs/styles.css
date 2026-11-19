@@ -973,6 +973,33 @@ button, input, select {
   max-width: 54ch;
 }
 
+.social-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.social-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.social-pill:hover {
+  border-color: var(--emerald-light);
+  color: var(--emerald-light);
+  transform: translateY(-1px);
+}
+
 .site-footer {
   border-top: 1px solid var(--border);
   padding: 36px 0;
