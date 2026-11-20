@@ -508,12 +508,15 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         localStorageHelper.savePaymentProfiles(next)
         if (_selectedPaymentProfileId.value == id) {
             selectPaymentProfile(next.firstOrNull()?.id)
+        } else {
+            TasaVeRatesWidgetProvider.updateAllWidgets(getApplication())
         }
     }
 
     fun selectPaymentProfile(id: Long?) {
         _selectedPaymentProfileId.value = id
         localStorageHelper.setSelectedPaymentProfileId(id)
+        TasaVeRatesWidgetProvider.updateAllWidgets(getApplication())
     }
 
     fun savePagoMovilInfo(info: PagoMovilInfo) {

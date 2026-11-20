@@ -84,7 +84,9 @@ import java.util.Locale
 @Composable
 fun TasaVeScreen(
     viewModel: TasaVeViewModel,
-    activity: Activity? = null
+    activity: Activity? = null,
+    widgetAction: String? = null,
+    onConsumeWidgetAction: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -136,6 +138,33 @@ fun TasaVeScreen(
     var scannerForCart by remember { mutableStateOf(false) }
     var scannedDuringDialog by remember { mutableStateOf(false) }
     var showPlansDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(widgetAction) {
+        when (widgetAction) {
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CONVERTER -> {
+                currentTab = AppTab.CONVERTER
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CART -> {
+                currentTab = AppTab.CART
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CHECKOUT -> {
+                currentTab = AppTab.CHECKOUT
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_SCANNER -> {
+                viewModel.refreshRemainingFreeScans()
+                scannerForCart = false
+                showScanner = true
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_PLANS -> {
+                showPlansDialog = true
+                onConsumeWidgetAction()
+            }
+        }
+    }
 
     val triggerWatchAdFreePass: () -> Unit = {
         rewardedAdManager.showOrLoad(
@@ -2922,19 +2951,19 @@ private fun LegalCenterDialog(
             "2. Información que recopilamos" to
                 "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay: alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos, titular y correo/ID digital) se guardan únicamente de forma local en tu dispositivo.",
             "3. Uso de la información" to
-                "Los datos locales se usan exclusivamente para calcular conversiones, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, Widget, tarjetas visuales PNG generadas temporalmente en caché (shared_cards) y resúmenes de cobro que tú eliges copiar o compartir.",
+                "Los datos locales se usan exclusivamente para calcular conversiones, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, widgets de inicio (Tasas en Vivo gratis y Centro Rápido Ultra), tarjetas visuales PNG generadas temporalmente en caché (shared_cards) con marca personalizada opcional y resúmenes de cobro que tú eliges copiar o compartir.",
             "4. Enlaces externos y compartición" to
                 "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en el caché local compartido por FileProvider sin subirse a servidores externos. Las consultas a las APIs de tasas solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
             "5. Seguridad de los datos" to
                 "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
             "6. Publicidad, anuncios bonificados y suscripción Ultra" to
-                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra o activar 12 h sin banners ni intersticiales). Muestra banners adaptativos e intersticiales ocasionales tras acciones clave (nunca al abrir la app). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, Alertas de tasa y Widget de inicio.",
+                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa, 4 decimales, BCV Mañana, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo 4×2, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra o activar 12 h sin banners ni intersticiales). Muestra banners adaptativos e intersticiales ocasionales tras acciones clave (nunca al abrir la app). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, marca personalizada en tarjetas PNG, Alertas de tasa y Widget Centro Rápido Ultra (Tasas, Calculadora clásica y Cobro Express).",
             "7. Permisos del sistema" to
                 "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y suscripción Ultra en Google Play.",
             "8. Uso de tecnologías de terceros" to
                 "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI y DolarVzla).",
             "9. Cambios en esta política" to
-                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (18 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
+                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (19 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
                 "Responsable: Tasa VE\nCorreo de privacidad y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
         )
@@ -2949,7 +2978,7 @@ private fun LegalCenterDialog(
             "3. Fuentes de Datos y Descargo" to
                 "Las tasas se consultan de fuentes públicas (ve.dolarapi.com y rates.dolarvzla.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
             "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
-                "El Plan Gratuito ofrece las funciones principales con banners, intersticiales ocasionales tras acciones y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado, o pase de 12 h sin anuncios por 1 video), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, Alertas y Widget.",
+                "El Plan Gratuito ofrece las funciones principales con banners, intersticiales ocasionales tras acciones, Widget Tasas en Vivo gratis y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado, o pase de 12 h sin anuncios por 1 video), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget Centro Rápido Ultra.",
             "5. Reembolsos, Restauración y Contacto" to
                 "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: soporte@tasave.net."
         )
@@ -2988,7 +3017,7 @@ private fun LegalCenterDialog(
                             color = textPrimary
                         )
                         Text(
-                            text = "Actualizado: 18 nov 2026 • Versión 1.2.0",
+                            text = "Actualizado: 19 nov 2026 • Versión 1.2.0",
                             fontSize = 10.5.sp,
                             color = Color(0xFF10B981),
                             fontWeight = FontWeight.SemiBold

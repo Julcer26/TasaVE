@@ -65,6 +65,7 @@ import com.julcer26.tasave.share.ShareCardGenerator
 import com.julcer26.tasave.ui.RateSelectorCard
 import com.julcer26.tasave.ui.TasaVeUiState
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
+import com.julcer26.tasave.widget.TasaVeUltraWidgetProvider
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -1444,7 +1445,7 @@ fun MarketTab(
             }
         }
 
-        // 4. Home Screen Widget Card (Exclusivo Ultra)
+        // 4. Home Screen Widgets Card (Tasas Gratis + Centro Rápido Ultra)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1452,84 +1453,93 @@ fun MarketTab(
                 .background(cardBg)
                 .border(
                     1.dp,
-                    if (isUltraUser) borderCol else Color(0x4DF59E0B),
+                    if (isUltraUser) borderCol else Color(0x4D10B981),
                     RoundedCornerShape(20.dp)
                 )
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Default.Widgets, contentDescription = null, tint = if (isUltraUser) EmeraldLight else AmberUltra)
+                Icon(Icons.Default.Widgets, contentDescription = null, tint = EmeraldLight)
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text("Widget de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-                        if (!isUltraUser) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0x26F59E0B))
-                                    .padding(horizontal = 7.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "EXCLUSIVO ULTRA",
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = AmberUltra
-                                )
-                            }
-                        }
-                    }
+                    Text("Widgets de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
                     Text(
-                        text = "Mira las 3 tasas y la brecha directo en tu escritorio.",
+                        text = "Tasas en Vivo gratis para todos • Centro Rápido (4×4 + Cobro) en Ultra.",
                         fontSize = 11.sp,
                         color = textSecondary
                     )
                 }
             }
+
+            // Free Widget Pin Button (Available to everyone)
+            OutlinedButton(
+                onClick = {
+                    TasaVeRatesWidgetProvider.updateAllWidgets(context)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val manager = AppWidgetManager.getInstance(context)
+                        val provider = ComponentName(context, TasaVeRatesWidgetProvider::class.java)
+                        if (manager.isRequestPinAppWidgetSupported) {
+                            manager.requestPinAppWidget(provider, null, null)
+                        } else {
+                            Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE • Tasas en Vivo.", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 44.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, Color(0x4D10B981))
+            ) {
+                Icon(Icons.Default.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(17.dp), tint = EmeraldLight)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Fijar Widget Tasas en Vivo (Gratis)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
+            }
+
+            // Ultra Pro Widget Pin / Unlock Button
             if (isUltraUser) {
                 Button(
                     onClick = {
                         TasaVeRatesWidgetProvider.updateAllWidgets(context)
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             val manager = AppWidgetManager.getInstance(context)
-                            val provider = ComponentName(context, TasaVeRatesWidgetProvider::class.java)
+                            val provider = ComponentName(context, TasaVeUltraWidgetProvider::class.java)
                             if (manager.isRequestPinAppWidgetSupported) {
                                 manager.requestPinAppWidget(provider, null, null)
                             } else {
-                                Toast.makeText(context, "Agrégalo desde Widgets en tu pantalla de inicio.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Centro Rápido.", Toast.LENGTH_LONG).show()
                             }
                         } else {
-                            Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 48.dp),
+                        .heightIn(min = 46.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
                 ) {
-                    Icon(Icons.Default.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Widgets, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Fijar Widget en Inicio", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text("Fijar Widget Centro Rápido (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             } else {
                 Button(
                     onClick = onOpenPlans,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 48.dp),
+                        .heightIn(min = 46.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black)
                 ) {
                     Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Desbloquear con Ultra ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text("Desbloquear Widget Calc. + Cobro ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
                 }
             }
         }
@@ -3073,7 +3083,9 @@ fun PlansComparisonDialog(
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
-                        listOf("Alertas + Widget inicio", "—", "✓"),
+                        listOf("Widget Tasas en Vivo", "✓", "✓"),
+                        listOf("Widget Pro (Calc. 4×4 + Cobro)", "—", "✓"),
+                        listOf("Alertas de tasa", "—", "✓"),
                         listOf("Logo propio en Tarjeta PNG", "—", "✓")
                     )
                     rows.forEach { cols ->
@@ -3109,7 +3121,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget. Cancela cuando quieras.",
+                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget Pro (Calc. 4×4 + Cobro). Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

@@ -389,9 +389,12 @@ class UltraMathAndBillingTest {
     @Test
     fun widgetCalcMath_handlesTokensBackspaceAndConversion() {
         var input = "0"
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "00")
+        assertEquals("0", input)
         input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "2")
-        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "5")
-        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, ".")
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "00")
+        assertEquals("200", input)
+        input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken("25", ".")
         input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, ".")
         input = com.julcer26.tasave.widget.WidgetCalcMath.appendToken(input, "5")
         assertEquals("25.5", input)
@@ -415,6 +418,23 @@ class UltraMathAndBillingTest {
         )
         assertEquals("Bs. 2400", leftBs)
         assertEquals("$ 10.00", rightUsd)
+
+        val profile = com.julcer26.tasave.ultra.PaymentMethodProfile(
+            id = 1L,
+            alias = "Tienda",
+            type = com.julcer26.tasave.ultra.PaymentMethodType.PAGO_MOVIL,
+            bankCode = "0134",
+            bankName = "Banesco",
+            docPrefix = "J",
+            docNumber = "123456789",
+            phonePrefix = "0414",
+            phoneNumber = "1234567"
+        )
+        val formatted = com.julcer26.tasave.widget.WidgetCalcMath.formatProfileForWidget(profile, 0, 2)
+        assertTrue(formatted.title.contains("Tienda"))
+        assertTrue(formatted.title.contains("(1/2)"))
+        assertTrue(formatted.copyText.contains("0134 - Banesco"))
+        assertTrue(formatted.copyText.contains("J-123456789"))
     }
 }
 

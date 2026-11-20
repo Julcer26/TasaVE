@@ -19,11 +19,12 @@
 ## Características Principales
 
 - **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV en **4 decimales exactos**, vista anticipada de **BCV Mañana**, USDT paralelo y Modo Offline con caché local.
+- **Widgets Obsidian Studio en Inicio:** Widget gratuito **Tasas en Vivo** (`4×2` con BCV Hoy/Mañana y Brecha) y **Centro Rápido Ultra** (`4×3` con pestañas de 1 toque: Tasas + Escáner/Carrito, Calculadora Clásica `4×4` y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).
 - **Carrito de Mercado Inteligente:** Controla tu presupuesto en USD y Bolívares con cálculo opcional de **IVA (16%)** e **IGTF (3%)**.
 - **Brecha Cambiaria y Tendencias:** Comparativa oficial vs. paralelo y gráficos históricos interactivos.
-- **Cobros, Pago Mixto y Tarjeta PNG:** Calcula el vuelto en pagos mixtos y comparte tarjetas visuales en PNG con el isotipo oficial de **Tasa VE** y tus datos de Pago Móvil, Zelle o Binance Pay.
-- **Privacidad Local:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo.
+- **Cobros, Pago Mixto y Tarjeta PNG:** Calcula el vuelto en pagos mixtos y comparte tarjetas visuales en PNG con tus datos de Pago Móvil, Zelle o Binance Pay (y logo propio en **Ultra**).
+- **Privacidad Local y Feedback Directo:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo, con centro de reportes/sugerencias integrado en Configuración.
 
 ---
 
@@ -49,4 +50,4 @@ python3 brand/generate_brand_assets.py
 ./gradlew assembleDebug
 ```
 
-> **Contacto:** [soporte@tasave.net](mailto:soporte@tasave.net) • **Sitio oficial:** [https://tasave.net](https://tasave.net)
+> **Contacto:** [soporte@tasave.net](mailto:soporte@tasave.net) • **Web:** [tasave.net](https://tasave.net) • **Instagram:** [@tasa.ve](https://www.instagram.com/tasa.ve/) • **TikTok:** [@tasa.ve](https://www.tiktok.com/@tasa.ve)

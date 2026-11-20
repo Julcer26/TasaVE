@@ -7,5 +7,7 @@
     <string name="admob_rewarded_ad_unit_id"></string>
     <!-- Pega aquí la URL /exec de tu Google Apps Script conectado a la hoja "Tasa VE — Reportes y Sugerencias" -->
     <string name="feedback_webhook_url"></string>
-    <string name="widget_description">Consulta al instante USD BCV, EUR BCV, USDT y la brecha cambiaria desde tu pantalla de inicio (Tasa VE Ultra).</string>
+    <string name="widget_description">Consulta al instante USD BCV, EUR BCV, USDT y la brecha cambiaria desde tu pantalla de inicio.</string>
+    <string name="widget_free_description">Gratis: USD BCV (4 dec.), EUR BCV, USDT, brecha y BCV Mañana en vivo desde tu inicio.</string>
+    <string name="widget_ultra_description">Ultra: Centro Rápido con Tasas, Calculadora 4×4 y Cobro Express en 1 toque.</string>
 </resources>

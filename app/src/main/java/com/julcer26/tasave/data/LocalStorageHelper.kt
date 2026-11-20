@@ -2,6 +2,8 @@ package com.julcer26.tasave.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.julcer26.tasave.BuildConfig
+import com.julcer26.tasave.billing.BillingManager
 import com.julcer26.tasave.ultra.AlertSettings
 import com.julcer26.tasave.ultra.CartItem
 import com.julcer26.tasave.ultra.PagoMovilInfo
@@ -9,6 +11,7 @@ import com.julcer26.tasave.ultra.PaymentMethodProfile
 import com.julcer26.tasave.ultra.PaymentMethodType
 import com.julcer26.tasave.ultra.RateSnapshot
 import com.julcer26.tasave.ultra.UltraMath
+import com.julcer26.tasave.ultra.UserTier
 import com.julcer26.tasave.ultra.VENEZUELAN_BANKS
 import org.json.JSONArray
 import org.json.JSONObject
@@ -84,6 +87,8 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_WIDGET_CALC_RATE = "widget_calc_rate_key"
         private const val KEY_WIDGET_CALC_IS_VES = "widget_calc_is_ves"
         private const val KEY_WIDGET_CALC_INPUT = "widget_calc_input"
+        private const val KEY_ULTRA_WIDGET_TAB = "ultra_widget_active_tab"
+        private const val KEY_ULTRA_WIDGET_PROFILE_IDX = "ultra_widget_profile_idx"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -604,5 +609,27 @@ class LocalStorageHelper(context: Context) {
             .putBoolean(KEY_WIDGET_CALC_IS_VES, isVesInput)
             .putString(KEY_WIDGET_CALC_INPUT, input)
             .apply()
+    }
+
+    fun isEffectiveUltraActive(): Boolean {
+        val dbgTier = runCatching { UserTier.valueOf(getDebugTierOverride()) }
+            .getOrDefault(UserTier.ULTRA)
+        return BillingManager.resolveEffectiveUltraEntitlement(
+            purchasedUltra = isUltraUser(),
+            isDebugBuild = BuildConfig.DEBUG,
+            debugTier = dbgTier
+        )
+    }
+
+    fun getUltraWidgetTab(): String = prefs.getString(KEY_ULTRA_WIDGET_TAB, "CALC") ?: "CALC"
+
+    fun setUltraWidgetTab(tab: String) {
+        prefs.edit().putString(KEY_ULTRA_WIDGET_TAB, tab).apply()
+    }
+
+    fun getUltraWidgetProfileIndex(): Int = prefs.getInt(KEY_ULTRA_WIDGET_PROFILE_IDX, 0)
+
+    fun setUltraWidgetProfileIndex(index: Int) {
+        prefs.edit().putInt(KEY_ULTRA_WIDGET_PROFILE_IDX, index.coerceAtLeast(0)).apply()
     }
 }

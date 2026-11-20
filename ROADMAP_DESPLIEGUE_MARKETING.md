@@ -13,8 +13,8 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor 4 decimales, BCV Hoy/Mañana, USDT paralelo, Brecha y Gráficos, Pago Mixto + Tarjeta PNG, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
-| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y Widget de pantalla de inicio. |
+| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor 4 decimales, BCV Hoy/Mañana, USDT paralelo, Brecha y Gráficos, Pago Mixto + Tarjeta PNG, **Widget Tasas en Vivo** en inicio, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
+| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y **Widget Pro (Calculadora 4×4 + Cobro Express en 1 toque)**. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
 > **Regla de oro:** *Business* nunca debe cobrarse como un "extra aparte sobre Ultra". En Google Play Billing se ofertan como planes independientes donde *Business* desbloquea automáticamente todos los beneficios de *Ultra*.
@@ -62,7 +62,7 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
   3. Carrito inteligente con IVA (16 %) y equivalencias.
   4. Cobros / Pago Mixto con vuelto automático y Tarjeta PNG lista para WhatsApp.
   5. Brecha cambiaria + gráficos históricos (`1D` a `Todo`).
-  6. Widget de pantalla de inicio + Alertas de tasa.
+  6. Widget gratis Tasas en Vivo + Widget Ultra Centro Rápido (Calculadora 4×4 y Cobro Express).
 
 ### 3.2 Motor Viral Integrado (Loop de Adquisición por WhatsApp)
 Cada vez que un usuario comparte una **Tarjeta PNG** o un resumen de **Cobro / Pago Móvil** por WhatsApp, incluye un formato limpio con ambos enlaces oficiales (`https://tasave.net` y `https://play.google.com/store/apps/details?id=com.julcer26.tasave`), mientras el pie de la tarjeta visual conserva `Generado con Tasa VE • https://tasave.net` incluso cuando un usuario Ultra personaliza la cabecera con su propio logo.
@@ -78,7 +78,8 @@ Cada vez que un usuario comparte una **Tarjeta PNG** o un resumen de **Cobro / P
   2. **"Escanea el precio en el súper sin sacar la cuenta a mano":** apunta la cámara a un producto en \$ y ve el total instantáneo en Bs. BCV.
   3. **"Mira la tasa BCV de mañana antes que los demás":** muestra el selector *BCV Hoy vs Mañana* y las alertas automáticas.
   4. **"Cobra por WhatsApp con el logo de tu negocio":** genera la *Tarjeta PNG personalizada* (Ultra) con tus datos de Pago Móvil/Zelle/Binance en 1 toque.
-  5. **Canales y alianzas micro:** grupos de emprendedores, tiendas de Instagram, repartidores/delivery y bodegas locales regalando códigos/pases promocionales en lanzamientos.
+  5. **"Calcula y copia tu Pago Móvil sin abrir la app":** muestra el **Widget Gratis de Tasas** y el **Widget Ultra (Calculadora 4×4 + Cobro Express)** directo en el escritorio del teléfono.
+  6. **Canales y alianzas micro:** grupos de emprendedores, tiendas de Instagram, repartidores/delivery y bodegas locales regalando códigos/pases promocionales en lanzamientos.
 
 ---
 

@@ -28,6 +28,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:label="@string/app_name"
             android:theme="@style/Theme.TasaVE">
             <intent-filter>
@@ -39,13 +40,26 @@
 
         <receiver
             android:name=".widget.TasaVeRatesWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="Tasa VE • Tasas en Vivo">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/tasa_ve_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.TasaVeUltraWidgetProvider"
+            android:exported="true"
+            android:label="Tasa VE Ultra • Centro Rápido">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tasa_ve_ultra_widget_info" />
         </receiver>
 
         <provider
