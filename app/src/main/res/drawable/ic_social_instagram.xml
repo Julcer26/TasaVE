@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="44dp"
+    android:height="44dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Real Instagram Rounded Gradient Badge -->
+    <path android:pathData="M14,2 L34,2 A12,12 0 0 1 46,14 L46,34 A12,12 0 0 1 34,46 L14,46 A12,12 0 0 1 2,34 L2,14 A12,12 0 0 1 14,2 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="42"
+                android:endY="6"
+                android:startX="6"
+                android:startY="44"
+                android:type="linear">
+                <item android:color="#FFFD5949" android:offset="0.0" />
+                <item android:color="#FFD6249F" android:offset="0.5" />
+                <item android:color="#FF285AEB" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Warm lower-left yellow glow -->
+    <path android:pathData="M14,2 L34,2 A12,12 0 0 1 46,14 L46,34 A12,12 0 0 1 34,46 L14,46 A12,12 0 0 1 2,34 L2,14 A12,12 0 0 1 14,2 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="12"
+                android:centerY="44"
+                android:gradientRadius="36"
+                android:type="radial">
+                <item android:color="#FFFDF497" android:offset="0.0" />
+                <item android:color="#DDFD5949" android:offset="0.45" />
+                <item android:color="#00D6249F" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Outer Camera Frame -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M17.5,11.5 L30.5,11.5 A6,6 0 0 1 36.5,17.5 L36.5,30.5 A6,6 0 0 1 30.5,36.5 L17.5,36.5 A6,6 0 0 1 11.5,30.5 L11.5,17.5 A6,6 0 0 1 17.5,11.5 Z"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.8" />
+
+    <!-- Camera Lens Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M24,18 A6,6 0 1 1 23.99,18 Z"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2.8" />
+
+    <!-- Viewfinder Dot -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M31.2,16.8 A1.6,1.6 0 1 1 31.19,16.8 Z" />
+</vector>

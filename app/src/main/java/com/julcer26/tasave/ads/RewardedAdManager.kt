@@ -117,14 +117,13 @@ class RewardedAdManager(
         onRewarded: () -> Unit,
         onError: (String) -> Unit
     ) {
+        rewardedAd = null
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                rewardedAd = null
                 preload(activity)
             }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                rewardedAd = null
                 onError("No se pudo mostrar el anuncio. Intenta nuevamente.")
                 preload(activity)
             }

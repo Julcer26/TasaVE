@@ -2327,7 +2327,7 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Community, Official Website & Social Media Section
+                // Community, Official Website & Social Media Section (Real Icons Side-by-Side)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2335,66 +2335,92 @@ fun SleekSettingsDialog(
                         .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
                         .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
                         .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "COMUNIDAD Y ENLACES",
+                        text = "WEB Y REDES (@tasa.ve)",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF10B981),
-                        letterSpacing = 0.7.sp
+                        letterSpacing = 0.7.sp,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    LegalMenuRow(
-                        icon = Icons.Default.Language,
-                        title = "Página Web Oficial",
-                        subtitle = "tasave.net • Simulador, APK y novedades",
-                        isDark = isDark,
-                        accentColor = Color(0xFF10B981),
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://tasave.net"))
-                                )
-                            }.onFailure {
-                                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
-                            }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://tasave.net"))
+                                        )
+                                    }.onFailure {
+                                        Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_social_web),
+                                contentDescription = "Página Web Oficial tasave.net",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(46.dp)
+                            )
                         }
-                    )
 
-                    LegalMenuRow(
-                        icon = Icons.Default.PhotoCamera,
-                        title = "Instagram (@tasa.ve)",
-                        subtitle = "Consejos, tasas y actualizaciones en vivo",
-                        isDark = isDark,
-                        accentColor = Color(0xFFEC4899),
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.instagram.com/tasa.ve/"))
-                                )
-                            }.onFailure {
-                                Toast.makeText(context, "No se pudo abrir Instagram", Toast.LENGTH_SHORT).show()
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.instagram.com/tasa.ve/"))
+                                        )
+                                    }.onFailure {
+                                        Toast.makeText(context, "No se pudo abrir Instagram", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_social_instagram),
+                                contentDescription = "Instagram @tasa.ve",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(46.dp)
+                            )
                         }
-                    )
 
-                    LegalMenuRow(
-                        icon = Icons.Default.PlayCircle,
-                        title = "TikTok (@tasa.ve)",
-                        subtitle = "Videos rápidos de cobros, Pago Mixto y OCR",
-                        isDark = isDark,
-                        accentColor = Color(0xFF38BDF8),
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.tiktok.com/@tasa.ve"))
-                                )
-                            }.onFailure {
-                                Toast.makeText(context, "No se pudo abrir TikTok", Toast.LENGTH_SHORT).show()
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.tiktok.com/@tasa.ve"))
+                                        )
+                                    }.onFailure {
+                                        Toast.makeText(context, "No se pudo abrir TikTok", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_social_tiktok),
+                                contentDescription = "TikTok @tasa.ve",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(46.dp)
+                            )
                         }
-                    )
+                    }
                 }
 
                 // Support & Suggestions Section
@@ -2425,7 +2451,7 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Legal & Privacy Section (3 clear separated entries)
+                // Legal & Privacy Section (Title-only clean entries)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2446,7 +2472,7 @@ fun SleekSettingsDialog(
                     LegalMenuRow(
                         icon = Icons.Default.PrivacyTip,
                         title = "Política de Privacidad",
-                        subtitle = "10 puntos • Datos locales, Cámara OCR y Permisos",
+                        subtitle = null,
                         isDark = isDark,
                         onClick = { legalDialogTab = 0 }
                     )
@@ -2454,7 +2480,7 @@ fun SleekSettingsDialog(
                     LegalMenuRow(
                         icon = Icons.Default.Gavel,
                         title = "Términos de Uso y Descargo",
-                        subtitle = "BCV, SENIAT, SUDEBAN y Suscripción Ultra",
+                        subtitle = null,
                         isDark = isDark,
                         onClick = { legalDialogTab = 1 }
                     )
@@ -2462,7 +2488,7 @@ fun SleekSettingsDialog(
                     LegalMenuRow(
                         icon = Icons.Default.OpenInBrowser,
                         title = "Ver Política Web Completa",
-                        subtitle = "Abrir documento oficial en el navegador",
+                        subtitle = null,
                         isDark = isDark,
                         onClick = {
                             runCatching {
@@ -2553,7 +2579,7 @@ fun SleekSettingsDialog(
 private fun LegalMenuRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     isDark: Boolean,
     accentColor: Color = Color(0xFF10B981),
     onClick: () -> Unit
@@ -2570,7 +2596,7 @@ private fun LegalMenuRow(
             .background(rowBg)
             .border(1.dp, rowBorder, RoundedCornerShape(14.dp))
             .clickable { onClick() }
-            .padding(horizontal = 12.dp, vertical = 11.dp),
+            .padding(horizontal = 12.dp, vertical = if (subtitle.isNullOrBlank()) 10.dp else 11.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -2595,13 +2621,15 @@ private fun LegalMenuRow(
                 fontWeight = FontWeight.Bold,
                 color = textPrimary
             )
-            Text(
-                text = subtitle,
-                fontSize = 10.5.sp,
-                color = textSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    fontSize = 10.5.sp,
+                    color = textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
