@@ -1467,7 +1467,7 @@ fun MarketTab(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Widgets de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
                     Text(
-                        text = "Tasas en Vivo gratis para todos • Centro Rápido (4×4 + Cobro) en Ultra.",
+                        text = "Tasas en Vivo gratis para todos • Calculadora y Cobro Express en Ultra.",
                         fontSize = 11.sp,
                         color = textSecondary
                     )
@@ -1512,7 +1512,7 @@ fun MarketTab(
                             if (manager.isRequestPinAppWidgetSupported) {
                                 manager.requestPinAppWidget(provider, null, null)
                             } else {
-                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Centro Rápido.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Cobros.", Toast.LENGTH_LONG).show()
                             }
                         } else {
                             Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
@@ -1526,7 +1526,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.Widgets, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Fijar Widget Centro Rápido (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Fijar Widget Calculadora y Cobros (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             } else {
                 Button(
@@ -3075,7 +3075,7 @@ fun PlansComparisonDialog(
                     HorizontalDivider(color = Color(0x1A94A3B8))
 
                     val rows = listOf(
-                        listOf("Calculadora + 4 decimales", "✓", "✓"),
+                        listOf("Calculadora exacta BCV y USDT", "✓", "✓"),
                         listOf("BCV Mañana + Tendencias", "✓", "✓"),
                         listOf("Brecha + Gráficos históricos", "✓", "✓"),
                         listOf("Pago Mixto + Tarjeta PNG", "✓", "✓"),
@@ -3084,7 +3084,7 @@ fun PlansComparisonDialog(
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Widget Tasas en Vivo", "✓", "✓"),
-                        listOf("Widget Pro (Calc. 4×4 + Cobro)", "—", "✓"),
+                        listOf("Widget Calculadora y Cobros", "—", "✓"),
                         listOf("Alertas de tasa", "—", "✓"),
                         listOf("Logo propio en Tarjeta PNG", "—", "✓")
                     )
@@ -3121,7 +3121,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget Pro (Calc. 4×4 + Cobro). Cancela cuando quieras.",
+                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget Calculadora y Cobros. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

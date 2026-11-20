@@ -159,7 +159,7 @@
       <div class="sim-topbar">
         <span class="sim-brand">Tasa VE</span>
         <span class="sim-badge ${state.tomorrowBcv ? "amber" : ""}">
-          ${state.tomorrowBcv ? "BCV Mañana" : "En Vivo • 4 Dec."}
+          ${state.tomorrowBcv ? "BCV Mañana" : "En Vivo • BCV"}
         </span>
       </div>
 

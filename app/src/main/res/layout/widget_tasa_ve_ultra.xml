@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="Centro Rápido en Escritorio"
+            android:text="Tu widget todo en uno en el inicio"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:gravity="center"
-            android:text="Calculadora clásica 4×4, Cobro Express (copia Pago Móvil/Zelle/Binance en 1 toque) y accesos rápidos."
+            android:text="Calculadora rápida en tu pantalla, tasas en vivo y copia tu Pago Móvil, Zelle o Binance en 1 toque."
             android:textColor="#94A3B8"
             android:textSize="11sp" />
 

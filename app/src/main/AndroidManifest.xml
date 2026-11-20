@@ -53,7 +53,7 @@
         <receiver
             android:name=".widget.TasaVeUltraWidgetProvider"
             android:exported="true"
-            android:label="Tasa VE Ultra • Centro Rápido">
+            android:label="Tasa VE Ultra • Calculadora y Cobros">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
