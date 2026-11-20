@@ -19,7 +19,7 @@
 ## Características Principales
 
 - **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV en **4 decimales exactos**, vista anticipada de **BCV Mañana**, USDT paralelo y Modo Offline con caché local.
-- **Widgets Obsidian Studio en Inicio:** Widget gratuito **Tasas en Vivo** (`4×2` con BCV Hoy/Mañana y Brecha) y **Centro Rápido Ultra** (`4×3` con pestañas de 1 toque: Tasas + Escáner/Carrito, Calculadora Clásica `4×4` y Cobro Express con copia directa).
+- **Widgets Obsidian Studio en Inicio:** Widget gratuito **Tasas en Vivo** (`4×1` compacto, ampliable a `4×2` con BCV Hoy/Mañana y Brecha) y **Centro Rápido Ultra** (`4×3`, redimensionable desde `3×3`, con pestañas de 1 toque: Tasas + Escáner/Carrito, Calculadora Clásica `4×4` y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).
 - **Carrito de Mercado Inteligente:** Controla tu presupuesto en USD y Bolívares con cálculo opcional de **IVA (16%)** e **IGTF (3%)**.
 - **Brecha Cambiaria y Tendencias:** Comparativa oficial vs. paralelo y gráficos históricos interactivos.

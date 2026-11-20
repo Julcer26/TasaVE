@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <!-- LOCKED STATE (Shown when user is on Free plan) -->
     <LinearLayout
@@ -98,8 +98,8 @@
 
             <ImageView
                 android:id="@+id/ultra_widget_logo"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:contentDescription="Logo Tasa VE"
                 android:src="@drawable/widget_brand_logo" />
 
@@ -112,45 +112,45 @@
                 android:maxLines="1"
                 android:text="Tasa VE"
                 android:textColor="#FFFFFF"
-                android:textSize="12.5sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/ultra_tab_btn_rates"
                 android:layout_width="wrap_content"
-                android:layout_height="26dp"
+                android:layout_height="24dp"
                 android:layout_marginEnd="4dp"
                 android:background="@drawable/widget_tab_normal"
                 android:gravity="center"
-                android:paddingHorizontal="9dp"
+                android:paddingHorizontal="7dp"
                 android:text="Tasas"
                 android:textColor="#CBD5E1"
-                android:textSize="10.5sp"
+                android:textSize="9.5sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/ultra_tab_btn_calc"
                 android:layout_width="wrap_content"
-                android:layout_height="26dp"
+                android:layout_height="24dp"
                 android:layout_marginEnd="4dp"
                 android:background="@drawable/widget_tab_selected"
                 android:gravity="center"
-                android:paddingHorizontal="9dp"
+                android:paddingHorizontal="7dp"
                 android:text="Calc."
                 android:textColor="#34D399"
-                android:textSize="10.5sp"
+                android:textSize="9.5sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/ultra_tab_btn_pay"
                 android:layout_width="wrap_content"
-                android:layout_height="26dp"
+                android:layout_height="24dp"
                 android:background="@drawable/widget_tab_normal"
                 android:gravity="center"
-                android:paddingHorizontal="9dp"
+                android:paddingHorizontal="7dp"
                 android:text="Cobro"
                 android:textColor="#CBD5E1"
-                android:textSize="10.5sp"
+                android:textSize="9.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
 

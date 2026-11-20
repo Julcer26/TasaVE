@@ -6,6 +6,8 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
 import com.julcer26.tasave.MainActivity
 import com.julcer26.tasave.R
@@ -134,6 +136,16 @@ class TasaVeRatesWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        updateAppWidget(context, appWidgetManager, appWidgetId)
+    }
+
     companion object {
         fun updateAllWidgets(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
@@ -164,8 +176,17 @@ class TasaVeRatesWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            val minHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 64)
+            val isExpandedHeight = minHeightDp >= 95
+
             val nextUsd = bundle.nextUsdBcv
             val nextDateIso = bundle.nextBcvDateIso
+            val headerMeta = if (!isExpandedHeight && nextUsd != null) {
+                "Mañ: ${String.format(Locale.US, "%.2f", nextUsd.rate)} • ${usd.dateUpdated}"
+            } else {
+                usd.dateUpdated
+            }
             val footerText = if (nextUsd != null && nextDateIso != null) {
                 val shortDate = TasaVeRepository.formatIsoShortDate(nextDateIso)
                 "BCV Mañana ($shortDate): Bs. ${String.format(Locale.US, "%.4f", nextUsd.rate)} • Toca para abrir"
@@ -178,12 +199,16 @@ class TasaVeRatesWidgetProvider : AppWidgetProvider() {
                 setTextViewText(R.id.widget_usd_value, String.format(Locale.US, "%.4f", usd.rate))
                 setTextViewText(R.id.widget_eur_value, String.format(Locale.US, "%.4f", eur.rate))
                 setTextViewText(R.id.widget_usdt_value, String.format(Locale.US, "%.2f", usdt.rate))
-                setTextViewText(R.id.widget_updated, usd.dateUpdated)
+                setTextViewText(R.id.widget_updated, headerMeta)
                 setTextViewText(
                     R.id.widget_spread,
                     "Brecha ${String.format(Locale.US, "%.1f", spread)}%"
                 )
                 setTextViewText(R.id.widget_footer_note, footerText)
+                setViewVisibility(
+                    R.id.widget_footer_note,
+                    if (isExpandedHeight) View.VISIBLE else View.GONE
+                )
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
