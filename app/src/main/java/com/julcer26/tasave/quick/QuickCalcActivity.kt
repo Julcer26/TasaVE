@@ -6,6 +6,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,23 +19,29 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,19 +57,16 @@ import com.julcer26.tasave.widget.WidgetCalcMath
 import java.util.Locale
 
 /**
- * Floating translucent quick-converter and clipboard helper.
- * Launched from:
- * 1) Android text selection toolbar (ACTION_PROCESS_TEXT -> "Tasa VE", supports in-place replacement!)
- * 2) Persistent live-rate notification buttons (Copy rates, Quick calc, Copy Pago Movil)
- * 3) Android Quick Settings Tile ("Tasa VE" in Barra Rápida)
- * 4) Android Share menu (ACTION_SEND text/plain -> "Tasa VE")
- * 5) Ultra Home Screen Widget Copy button (Android 10+ foreground clipboard support)
- *
- * When opened from Notification or Quick Settings Tile without explicit text,
- * automatically inspects the clipboard on window focus so any amount copied
- * from a WhatsApp chat bubble (e.g. "$35") is converted immediately.
+ * Dedicated subclass registered without excludeFromRecents / noHistory
+ * so Android 11-16 Package Visibility and Samsung One UI ("Administrar aplicaciones")
+ * always list "Tasa VE" inside the 3-dot text selection menu.
  */
-class QuickCalcActivity : ComponentActivity() {
+class ProcessTextActivity : QuickCalcActivity()
+
+/**
+ * Compact floating translucent quick-converter and clipboard helper.
+ */
+open class QuickCalcActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_MODE = "extra_open_mode"
@@ -84,9 +89,11 @@ class QuickCalcActivity : ComponentActivity() {
     }
 
     private var clipboardSnippetState by mutableStateOf<String?>(null)
-    private var hasCheckedClipboardOnFocus = false
+    private var clipboardDetectionSeq by mutableStateOf(0)
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private fun closeOverlay(preserveCallerTask: Boolean = intent?.action == Intent.ACTION_PROCESS_TEXT) {
+        mainHandler.removeCallbacksAndMessages(null)
         if (preserveCallerTask) {
             finish()
         } else {
@@ -104,34 +111,82 @@ class QuickCalcActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
+        if (intent?.action == Intent.ACTION_VIEW) {
+            // If a user ever opens an https link via ProcessTextActivity, redirect to MainActivity
+            openMainApp(openPlans = false)
+            closeOverlay(preserveCallerTask = true)
+            return
+        }
         if (handleDirectActionIfNeeded(intent)) {
             return
         }
         renderQuickOverlay(intent)
+        scheduleClipboardProbes()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        hasCheckedClipboardOnFocus = false
         clipboardSnippetState = null
         if (handleDirectActionIfNeeded(intent)) {
             return
         }
         renderQuickOverlay(intent)
+        scheduleClipboardProbes()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        scheduleClipboardProbes()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus && !hasCheckedClipboardOnFocus) {
-            hasCheckedClipboardOnFocus = true
-            if (extractIncomingText(intent).isNullOrBlank()) {
-                val clipText = readClipboardTextSafely()
-                if (!clipText.isNullOrBlank() && QuickAmountParser.parse(clipText) != null) {
-                    clipboardSnippetState = clipText.trim().take(80)
+        if (hasFocus) {
+            scheduleClipboardProbes()
+        }
+    }
+
+    override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
+
+    /**
+     * When launched from Notification shade ("Calc. rápida") or Quick Settings Tile,
+     * SystemUI takes ~150-350ms to collapse and transfer input focus to our window.
+     * Probing at 0, 120, 260, and 450ms guarantees we read ClipboardManager as soon as focus lands.
+     */
+    private fun scheduleClipboardProbes() {
+        if (!extractIncomingText(intent).isNullOrBlank()) return
+        val delays = longArrayOf(0L, 120L, 260L, 450L)
+        for (delayMs in delays) {
+            mainHandler.postDelayed({
+                if (clipboardSnippetState == null && extractIncomingText(intent).isNullOrBlank()) {
+                    tryReadClipboardAmount(showToastOnFail = false)
                 }
+            }, delayMs)
+        }
+    }
+
+    private fun tryReadClipboardAmount(showToastOnFail: Boolean): Boolean {
+        val clipText = readClipboardTextSafely()
+        if (!clipText.isNullOrBlank()) {
+            val parsed = QuickAmountParser.parse(clipText)
+            if (parsed != null) {
+                clipboardSnippetState = clipText.trim().take(80)
+                clipboardDetectionSeq += 1
+                return true
             }
         }
+        if (showToastOnFail) {
+            Toast.makeText(
+                this,
+                "Copia primero un monto en WhatsApp para pegarlo aquí",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        return false
     }
 
     private fun extractIncomingText(intent: Intent?): String? {
@@ -217,7 +272,9 @@ class QuickCalcActivity : ComponentActivity() {
 
         setContent {
             val activeSnippet = explicitText ?: clipboardSnippetState
-            val parsed = remember(activeSnippet) { QuickAmountParser.parse(activeSnippet) }
+            val parsed = remember(activeSnippet, clipboardDetectionSeq) {
+                QuickAmountParser.parse(activeSnippet)
+            }
             val initialRateKey = if (isUltra && parsed != null) {
                 parsed.suggestedRateKey
             } else {
@@ -230,13 +287,17 @@ class QuickCalcActivity : ComponentActivity() {
                     rates = rates,
                     isUltra = isUltra,
                     rawSnippet = activeSnippet,
+                    snippetVersion = clipboardDetectionSeq,
                     isFromClipboard = explicitText == null && clipboardSnippetState != null,
                     isEditableTextTarget = isEditableProcessText,
                     initialRateKey = initialRateKey,
-                    initialAmount = parsed?.amount?.let { formatCleanInput(it) } ?: "10",
+                    initialAmount = parsed?.amount?.let { formatCleanInput(it) } ?: "1",
                     initialInputIsVes = parsed?.inputIsVes ?: false,
                     profiles = profiles,
                     initialProfileIndex = initialProfileIndex,
+                    onPasteClipboard = {
+                        tryReadClipboardAmount(showToastOnFail = true)
+                    },
                     onSelectProfileIndex = { idx ->
                         val chosen = profiles.getOrNull(idx)
                         if (chosen != null) {
@@ -353,6 +414,7 @@ private fun QuickCalcOverlayContent(
     rates: CachedRatesBundle,
     isUltra: Boolean,
     rawSnippet: String?,
+    snippetVersion: Int,
     isFromClipboard: Boolean,
     isEditableTextTarget: Boolean,
     initialRateKey: String,
@@ -360,6 +422,7 @@ private fun QuickCalcOverlayContent(
     initialInputIsVes: Boolean,
     profiles: List<PaymentMethodProfile>,
     initialProfileIndex: Int,
+    onPasteClipboard: () -> Unit,
     onSelectProfileIndex: (Int) -> Unit,
     onCopyResult: (String) -> Unit,
     onShareResult: (String) -> Unit,
@@ -368,9 +431,9 @@ private fun QuickCalcOverlayContent(
     onOpenApp: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedRateKey by remember(initialRateKey) { mutableStateOf(initialRateKey) }
-    var amountText by remember(initialAmount) { mutableStateOf(initialAmount) }
-    var inputIsVes by remember(initialInputIsVes) { mutableStateOf(initialInputIsVes) }
+    var selectedRateKey by remember(initialRateKey, snippetVersion) { mutableStateOf(initialRateKey) }
+    var amountText by remember(initialAmount, snippetVersion) { mutableStateOf(initialAmount) }
+    var inputIsVes by remember(initialInputIsVes, snippetVersion) { mutableStateOf(initialInputIsVes) }
     var useTomorrowBcv by remember { mutableStateOf(false) }
     var selectedProfileIdx by remember {
         mutableStateOf(initialProfileIndex.coerceIn(0, (profiles.size - 1).coerceAtLeast(0)))
@@ -415,7 +478,7 @@ private fun QuickCalcOverlayContent(
     val (rateLabel, unitSymbol) = when (selectedRateKey) {
         "EUR_BCV" -> "EUR BCV$tomorrowSuffix" to "€"
         "USDT" -> "USDT Binance" to "USDT"
-        "COP" -> "COP BCV$tomorrowSuffix (${String.format(Locale.US, "%.0f", copPerUsd)}/$)" to "COP"
+        "COP" -> "COP BCV$tomorrowSuffix" to "COP"
         else -> "USD BCV$tomorrowSuffix" to "$"
     }
 
@@ -448,8 +511,8 @@ private fun QuickCalcOverlayContent(
     }
 
     val activeProfile = profiles.getOrNull(selectedProfileIdx)
-    val activeProfileLabel = activeProfile?.let {
-        val aliasPart = if (it.alias.isNotBlank()) " (${it.alias})" else ""
+    val activeProfileShort = activeProfile?.let {
+        val aliasPart = if (it.alias.isNotBlank()) " ${it.alias}" else ""
         "${it.type.label}$aliasPart"
     } ?: "Pago Móvil"
 
@@ -461,29 +524,29 @@ private fun QuickCalcOverlayContent(
                 indication = null,
                 onClick = onDismiss
             )
-            .padding(horizontal = 16.dp, vertical = 20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .widthIn(max = 420.dp)
+                .widthIn(max = 380.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {}
                 ),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(20.dp),
             color = cardBg,
             border = BorderStroke(1.dp, emerald.copy(alpha = 0.35f)),
             tonalElevation = 8.dp,
-            shadowElevation = 16.dp
+            shadowElevation = 14.dp
         ) {
             Column(
-                modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Header
+                // Row 1: Compact Header (Title + Tier + BCV Hoy/Mañana + Paste + Open App + Close)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -491,12 +554,13 @@ private fun QuickCalcOverlayContent(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             text = "⚡ Tasa VE",
                             color = textPrimary,
-                            fontSize = 17.sp,
+                            fontSize = 14.5.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Box(
@@ -506,18 +570,12 @@ private fun QuickCalcOverlayContent(
                                     if (isUltra) gold.copy(alpha = 0.16f)
                                     else emerald.copy(alpha = 0.14f)
                                 )
-                                .border(
-                                    1.dp,
-                                    if (isUltra) gold.copy(alpha = 0.45f)
-                                    else emerald.copy(alpha = 0.35f),
-                                    RoundedCornerShape(50)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .padding(horizontal = 6.dp, vertical = 1.dp)
                         ) {
                             Text(
                                 text = if (isUltra) "★ Ultra" else "Gratis",
                                 color = if (isUltra) gold else emeraldText,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -536,56 +594,82 @@ private fun QuickCalcOverlayContent(
                                         RoundedCornerShape(50)
                                     )
                                     .clickable { useTomorrowBcv = !useTomorrowBcv }
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    .padding(horizontal = 6.dp, vertical = 1.dp)
                             ) {
                                 Text(
-                                    text = if (effectiveTomorrow) "BCV Mañana" else "BCV Hoy",
+                                    text = if (effectiveTomorrow) "Mañana" else "Hoy",
                                     color = if (effectiveTomorrow) gold else textSecondary,
-                                    fontSize = 10.5.sp,
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         }
+
+                        // 1-Tap Paste chip
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(surfaceElevated)
+                                .border(1.dp, subtleBorder, RoundedCornerShape(50))
+                                .clickable(onClick = onPasteClipboard)
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentPaste,
+                                contentDescription = "Pegar monto",
+                                tint = emeraldText,
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Text(
+                                text = "Pegar",
+                                color = emeraldText,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
 
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(30.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Cerrar",
-                            tint = textSecondary
+                        Text(
+                            text = "App →",
+                            color = emeraldText,
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable(onClick = onOpenApp)
                         )
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(surfaceElevated)
+                                .clickable(onClick = onDismiss),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Cerrar",
+                                tint = textSecondary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
                 }
 
-                if (!rawSnippet.isNullOrBlank()) {
-                    val sourceLabel = if (isFromClipboard) {
-                        "Detectado del portapapeles"
-                    } else {
-                        "Texto seleccionado"
-                    }
-                    Text(
-                        text = "$sourceLabel: \"${rawSnippet.trim()}\"",
-                        color = if (isFromClipboard) emeraldText else textSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = if (isFromClipboard) FontWeight.SemiBold else FontWeight.Normal,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                // Rate Selector Chips
+                // Row 2: Slim Rate Selector Pills
                 val options = listOf(
-                    "USD_BCV" to "USD BCV",
-                    "EUR_BCV" to "EUR BCV",
+                    "USD_BCV" to "USD",
+                    "EUR_BCV" to "EUR",
                     "USDT" to "USDT",
                     "COP" to "COP"
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
                     options.forEach { (key, label) ->
                         val selected = selectedRateKey == key
@@ -593,16 +677,16 @@ private fun QuickCalcOverlayContent(
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(8.dp))
                                 .clickable {
                                     if (locked) {
-                                        upgradeHint = "Cambia a $label al instante en cualquier chat con Tasa VE Ultra."
+                                        upgradeHint = "Cambia a $label en cualquier chat con Ultra."
                                     } else {
                                         upgradeHint = null
                                         selectedRateKey = key
                                     }
                                 },
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(8.dp),
                             color = if (selected) emerald.copy(alpha = 0.18f) else surfaceElevated,
                             border = BorderStroke(
                                 1.dp,
@@ -610,7 +694,7 @@ private fun QuickCalcOverlayContent(
                             )
                         ) {
                             Row(
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                modifier = Modifier.padding(vertical = 5.dp, horizontal = 3.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -619,9 +703,9 @@ private fun QuickCalcOverlayContent(
                                         imageVector = Icons.Default.Lock,
                                         contentDescription = null,
                                         tint = gold,
-                                        modifier = Modifier.size(11.dp)
+                                        modifier = Modifier.size(10.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Spacer(modifier = Modifier.width(2.dp))
                                 }
                                 Text(
                                     text = label,
@@ -630,7 +714,7 @@ private fun QuickCalcOverlayContent(
                                         locked -> textSecondary
                                         else -> textPrimary
                                     },
-                                    fontSize = 11.sp,
+                                    fontSize = 10.5.sp,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                     maxLines = 1
                                 )
@@ -639,100 +723,123 @@ private fun QuickCalcOverlayContent(
                     }
                 }
 
-                // Amount & Direction Box
-                Column(
+                // Row 3: Compact Side-by-Side Input ⇄ Result Bar
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(surfaceElevated)
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(horizontal = 8.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    // Input Box (Left)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .weight(0.95f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(innerResultBg)
+                            .border(1.dp, emerald.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 8.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
+                        Text(
+                            text = if (inputIsVes) "Bs." else unitSymbol,
+                            color = emeraldText,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        BasicTextField(
                             value = amountText,
                             onValueChange = { raw ->
-                                if (raw.length <= 14 && raw.all { it.isDigit() || it == '.' || it == ',' }) {
+                                if (raw.length <= 12 && raw.all { it.isDigit() || it == '.' || it == ',' }) {
                                     amountText = raw
                                 }
                             },
-                            modifier = Modifier.weight(1f),
                             singleLine = true,
-                            label = {
-                                Text(
-                                    text = if (inputIsVes) "Monto en Bolívares (Bs.)" else "Monto en $unitSymbol",
-                                    fontSize = 11.sp
-                                )
-                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = emerald,
-                                unfocusedBorderColor = subtleBorder,
-                                focusedTextColor = textPrimary,
-                                unfocusedTextColor = textPrimary,
-                                focusedLabelColor = emeraldText,
-                                unfocusedLabelColor = textSecondary
-                            )
+                            cursorBrush = SolidColor(emerald),
+                            textStyle = TextStyle(
+                                color = textPrimary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.weight(1f),
+                            decorationBox = { innerTextField ->
+                                if (amountText.isEmpty()) {
+                                    Text("0", color = textSecondary, fontSize = 16.sp)
+                                }
+                                innerTextField()
+                            }
                         )
-
-                        FilledIconButton(
-                            onClick = { inputIsVes = !inputIsVes },
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = emerald.copy(alpha = 0.18f),
-                                contentColor = emeraldText
-                            )
-                        ) {
+                        if (amountText.isNotEmpty()) {
                             Icon(
-                                imageVector = Icons.Default.SwapVert,
-                                contentDescription = "Invertir dirección"
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Limpiar",
+                                tint = textSecondary,
+                                modifier = Modifier
+                                    .size(15.dp)
+                                    .clickable { amountText = "" }
                             )
                         }
                     }
 
+                    // Swap Button (Center)
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(emerald.copy(alpha = 0.18f))
+                            .clickable { inputIsVes = !inputIsVes },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = "Invertir",
+                            tint = emeraldText,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    // Result Box (Right)
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .weight(1.15f)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(innerResultBg)
-                            .padding(horizontal = 12.dp, vertical = 10.dp)
+                            .padding(horizontal = 8.dp, vertical = 5.dp),
+                        horizontalAlignment = Alignment.End
                     ) {
-                        Text(
-                            text = if (inputIsVes) "Equivalente en $rateLabel" else "Total a cobrar en Bolívares",
-                            color = textSecondary,
-                            fontSize = 11.sp
-                        )
                         Text(
                             text = resultDisplay,
                             color = emeraldText,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        if (activeRate > 0.0) {
-                            val rateFormatted = if (selectedRateKey == "COP") {
-                                "1 USD = ${String.format(Locale.US, "%.0f", copPerUsd)} COP • BCV Bs. ${String.format(Locale.US, "%.2f", usdRate)}"
-                            } else {
-                                "Tasa $rateLabel: Bs. ${String.format(Locale.US, "%.2f", activeRate)}"
-                            }
-                            Text(
-                                text = rateFormatted,
-                                color = textSecondary,
-                                fontSize = 11.sp
-                            )
+                        val miniRate = if (selectedRateKey == "COP") {
+                            "${String.format(Locale.US, "%.0f", copPerUsd)} COP/$"
+                        } else {
+                            "Tasa: Bs. ${String.format(Locale.US, "%.2f", activeRate)}"
                         }
+                        Text(
+                            text = miniRate,
+                            color = textSecondary,
+                            fontSize = 9.5.sp,
+                            maxLines = 1
+                        )
                     }
                 }
 
-                // Ultra Payment Profile Selector (when user has 2+ profiles)
+                // Optional Ultra Payment Profile Selector (when user has 2+ profiles)
                 if (isUltra && profiles.size > 1) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         profiles.forEachIndexed { idx, profile ->
@@ -744,12 +851,12 @@ private fun QuickCalcOverlayContent(
                             }
                             Surface(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .clickable {
                                         selectedProfileIdx = idx
                                         onSelectProfileIndex(idx)
                                     },
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 color = if (isSelected) gold.copy(alpha = 0.16f) else surfaceElevated,
                                 border = BorderStroke(
                                     1.dp,
@@ -759,9 +866,9 @@ private fun QuickCalcOverlayContent(
                                 Text(
                                     text = chipLabel,
                                     color = if (isSelected) gold else textSecondary,
-                                    fontSize = 10.5.sp,
+                                    fontSize = 10.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                                     maxLines = 1
                                 )
                             }
@@ -770,84 +877,63 @@ private fun QuickCalcOverlayContent(
                 }
 
                 if (upgradeHint != null) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = gold.copy(alpha = 0.12f),
-                        border = BorderStroke(1.dp, gold.copy(alpha = 0.4f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(gold.copy(alpha = 0.12f))
+                            .border(1.dp, gold.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = upgradeHint!!,
-                                color = textPrimary,
-                                fontSize = 11.sp,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp)
-                            )
-                            TextButton(
-                                onClick = onOpenPlans,
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "Ver Ultra",
-                                    color = gold,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
+                        Text(
+                            text = upgradeHint!!,
+                            color = textPrimary,
+                            fontSize = 10.5.sp,
+                            modifier = Modifier.weight(1f).padding(end = 6.dp)
+                        )
+                        Text(
+                            text = "Ver Ultra",
+                            color = gold,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            modifier = Modifier.clickable(onClick = onOpenPlans)
+                        )
                     }
                 }
 
-                // Actions
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Row 4: Compact Single-Row Action Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = { onCopyResult(conversionCopyLine) },
+                        enabled = parsedAmount > 0.0 && activeRate > 0.0,
+                        modifier = Modifier
+                            .weight(0.95f)
+                            .height(38.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = emerald,
+                            contentColor = Color(0xFF042F2E)
+                        )
                     ) {
-                        Button(
-                            onClick = { onCopyResult(conversionCopyLine) },
-                            enabled = parsedAmount > 0.0 && activeRate > 0.0,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = emerald,
-                                contentColor = Color(0xFF042F2E)
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (isEditableTextTarget) "Insertar y copiar" else "Copiar resultado",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = { onShareResult(conversionCopyLine) },
-                            enabled = parsedAmount > 0.0 && activeRate > 0.0,
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, subtleBorder),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Compartir conversión",
-                                tint = textPrimary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isEditableTextTarget) "Insertar" else "Copiar",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
                     }
 
                     OutlinedButton(
@@ -855,16 +941,15 @@ private fun QuickCalcOverlayContent(
                             if (isUltra) {
                                 onCopyWithPaymentProfile(conversionCopyLine, selectedProfileIdx)
                             } else {
-                                upgradeHint = if (profiles.isNotEmpty()) {
-                                    "Copia el monto convertido + tus datos de $activeProfileLabel en 1 toque con Tasa VE Ultra."
-                                } else {
-                                    "Desbloquea el envío rápido de monto + Pago Móvil en 1 toque con Tasa VE Ultra."
-                                }
+                                upgradeHint = "Copia el monto + tu $activeProfileShort en 1 toque con Ultra."
                             }
                         },
                         enabled = !isUltra || (parsedAmount > 0.0 && activeRate > 0.0),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1.35f)
+                            .height(38.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                         border = BorderStroke(
                             1.dp,
                             if (isUltra) gold.copy(alpha = 0.65f) else subtleBorder
@@ -876,45 +961,34 @@ private fun QuickCalcOverlayContent(
                         Icon(
                             imageVector = if (isUltra) Icons.Default.Star else Icons.Default.Lock,
                             contentDescription = null,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(13.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isUltra) {
-                                if (isEditableTextTarget) {
-                                    "Insertar monto + $activeProfileLabel"
-                                } else {
-                                    "Copiar monto + $activeProfileLabel"
-                                }
-                            } else {
-                                "★ Copiar monto + Pago Móvil (Ultra)"
-                            },
+                            text = if (isUltra) "+ $activeProfileShort" else "★ + Pago Móvil",
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
+                            fontSize = 11.5.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                }
 
-                // Privacy & Open App footer
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Solo procesa el texto que seleccionas o copias",
-                        color = textSecondary,
-                        fontSize = 10.sp
-                    )
-                    Text(
-                        text = "Abrir app →",
-                        color = emeraldText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(onClick = onOpenApp)
-                    )
+                    OutlinedButton(
+                        onClick = { onShareResult(conversionCopyLine) },
+                        enabled = parsedAmount > 0.0 && activeRate > 0.0,
+                        modifier = Modifier
+                            .size(38.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, subtleBorder),
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Compartir",
+                            tint = textPrimary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
             }
         }

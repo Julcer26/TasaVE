@@ -55,13 +55,14 @@
             </intent-filter>
         </activity>
 
-        <!-- Dedicated alias without excludeFromRecents so Samsung One UI ("Administrar aplicaciones")
-             and WhatsApp on Android 11-16 display "Tasa VE" in the text selection toolbar -->
-        <activity-alias
-            android:name=".quick.ProcessTextAlias"
-            android:targetActivity=".quick.QuickCalcActivity"
+        <!-- Dedicated real activity (without excludeFromRecents/noHistory) + generic https VIEW filter
+             so Android 11-16 Package Visibility and Samsung One UI ("Administrar aplicaciones")
+             expose "Tasa VE" in WhatsApp's 3-dot text selection menu -->
+        <activity
+            android:name=".quick.ProcessTextActivity"
             android:label="Tasa VE"
             android:icon="@mipmap/ic_launcher"
+            android:theme="@style/Theme.TasaVE.QuickOverlay"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.PROCESS_TEXT" />
@@ -72,12 +73,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="tasave.net"
-                    android:pathPrefix="/calc" />
+                <data android:scheme="https" />
             </intent-filter>
-        </activity-alias>
+        </activity>
 
         <service
             android:name=".quick.TasaVeQuickTileService"
