@@ -86,13 +86,45 @@ open class QuickCalcActivity : ComponentActivity() {
                 )
             }
         }
+
+        /**
+         * Explicitly forces Android's PackageManager and Samsung One UI's SemFloatingToolbar
+         * ("Administrar aplicaciones") to refresh ProcessTextActivity registration after an APK update.
+         */
+        fun refreshProcessTextMenuRegistration(context: Context, forceToggle: Boolean = false): Boolean {
+            return runCatching {
+                val pm = context.packageManager
+                val cn = android.content.ComponentName(context, ProcessTextActivity::class.java)
+                if (forceToggle) {
+                    pm.setComponentEnabledSetting(
+                        cn,
+                        android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                        android.content.pm.PackageManager.DONT_KILL_APP
+                    )
+                }
+                pm.setComponentEnabledSetting(
+                    cn,
+                    android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    android.content.pm.PackageManager.DONT_KILL_APP
+                )
+                val probe = Intent(Intent.ACTION_PROCESS_TEXT).apply { type = "text/plain" }
+                val matches = pm.queryIntentActivities(probe, 0)
+                matches.any { it.activityInfo?.packageName == context.packageName }
+            }.getOrDefault(false)
+        }
     }
 
     private var clipboardSnippetState by mutableStateOf<String?>(null)
     private var clipboardDetectionSeq by mutableStateOf(0)
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    private fun closeOverlay(preserveCallerTask: Boolean = intent?.action == Intent.ACTION_PROCESS_TEXT) {
+    private fun isCallerContextualAction(action: String?): Boolean {
+        return action == Intent.ACTION_PROCESS_TEXT ||
+            action == Intent.ACTION_SEND ||
+            action == Intent.ACTION_WEB_SEARCH
+    }
+
+    private fun closeOverlay(preserveCallerTask: Boolean = isCallerContextualAction(intent?.action)) {
         mainHandler.removeCallbacksAndMessages(null)
         if (preserveCallerTask) {
             finish()
@@ -112,7 +144,7 @@ open class QuickCalcActivity : ComponentActivity() {
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
         if (intent?.action == Intent.ACTION_VIEW) {
-            // If a user ever opens an https link via ProcessTextActivity, redirect to MainActivity
+            // If a user ever opens an http/https link via ProcessTextActivity, redirect to MainActivity
             openMainApp(openPlans = false)
             closeOverlay(preserveCallerTask = true)
             return
@@ -195,6 +227,8 @@ open class QuickCalcActivity : ComponentActivity() {
                 intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
             Intent.ACTION_SEND ->
                 intent.getStringExtra(Intent.EXTRA_TEXT)
+            Intent.ACTION_WEB_SEARCH ->
+                intent.getStringExtra(android.app.SearchManager.QUERY)
             else -> null
         }
     }

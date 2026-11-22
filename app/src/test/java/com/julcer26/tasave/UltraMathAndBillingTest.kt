@@ -462,11 +462,64 @@ class UltraMathAndBillingTest {
         assertEquals(75.0, cashWins.cashOrZelleEffectiveUsd, 0.001)
         assertEquals(8.3333, cashWins.cashSavingsVsUsdtUsd, 0.01)
 
+        // With $22 fixed cash discount: cash $78 < 83.33 USDT -> cash wins
+        val fixedCashWins = UltraMath.calculatePaymentComparison(
+            priceUsd = 100.0,
+            bcvRate = 50.0,
+            usdtRate = 60.0,
+            cashDiscountFixedUsd = 22.0
+        )
+        assertFalse(fixedCashWins.recommendUsdt)
+        assertEquals(78.0, fixedCashWins.cashOrZelleEffectiveUsd, 0.001)
+        assertEquals(22.0, fixedCashWins.cashDiscountUsd, 0.001)
+        assertEquals(22.0, fixedCashWins.cashDiscountPercent, 0.001)
+
         // 2. Dividir cuenta: $80 / 4 people @ 50 Bs.
         val split = UltraMath.calculateSplitBill(totalUsd = 80.0, peopleCount = 4, rate = 50.0)
         assertEquals(20.0, split.perPersonUsd, 0.001)
         assertEquals(1000.0, split.perPersonBs, 0.001)
         assertEquals(4000.0, split.totalBs, 0.001)
+
+        // 3. Multi-currency Dividir cuenta (USD, EUR, Bs., USDT, COP)
+        val splitEur = UltraMath.calculateSplitBillMultiCurrency(
+            totalAmount = 100.0,
+            currency = SplitCurrency.EUR,
+            peopleCount = 4,
+            usdRate = 50.0,
+            eurRate = 55.0,
+            usdtRate = 60.0,
+            copPerUsd = 4000.0
+        )
+        assertEquals(25.0, splitEur.perPersonInCurrency, 0.001)
+        assertEquals(5500.0, splitEur.totalBs, 0.001)
+        assertEquals(1375.0, splitEur.perPersonBs, 0.001)
+        assertEquals(27.5, splitEur.perPersonUsd, 0.001)
+
+        val splitVes = UltraMath.calculateSplitBillMultiCurrency(
+            totalAmount = 6000.0,
+            currency = SplitCurrency.VES,
+            peopleCount = 3,
+            usdRate = 50.0,
+            eurRate = 55.0,
+            usdtRate = 60.0,
+            copPerUsd = 4000.0
+        )
+        assertEquals(2000.0, splitVes.perPersonBs, 0.001)
+        assertEquals(40.0, splitVes.perPersonUsd, 0.001)
+        assertEquals(33.3333, splitVes.perPersonUsdt, 0.01)
+
+        val splitCop = UltraMath.calculateSplitBillMultiCurrency(
+            totalAmount = 160_000.0,
+            currency = SplitCurrency.COP,
+            peopleCount = 4,
+            usdRate = 50.0,
+            eurRate = 55.0,
+            usdtRate = 60.0,
+            copPerUsd = 4000.0
+        )
+        assertEquals(40_000.0, splitCop.perPersonInCurrency, 0.001)
+        assertEquals(10.0, splitCop.perPersonUsd, 0.001)
+        assertEquals(500.0, splitCop.perPersonBs, 0.001)
     }
 }
 

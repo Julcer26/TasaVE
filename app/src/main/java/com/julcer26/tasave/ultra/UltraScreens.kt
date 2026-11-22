@@ -907,6 +907,19 @@ private enum class UtilTool(val title: String, val subtitle: String, val analyti
 
 private fun formatDec2(value: Double): String = String.format(Locale.US, "%.2f", value)
 
+private fun formatCopAmount(value: Double): String =
+    if (value % 1.0 == 0.0) String.format(Locale.US, "%,.0f", value)
+    else String.format(Locale.US, "%,.2f", value)
+
+private fun formatSplitCurrencyValue(value: Double, currency: SplitCurrency): String =
+    when (currency) {
+        SplitCurrency.USD -> "$${formatDec2(value)}"
+        SplitCurrency.EUR -> "€${formatDec2(value)}"
+        SplitCurrency.VES -> "Bs. ${formatDec2(value)}"
+        SplitCurrency.USDT -> "${formatDec2(value)} USDT"
+        SplitCurrency.COP -> "${formatCopAmount(value)} COP"
+    }
+
 private fun sharePlainText(context: Context, title: String, body: String) {
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
@@ -942,7 +955,9 @@ fun MarketTab(
     val surfaceMuted = if (isDark) Color(0xFF1B1C22) else Color(0xFFF1F5F9)
 
     val usdRate = uiState.usdBcv?.rate ?: 0.0
+    val eurRate = uiState.eurBcv?.rate?.takeIf { it > 0.0 } ?: usdRate
     val usdtRate = uiState.usdtParalelo?.rate ?: 0.0
+    val copPerUsd = uiState.copPerUsd.takeIf { it > 0.0 } ?: 4320.0
     val spreadUsdtVsBcv = UltraMath.calculateSpreadPercent(usdtRate, usdRate)
 
     var selectedTool by remember { mutableStateOf<UtilTool?>(null) }
@@ -1018,13 +1033,16 @@ fun MarketTab(
                 UtilTool.COMPARE -> {
                     var priceText by remember { mutableStateOf("100") }
                     var discountText by remember { mutableStateOf("0") }
+                    var isFixedUsdDiscount by remember { mutableStateOf(false) }
+
                     val price = priceText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    val discount = discountText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val discountVal = discountText.replace(",", ".").toDoubleOrNull() ?: 0.0
                     val res = UltraMath.calculatePaymentComparison(
                         priceUsd = price,
                         bcvRate = usdRate,
                         usdtRate = usdtRate,
-                        cashDiscountPercent = discount
+                        cashDiscountPercent = if (isFixedUsdDiscount) 0.0 else discountVal,
+                        cashDiscountFixedUsd = if (isFixedUsdDiscount) discountVal else 0.0
                     )
 
                     Column(
@@ -1051,19 +1069,56 @@ fun MarketTab(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = "¿Te ofrecen descuento en efectivo / Zelle?",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = textSecondary
-                            )
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "¿Descuento en efectivo / Zelle?",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = textSecondary
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    listOf(false to "% Porc.", true to "\$ Monto").forEach { (isFixed, lbl) ->
+                                        val active = isFixedUsdDiscount == isFixed
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                                .border(
+                                                    1.dp,
+                                                    if (active) Emerald else borderCol,
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable { isFixedUsdDiscount = isFixed }
+                                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = lbl,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (active) EmeraldLight else textSecondary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            val presets = if (isFixedUsdDiscount) {
+                                listOf("0" to "Sin desc.", "5" to "-\$5", "10" to "-\$10", "20" to "-\$20")
+                            } else {
+                                listOf("0" to "Sin desc.", "5" to "-5%", "10" to "-10%", "15" to "-15%")
+                            }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                listOf("0", "5", "10", "15").forEach { pct ->
-                                    val active = discountText == pct
+                                presets.forEach { (valStr, labelStr) ->
+                                    val active = discountText.trim() == valStr
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
@@ -1074,12 +1129,12 @@ fun MarketTab(
                                                 if (active) Emerald else borderCol,
                                                 RoundedCornerShape(10.dp)
                                             )
-                                            .clickable { discountText = pct }
+                                            .clickable { discountText = valStr }
                                             .padding(vertical = 8.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = if (pct == "0") "Sin desc." else "-$pct%",
+                                            text = labelStr,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (active) EmeraldLight else textPrimary
@@ -1087,6 +1142,23 @@ fun MarketTab(
                                     }
                                 }
                             }
+
+                            OutlinedTextField(
+                                value = discountText,
+                                onValueChange = { if (it.length <= 10) discountText = it },
+                                label = {
+                                    Text(
+                                        if (isFixedUsdDiscount) "Descuento libre en dólares ($)"
+                                        else "Descuento libre en porcentaje (%)"
+                                    )
+                                },
+                                placeholder = {
+                                    Text(if (isFixedUsdDiscount) "Ej: 8.50" else "Ej: 7.5")
+                                },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
 
                         Row(
@@ -1121,6 +1193,12 @@ fun MarketTab(
                                 )
                             }
 
+                            val discountDesc = when {
+                                discountVal <= 0.0 -> "Pago directo en divisas"
+                                isFixedUsdDiscount -> "Con -$${formatDec2(res.cashDiscountUsd)} de desc."
+                                else -> "Con -${formatDec2(res.cashDiscountPercent).removeSuffix(".00")}% de desc."
+                            }
+
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
@@ -1143,7 +1221,7 @@ fun MarketTab(
                                     color = textPrimary
                                 )
                                 Text(
-                                    text = if (discount > 0.0) "Con ${discount.toInt()}% de desc." else "Pago directo en divisas",
+                                    text = discountDesc,
                                     fontSize = 10.5.sp,
                                     color = textSecondary
                                 )
@@ -1184,10 +1262,13 @@ fun MarketTab(
                                 } else {
                                     "Conviene pagar $${formatDec2(res.cashOrZelleEffectiveUsd)} directo (ahorro $${formatDec2(res.cashSavingsVsUsdtUsd)})"
                                 }
+                                val discNote = if (res.cashDiscountUsd > 0.0) {
+                                    " (desc. -$${formatDec2(res.cashDiscountUsd)} / -${formatDec2(res.cashDiscountPercent).removeSuffix(".00")}%)"
+                                } else ""
                                 sharePlainText(
                                     context,
                                     "Compartir comparación",
-                                    "¿Con qué pago $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}\n👉 $rec\nCalculado con Tasa VE"
+                                    "¿Con qué pago $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}$discNote\n👉 $rec\nCalculado con Tasa VE"
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -1202,16 +1283,19 @@ fun MarketTab(
                 }
 
                 UtilTool.SPLIT -> {
+                    var selectedCurrency by remember { mutableStateOf(SplitCurrency.USD) }
                     var totalBillText by remember { mutableStateOf("60") }
                     var people by remember { mutableIntStateOf(4) }
-                    var useUsdtRate by remember { mutableStateOf(false) }
 
                     val billTotal = totalBillText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    val chosenRate = if (useUsdtRate && usdtRate > 0.0) usdtRate else usdRate
-                    val splitRes = UltraMath.calculateSplitBill(
-                        totalUsd = billTotal,
+                    val splitRes = UltraMath.calculateSplitBillMultiCurrency(
+                        totalAmount = billTotal,
+                        currency = selectedCurrency,
                         peopleCount = people,
-                        rate = chosenRate
+                        usdRate = usdRate,
+                        eurRate = eurRate,
+                        usdtRate = usdtRate,
+                        copPerUsd = copPerUsd
                     )
 
                     Column(
@@ -1223,10 +1307,49 @@ fun MarketTab(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "Moneda de la cuenta",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textSecondary
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                SplitCurrency.entries.forEach { cur ->
+                                    val active = selectedCurrency == cur
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                            .border(
+                                                1.dp,
+                                                if (active) Emerald else borderCol,
+                                                RoundedCornerShape(10.dp)
+                                            )
+                                            .clickable { selectedCurrency = cur }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = cur.chipLabel,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (active) EmeraldLight else textPrimary,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         OutlinedTextField(
                             value = totalBillText,
-                            onValueChange = { if (it.length <= 10) totalBillText = it },
-                            label = { Text("Cuenta total ($)") },
+                            onValueChange = { if (it.length <= 12) totalBillText = it },
+                            label = { Text(selectedCurrency.inputLabel) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.fillMaxWidth()
@@ -1266,21 +1389,22 @@ fun MarketTab(
                             }
                         }
 
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf(false to "Tasa BCV", true to "USDT Binance").forEach { (isUsdt, lbl) ->
-                                val active = useUsdtRate == isUsdt
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
-                                        .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(10.dp))
-                                        .clickable { useUsdtRate = isUsdt }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(lbl, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
-                                }
+                        val primaryPerPersonText = when (selectedCurrency) {
+                            SplitCurrency.VES -> "Bs. ${formatDec2(splitRes.perPersonBs)}  •  $${formatDec2(splitRes.perPersonUsd)} BCV"
+                            else -> "${formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)}  •  Bs. ${formatDec2(splitRes.perPersonBs)}"
+                        }
+                        val equivParts = buildList {
+                            if (selectedCurrency != SplitCurrency.USD && selectedCurrency != SplitCurrency.VES) {
+                                add("$${formatDec2(splitRes.perPersonUsd)} BCV")
+                            }
+                            if (selectedCurrency != SplitCurrency.USDT) {
+                                add("${formatDec2(splitRes.perPersonUsdt)} USDT")
+                            }
+                            if (selectedCurrency != SplitCurrency.EUR) {
+                                add("€${formatDec2(splitRes.perPersonEur)}")
+                            }
+                            if (selectedCurrency != SplitCurrency.COP) {
+                                add("${formatCopAmount(splitRes.perPersonCop)} COP")
                             }
                         }
 
@@ -1293,15 +1417,30 @@ fun MarketTab(
                                 .padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text("CADA PERSONA PAGA (${splitRes.peopleCount} PERS.)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = EmeraldLight)
                             Text(
-                                text = "$${formatDec2(splitRes.perPersonUsd)}  •  Bs. ${formatDec2(splitRes.perPersonBs)}",
-                                fontSize = 20.sp,
+                                text = "CADA PERSONA PAGA (${splitRes.peopleCount} PERS. • ${selectedCurrency.code})",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldLight
+                            )
+                            Text(
+                                text = primaryPerPersonText,
+                                fontSize = 19.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = textPrimary
                             )
                             Text(
-                                text = "Cuenta total: $${formatDec2(splitRes.totalUsd)} (Bs. ${formatDec2(splitRes.totalBs)})",
+                                text = "Equiv. c/u: ${equivParts.joinToString("  •  ")}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = EmeraldLight
+                            )
+                            Text(
+                                text = if (selectedCurrency == SplitCurrency.VES) {
+                                    "Cuenta total: Bs. ${formatDec2(splitRes.totalBs)} ($${formatDec2(splitRes.totalUsd)} BCV)"
+                                } else {
+                                    "Cuenta total: ${formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)} (Bs. ${formatDec2(splitRes.totalBs)})"
+                                },
                                 fontSize = 11.sp,
                                 color = textSecondary
                             )
@@ -1309,11 +1448,23 @@ fun MarketTab(
 
                         Button(
                             onClick = {
-                                val rateLbl = if (useUsdtRate) "USDT Binance" else "BCV"
+                                val totalFormatted = formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)
+                                val perPersonFormatted = formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)
+                                val shareBody = buildString {
+                                    append("Cuenta dividida entre ${splitRes.peopleCount} personas (${selectedCurrency.code}):\n")
+                                    if (selectedCurrency == SplitCurrency.VES) {
+                                        append("• Total: Bs. ${formatDec2(splitRes.totalBs)} ($${formatDec2(splitRes.totalUsd)} BCV)\n")
+                                        append("👉 Cada uno paga: Bs. ${formatDec2(splitRes.perPersonBs)} ($${formatDec2(splitRes.perPersonUsd)} BCV / ${formatDec2(splitRes.perPersonUsdt)} USDT / ${formatCopAmount(splitRes.perPersonCop)} COP)\n")
+                                    } else {
+                                        append("• Total: $totalFormatted / Bs. ${formatDec2(splitRes.totalBs)}\n")
+                                        append("👉 Cada uno paga: $perPersonFormatted o Bs. ${formatDec2(splitRes.perPersonBs)} (${equivParts.joinToString(" / ")})\n")
+                                    }
+                                    append("Calculado con Tasa VE")
+                                }
                                 sharePlainText(
                                     context,
                                     "Compartir cuenta dividida",
-                                    "Cuenta dividida entre ${splitRes.peopleCount} personas ($rateLbl):\n• Total: $${formatDec2(splitRes.totalUsd)} / Bs. ${formatDec2(splitRes.totalBs)}\n👉 Cada uno paga: $${formatDec2(splitRes.perPersonUsd)} o Bs. ${formatDec2(splitRes.perPersonBs)}\nCalculado con Tasa VE"
+                                    shareBody
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -1738,38 +1889,82 @@ fun MarketTab(
                     }
                 }
                 Text(
-                    text = "• Si te enviaron una burbuja (ej. \"\$35\"): cópiala en WhatsApp y toca \"Calc. rápida\" en la notificación fija o el botón \"Tasa VE\" en tu Barra Rápida (detecta el monto copiado automáticamente).\n• Si estás escribiendo en \"Mensaje\": escribe 35 → selecciónalo (doble toque) → toca ⋮ → \"Tasa VE\" y reemplázalo en el chat en 1 toque.",
+                    text = "• Si te enviaron una burbuja (ej. \"\$35\"): cópiala en WhatsApp y toca \"Calc. rápida\" en la notificación fija o el botón \"Tasa VE\" en tu Barra Rápida.\n• Si estás escribiendo en \"Mensaje\": escribe 35 → selecciónalo (doble toque) → toca ⋮ → \"Tasa VE\" (en Samsung: desliza hacia arriba en el menú ⋮ o entra en \"Administrar aplicaciones\" y activa Tasa VE).",
                     fontSize = 11.sp,
                     color = textSecondary,
                     lineHeight = 15.sp
                 )
-                OutlinedButton(
-                    onClick = {
-                        onTrackUtilTool("test_floating_calc")
-                        context.startActivity(
-                            com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
-                                context,
-                                com.julcer26.tasave.quick.QuickCalcActivity.MODE_CALC
-                            )
-                        )
-                    },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, borderCol)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Bolt,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = EmeraldLight
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Abrir conversor flotante ahora",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
+                    OutlinedButton(
+                        onClick = {
+                            onTrackUtilTool("test_floating_calc")
+                            context.startActivity(
+                                com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
+                                    context,
+                                    com.julcer26.tasave.quick.QuickCalcActivity.MODE_CALC
+                                )
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, borderCol),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bolt,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = EmeraldLight
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Abrir flotante",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary,
+                            maxLines = 1
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            onTrackUtilTool("refresh_process_text_menu")
+                            val registered = com.julcer26.tasave.quick.QuickCalcActivity.refreshProcessTextMenuRegistration(
+                                context,
+                                forceToggle = true
+                            )
+                            Toast.makeText(
+                                context,
+                                if (registered) {
+                                    "Menú ⋮ actualizado. En WhatsApp: selecciona el número → ⋮ → Administrar aplicaciones → activa Tasa VE"
+                                } else {
+                                    "Registro actualizado. Cierra y vuelve a abrir WhatsApp para ver Tasa VE en ⋮"
+                                },
+                                Toast.LENGTH_LONG
+                            ).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, Emerald.copy(alpha = 0.45f)),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = EmeraldLight
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Activar menú ⋮",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 

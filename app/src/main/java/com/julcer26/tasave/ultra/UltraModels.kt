@@ -274,16 +274,29 @@ object UltraMath {
         priceUsd: Double,
         bcvRate: Double,
         usdtRate: Double,
-        cashDiscountPercent: Double = 0.0
+        cashDiscountPercent: Double = 0.0,
+        cashDiscountFixedUsd: Double = 0.0
     ): PaymentComparisonResult {
         val safePrice = priceUsd.coerceAtLeast(0.0)
         val safeBcv = if (bcvRate > 0.0) bcvRate else 1.0
         val safeUsdt = if (usdtRate > 0.0) usdtRate else safeBcv
-        val safeDiscount = cashDiscountPercent.coerceIn(0.0, 90.0)
+
+        val cashEffective: Double
+        val effectiveDiscountPct: Double
+        val effectiveDiscountUsd: Double
+
+        if (cashDiscountFixedUsd > 0.0) {
+            effectiveDiscountUsd = cashDiscountFixedUsd.coerceIn(0.0, safePrice)
+            cashEffective = (safePrice - effectiveDiscountUsd).coerceAtLeast(0.0)
+            effectiveDiscountPct = if (safePrice > 0.0) (effectiveDiscountUsd / safePrice) * 100.0 else 0.0
+        } else {
+            effectiveDiscountPct = cashDiscountPercent.coerceIn(0.0, 95.0)
+            cashEffective = safePrice * (1.0 - effectiveDiscountPct / 100.0)
+            effectiveDiscountUsd = (safePrice - cashEffective).coerceAtLeast(0.0)
+        }
 
         val bsAmount = safePrice * safeBcv
         val usdtNeeded = bsAmount / safeUsdt
-        val cashEffective = safePrice * (1.0 - safeDiscount / 100.0)
         val spreadPct = calculateSpreadPercent(safeUsdt, safeBcv)
         val recommendUsdt = usdtNeeded <= cashEffective
 
@@ -291,7 +304,8 @@ object UltraMath {
             priceUsd = safePrice,
             bcvRate = safeBcv,
             usdtRate = safeUsdt,
-            cashDiscountPercent = safeDiscount,
+            cashDiscountPercent = effectiveDiscountPct,
+            cashDiscountUsd = effectiveDiscountUsd,
             bsAmount = bsAmount,
             usdtNeededToCoverBs = usdtNeeded,
             cashOrZelleEffectiveUsd = cashEffective,
@@ -320,6 +334,66 @@ object UltraMath {
             totalBs = totalBs
         )
     }
+
+    fun calculateSplitBillMultiCurrency(
+        totalAmount: Double,
+        currency: SplitCurrency,
+        peopleCount: Int,
+        usdRate: Double,
+        eurRate: Double,
+        usdtRate: Double,
+        copPerUsd: Double = 4320.0
+    ): MultiCurrencySplitResult {
+        val safeTotal = totalAmount.coerceAtLeast(0.0)
+        val safePeople = peopleCount.coerceIn(1, 50)
+        val safeUsd = if (usdRate > 0.0) usdRate else 1.0
+        val safeEur = if (eurRate > 0.0) eurRate else safeUsd
+        val safeUsdt = if (usdtRate > 0.0) usdtRate else safeUsd
+        val safeCopPerUsd = if (copPerUsd > 0.0) copPerUsd else 4320.0
+        val copRateVes = safeUsd / safeCopPerUsd
+
+        val totalBs = when (currency) {
+            SplitCurrency.USD -> safeTotal * safeUsd
+            SplitCurrency.EUR -> safeTotal * safeEur
+            SplitCurrency.VES -> safeTotal
+            SplitCurrency.USDT -> safeTotal * safeUsdt
+            SplitCurrency.COP -> safeTotal * copRateVes
+        }
+
+        val totalUsdBcv = totalBs / safeUsd
+        val totalEurBcv = totalBs / safeEur
+        val totalUsdt = totalBs / safeUsdt
+        val totalCop = totalUsdBcv * safeCopPerUsd
+
+        return MultiCurrencySplitResult(
+            currency = currency,
+            peopleCount = safePeople,
+            totalInCurrency = safeTotal,
+            perPersonInCurrency = safeTotal / safePeople,
+            totalBs = totalBs,
+            perPersonBs = totalBs / safePeople,
+            totalUsd = totalUsdBcv,
+            perPersonUsd = totalUsdBcv / safePeople,
+            totalEur = totalEurBcv,
+            perPersonEur = totalEurBcv / safePeople,
+            totalUsdt = totalUsdt,
+            perPersonUsdt = totalUsdt / safePeople,
+            totalCop = totalCop,
+            perPersonCop = totalCop / safePeople
+        )
+    }
+}
+
+enum class SplitCurrency(
+    val code: String,
+    val chipLabel: String,
+    val inputLabel: String
+) {
+    USD("USD", "\$ USD", "Cuenta total (\$ USD BCV)"),
+    EUR("EUR", "€ EUR", "Cuenta total (€ EUR BCV)"),
+    VES("VES", "Bs.", "Cuenta total (Bs.)"),
+    USDT("USDT", "₮ USDT", "Cuenta total (USDT)"),
+    COP("COP", "🇨🇴 COP", "Cuenta total (COP)")
 }
 
 data class PaymentComparisonResult(
@@ -327,6 +401,7 @@ data class PaymentComparisonResult(
     val bcvRate: Double,
     val usdtRate: Double,
     val cashDiscountPercent: Double,
+    val cashDiscountUsd: Double = 0.0,
     val bsAmount: Double,
     val usdtNeededToCoverBs: Double,
     val cashOrZelleEffectiveUsd: Double,
@@ -342,4 +417,21 @@ data class SplitBillResult(
     val perPersonUsd: Double,
     val perPersonBs: Double,
     val totalBs: Double
+)
+
+data class MultiCurrencySplitResult(
+    val currency: SplitCurrency,
+    val peopleCount: Int,
+    val totalInCurrency: Double,
+    val perPersonInCurrency: Double,
+    val totalBs: Double,
+    val perPersonBs: Double,
+    val totalUsd: Double,
+    val perPersonUsd: Double,
+    val totalEur: Double,
+    val perPersonEur: Double,
+    val totalUsdt: Double,
+    val perPersonUsdt: Double,
+    val totalCop: Double,
+    val perPersonCop: Double
 )

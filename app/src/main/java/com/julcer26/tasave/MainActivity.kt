@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         pendingWidgetAction = intent?.getStringExtra(TasaVeUltraWidgetProvider.EXTRA_WIDGET_ACTION)
+        com.julcer26.tasave.quick.QuickCalcActivity.refreshProcessTextMenuRegistration(this)
 
         // Initialize Google Mobile Ads (AdMob) in the background
         MobileAds.initialize(this) {}

@@ -10,6 +10,21 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="text/plain" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -45,27 +60,28 @@
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:label="Tasa VE"
+            android:label="@string/process_text_label"
+            android:icon="@mipmap/ic_launcher"
+            android:theme="@style/Theme.TasaVE.QuickOverlay" />
+
+        <!-- Dedicated real activity (without excludeFromRecents/noHistory) with @string/process_text_label
+             and http + https + text/plain VIEW & SEND filters so Android 11-16 Package Visibility
+             and Samsung One UI ("Administrar aplicaciones") expose "Tasa VE" in WhatsApp's 3-dot menu -->
+        <activity
+            android:name=".quick.ProcessTextActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:label="@string/process_text_label"
             android:icon="@mipmap/ic_launcher"
             android:theme="@style/Theme.TasaVE.QuickOverlay">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
+            <intent-filter android:label="@string/process_text_label">
+                <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-        </activity>
-
-        <!-- Dedicated real activity (without excludeFromRecents/noHistory) + generic https VIEW filter
-             so Android 11-16 Package Visibility and Samsung One UI ("Administrar aplicaciones")
-             expose "Tasa VE" in WhatsApp's 3-dot text selection menu -->
-        <activity
-            android:name=".quick.ProcessTextActivity"
-            android:label="Tasa VE"
-            android:icon="@mipmap/ic_launcher"
-            android:theme="@style/Theme.TasaVE.QuickOverlay"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.PROCESS_TEXT" />
+            <intent-filter android:label="@string/process_text_label">
+                <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
@@ -73,7 +89,22 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
                 <data android:scheme="https" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/xhtml+xml" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.WEB_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
