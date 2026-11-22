@@ -95,7 +95,6 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_COP_PER_USD = "cop_per_usd_exact"
         private const val KEY_COP_DATE = "cop_date"
         private const val KEY_ANALYTICS_ENABLED = "analytics_enabled"
-        private const val KEY_SAVED_FEE_PERCENT = "saved_fee_percent"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -657,14 +656,5 @@ class LocalStorageHelper(context: Context) {
 
     fun setAnalyticsEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_ANALYTICS_ENABLED, enabled).apply()
-    }
-
-    fun getSavedFeePercent(): Double {
-        val raw = prefs.getString(KEY_SAVED_FEE_PERCENT, null)?.toDoubleOrNull()
-        return if (raw != null && raw in 0.0..50.0) raw else 3.5
-    }
-
-    fun saveFavoriteFeePercent(percent: Double) {
-        prefs.edit().putString(KEY_SAVED_FEE_PERCENT, percent.coerceIn(0.0, 50.0).toString()).apply()
     }
 }

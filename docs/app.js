@@ -368,9 +368,7 @@
     const usdt = RATES.USDT.rate;
     const modes = [
       { id: "compare", label: "¿Con qué pago?" },
-      { id: "installments", label: "Cuotas" },
-      { id: "fees", label: "Comisiones" },
-      { id: "split", label: "Dividir" }
+      { id: "split", label: "Dividir cuenta" }
     ];
 
     let bodyHtml = "";
@@ -399,39 +397,6 @@
           </div>
         </div>
       `;
-    } else if (state.utilMode === "installments") {
-      const initUsd = 120 * 0.4;
-      const cuotaUsd = (120 - initUsd) / 3;
-      bodyHtml = `
-        <div class="sim-card">
-          <span class="sim-label">Cashea / Krece • Compra $120 (40% + 3 cuotas)</span>
-          <div style="margin-top:6px;">
-            <strong style="font-size:1.15rem;color:#34D399;">Inicial hoy: $${fmtMoney(initUsd, 2)}</strong>
-            <div style="font-size:0.82rem;color:#CBD5E1;">Bs. ${fmtMoney(initUsd * bcv, 2)} BCV &bull; ${fmtMoney((initUsd * bcv) / usdt, 2)} USDT</div>
-          </div>
-          <div class="sim-sub-row" style="margin-top:8px;">
-            <span>3 cuotas de $${fmtMoney(cuotaUsd, 2)} c/u</span>
-            <span>≈ Bs. ${fmtMoney(cuotaUsd * bcv, 2)}</span>
-          </div>
-        </div>
-      `;
-    } else if (state.utilMode === "fees") {
-      const gross = 100;
-      const fee = gross * 0.054 + 0.30;
-      const net = gross - fee;
-      bodyHtml = `
-        <div class="sim-card">
-          <span class="sim-label">PayPal (5.4% + $0.30) &bull; Me envían $100</span>
-          <div style="margin-top:6px;">
-            <strong style="font-size:1.2rem;color:#34D399;">Recibes neto: $${fmtMoney(net, 2)}</strong>
-            <div style="font-size:0.82rem;color:#CBD5E1;">Comisión: -$${fmtMoney(fee, 2)} &bull; ≈ Bs. ${fmtMoney(net * usdt, 2)} (USDT)</div>
-          </div>
-          <div class="sim-sub-row" style="margin-top:8px;">
-            <span>Zinli ~2.5% &bull; Wally ~1.5%</span>
-            <span style="color:#F59E0B;">★ Favorita Ultra</span>
-          </div>
-        </div>
-      `;
     } else {
       const total = 80;
       const perPerson = total / 4;
@@ -452,7 +417,7 @@
     stageEl.innerHTML = `
       <div class="sim-topbar">
         <span class="sim-brand">Útiles del Día a Día</span>
-        <span class="sim-badge">Gratis + Ultra</span>
+        <span class="sim-badge">100% Gratis</span>
       </div>
 
       <div class="sim-pill-row" style="margin-bottom:8px;">

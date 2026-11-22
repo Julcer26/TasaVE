@@ -33,13 +33,13 @@ Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guar
    - Estos datos **permanecen únicamente en su dispositivo** y **nunca se transmiten a servidores del desarrollador ni a Firebase Analytics**.
    - Se excluyen explícitamente del respaldo automático en la nube de Android (`android:fullBackupContent` / `dataExtractionRules`) para mayor resguardo.
 4. **Caché temporal de tarjetas visuales (PNG):** Cuando el usuario genera una imagen para compartir un cálculo o resumen de cobro, el archivo PNG temporal se crea únicamente en el caché privado local (`shared_cards/`) expuesto de forma segura mediante `FileProvider`.
-5. **Preferencias de interfaz, comisiones favoritas y alertas:** Tema visual (Oscuro/Claro), ruta de comisión favorita en **Útiles**, saldo diario de escaneos, preferencia de estadísticas anónimas, umbrales locales de notificación y estado de la suscripción Ultra.
+5. **Preferencias de interfaz y alertas:** Tema visual (Oscuro/Claro), saldo diario de escaneos, preferencia de estadísticas anónimas, umbrales locales de notificación y estado de la suscripción Ultra.
 
 ---
 
 ## 3. Uso de la información
 La información procesada local y técnicamente se utiliza exclusivamente para:
-1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario SUDEBAN, calcular herramientas de **Útiles** (*¿Con qué pago?*, *Inicial y cuotas*, *Comisiones*, *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
+1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario SUDEBAN, calcular herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
 2. Formatear resúmenes y tarjetas visuales PNG de cobro o cálculo que el usuario **elige explícitamente** copiar al portapapeles o compartir mediante otras aplicaciones (como WhatsApp).
 3. Actualizar el Widget de pantalla de inicio y mostrar alertas locales de variación de tasa cuando el usuario las activa.
 4. Medir de manera agregada y anónima qué pantallas se usan más (si las estadísticas están activadas), mostrar publicidad no invasiva en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
@@ -61,8 +61,8 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 ---
 
 ## 6. Publicidad, anuncios bonificados y suscripción Ultra
-- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario SUDEBAN, las 4 herramientas de **Útiles** (*¿Con qué pago?*, *Inicial y cuotas*, *Comisiones* y *Dividir cuenta*), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
-- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **guardado de ruta favorita en Comisiones**, **logo propio en Tarjetas PNG**, **Alertas locales de variación de tasa** y **Widget Calculadora y Cobros Ultra**.
+- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario SUDEBAN, las herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
+- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **logo propio en Tarjetas PNG**, **Alertas locales de variación de tasa** y **Widget Calculadora y Cobros Ultra**.
 - **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*.
 - **Seguridad de pagos:** Todas las transacciones son procesadas exclusivamente por **Google Play Billing**; el desarrollador nunca accede a tarjetas, cuentas ni credenciales financieras.
 

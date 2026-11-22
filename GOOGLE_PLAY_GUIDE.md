@@ -98,7 +98,7 @@ El código ya integra `AnalyticsTracker` (con interruptor opt-out en *Configurac
    `app/google-services.json`
 3. Eventos anónimos configurados (sin montos ni datos personales):
    - `tasave_tab_opened` (`tab_name`: Conversor / Carrito / Útiles / Cobros)
-   - `tasave_util_opened` (`tool_name`: `compare_payment`, `installments`, `commissions`, `split_bill`)
+   - `tasave_util_opened` (`tool_name`: `compare_payment`, `split_bill`)
    - `tasave_rate_selected` (`rate_key`: `USD_BCV`, `EUR_BCV`, `USDT`, `COP`)
    - `tasave_calendar_opened` y `tasave_calendar_day_selected` (`is_bank_holiday`)
 
@@ -185,7 +185,7 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
    - Mínimo 5 capturas en resolución de teléfono (`1080 x 2400 px`):
      - Captura 1: Conversor BCV Hoy/Mañana, Euro, USDT y chip 🇨🇴 COP + botón Calendario.
      - Captura 2: Calendario SUDEBAN con feriados marcados y cálculo rápido por fecha.
-     - Captura 3: Pestaña **Útiles** (`¿Con qué pago?`, `Inicial y cuotas`, `Comisiones`, `Dividir cuenta`).
+     - Captura 3: Pestaña **Útiles** (`¿Con qué pago?` y `Dividir cuenta`).
      - Captura 4: Carrito Inteligente con Escáner OCR + IVA/IGTF.
      - Captura 5: Cobros (Pago Mixto, Tarjeta PNG con tu logo y WhatsApp).
 4. **Textos para la Ficha:**
@@ -200,7 +200,7 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
      Características principales:
      • Conversor bidireccional exacto (BCV Hoy/Mañana, Euro, USDT y COP frontera).
      • Calendario Bancario SUDEBAN: identifica lunes bancarios, feriados y tasas históricas por día.
-     • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/Zelle), Inicial y cuotas (Cashea/Krece), Comisiones (PayPal/Zinli/Wally) y Dividir cuenta.
+     • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/Zelle) y Dividir cuenta con amigos.
      • Carrito inteligente con escáner de cámara OCR local e IVA/IGTF referencial.
      • Módulo Cobros: Pago Mixto, perfiles locales de Pago Móvil/Zelle/Binance y Tarjeta PNG lista para WhatsApp.
      • Widgets en pantalla de inicio y Plan Ultra opcional sin anuncios ($0.99/mes o $7.99/año).

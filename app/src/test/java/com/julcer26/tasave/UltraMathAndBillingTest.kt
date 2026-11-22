@@ -438,7 +438,7 @@ class UltraMathAndBillingTest {
     }
 
     @Test
-    fun utilesCalculations_computeCompareInstallmentsFeesAndSplitAccurately() {
+    fun utilesCalculations_computeCompareAndSplitAccurately() {
         // 1. ¿Con qué pago?: $100 at BCV 50 -> Bs. 5000 / USDT 60 -> 83.3333 USDT (< $100 cash)
         val usdtWins = UltraMath.calculatePaymentComparison(
             priceUsd = 100.0,
@@ -462,44 +462,7 @@ class UltraMathAndBillingTest {
         assertEquals(75.0, cashWins.cashOrZelleEffectiveUsd, 0.001)
         assertEquals(8.3333, cashWins.cashSavingsVsUsdtUsd, 0.01)
 
-        // 2. Inicial y cuotas (Cashea / Krece): $120, 40% inicial, 3 cuotas
-        val plan = UltraMath.calculateInstallmentPlan(
-            totalUsd = 120.0,
-            initialPercent = 40,
-            installmentCount = 3,
-            bcvRate = 50.0,
-            usdtRate = 60.0
-        )
-        assertEquals(48.0, plan.initialUsd, 0.001)
-        assertEquals(2400.0, plan.initialBs, 0.001)
-        assertEquals(40.0, plan.initialUsdt, 0.001)
-        assertEquals(72.0, plan.remainingUsd, 0.001)
-        assertEquals(24.0, plan.installmentUsd, 0.001)
-        assertEquals(1200.0, plan.installmentBs, 0.001)
-
-        // 3. Comisiones: PayPal 5.4% + $0.30
-        val received = UltraMath.calculateNetOrGross(
-            amountUsd = 100.0,
-            percentFee = 5.4,
-            fixedFeeUsd = 0.30,
-            calculateGrossToReceive = false,
-            usdtRate = 60.0
-        )
-        assertEquals(5.70, received.feeUsd, 0.001)
-        assertEquals(94.30, received.netUsd, 0.001)
-        assertEquals(94.30 * 60.0, received.netVesAtUsdt, 0.01)
-
-        val grossNeeded = UltraMath.calculateNetOrGross(
-            amountUsd = 94.30,
-            percentFee = 5.4,
-            fixedFeeUsd = 0.30,
-            calculateGrossToReceive = true,
-            usdtRate = 60.0
-        )
-        assertEquals(100.0, grossNeeded.grossUsd, 0.02)
-        assertEquals(94.30, grossNeeded.netUsd, 0.001)
-
-        // 4. Dividir cuenta: $80 / 4 people @ 50 Bs.
+        // 2. Dividir cuenta: $80 / 4 people @ 50 Bs.
         val split = UltraMath.calculateSplitBill(totalUsd = 80.0, peopleCount = 4, rate = 50.0)
         assertEquals(20.0, split.perPersonUsd, 0.001)
         assertEquals(1000.0, split.perPersonBs, 0.001)

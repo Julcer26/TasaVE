@@ -13,8 +13,8 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario SUDEBAN**, pestaña **Útiles** (*¿Con qué pago?*, *Inicial y cuotas*, *Comisiones*, *Dividir cuenta*), Pago Mixto + Tarjeta PNG, **Widget Tasas en Vivo**, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
-| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **guardado de ruta favorita en Comisiones**, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y **Widget Calculadora y Cobro Express**. |
+| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario SUDEBAN**, pestaña **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), Pago Mixto + Tarjeta PNG, **Widget Tasas en Vivo**, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
+| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y **Widget Calculadora y Cobro Express**. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
 > **Regla de oro:** *Business* nunca debe cobrarse como un "extra aparte sobre Ultra". En Google Play Billing se ofertan como planes independientes donde *Business* desbloquea automáticamente todos los beneficios de *Ultra*.
@@ -49,7 +49,7 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 ### 2.2 Métricas a validar tras lanzar v1.2 (antes de publicar v1.3)
 - **Estabilidad:** Crash-free users > 99.5 % en Play Console / Vitals.
-- **Uso real por función (Firebase Analytics):** Eventos `tasave_tab_opened` (`Conversor`, `Carrito`, `Útiles`, `Cobros`), `tasave_util_opened` (`compare_payment`, `installments`, `commissions`, `split_bill`), `tasave_rate_selected` (incluyendo `COP`) y `tasave_calendar_opened`.
+- **Uso real por función (Firebase Analytics):** Eventos `tasave_tab_opened` (`Conversor`, `Carrito`, `Útiles`, `Cobros`), `tasave_util_opened` (`compare_payment`, `split_bill`), `tasave_rate_selected` (incluyendo `COP`) y `tasave_calendar_opened`.
 - **Monetización AdMob:** eCPM promedio del banner adaptativo, intersticial post-acción y rewarded (ratio de activación del pase 12h sin anuncios vs. +5 escaneos).
 - **Retención y Conversión:** % de usuarios activos al día 7 (`D7`), pestañas/útiles más frecuentes y tasa de conversión a `Ultra` (`$0.99` vs `$7.99`).
 
@@ -60,18 +60,18 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 ### 3.1 ASO (Posicionamiento en Google Play Store)
 - **Título (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
 - **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros.`
-- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `peso colombiano bolivar`, `feriados bancarios sudeban`, `cashea cuotas`, `paypal comision venezuela`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
+- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `peso colombiano bolivar`, `feriados bancarios sudeban`, `dividir cuenta bolivar`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
 - **Activos visuales recomendados (6 capturas en orden de impacto):**
   1. Conversor en vivo (BCV Hoy / Mañana + Euro BCV + USDT + chip `🇨🇴 COP` + botón Calendario).
   2. Calendario SUDEBAN marcando lunes bancarios, tasa del día y cálculo rápido.
-  3. Pestaña **Útiles** (`¿Con qué pago?`, `Inicial y cuotas`, `Comisiones`, `Dividir cuenta`).
+  3. Pestaña **Útiles** (`¿Con qué pago?` y `Dividir cuenta`).
   4. Escáner de cámara OCR + Carrito inteligente con IVA (16 %) y equivalencias.
   5. Cobros / Pago Mixto con vuelto automático y Tarjeta PNG lista para WhatsApp.
   6. Widget gratis Tasas en Vivo + Widget Ultra Calculadora y Cobro Express.
 
 ### 3.2 Motor Viral Integrado (Loop de Adquisición por WhatsApp)
-Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pago Móvil** o un resultado de **Útiles** (`¿Con qué pago?`, `Inicial y cuotas`, `Dividir cuenta`) por WhatsApp, incluye formato limpio con enlaces oficiales (`https://tasave.net` y Google Play), mientras el pie de la tarjeta visual conserva `Generado con Tasa VE • https://tasave.net` incluso cuando un usuario Ultra personaliza la cabecera con su propio logo.
-- **Efecto multiplicador:** quien recibe una tarjeta o desglose de cuotas/cuenta dividida pregunta *"¿qué app usas?"* o instala directo.
+Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pago Móvil** o un resultado de **Útiles** (`¿Con qué pago?`, `Dividir cuenta`) por WhatsApp, incluye formato limpio con enlaces oficiales (`https://tasave.net` y Google Play), mientras el pie de la tarjeta visual conserva `Generado con Tasa VE • https://tasave.net` incluso cuando un usuario Ultra personaliza la cabecera con su propio logo.
+- **Efecto multiplicador:** quien recibe una tarjeta o resultado de cuenta dividida pregunta *"¿qué app usas?"* o instala directo.
 - **Landing (`tasave.net`):** ya publicada en `docs/`; en cuanto Google Play apruebe la ficha pública, reemplazar el CTA de descarga de APK/lista de espera por el botón oficial de Google Play Store.
 
 ### 3.3 Estrategia de Contenido Corto en `@tasa.ve` (Instagram Reels y TikTok)
@@ -80,11 +80,11 @@ Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pa
   - **TikTok:** [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)
 - **Guiones de videos verticales (15 a 25 segundos)** resolviendo problemas cotidianos reales en Venezuela (sin sobreproducción, grabando la pantalla real del teléfono):
   1. **"¿Cambio USDT o pago en efectivo/Zelle?"**: abre *Útiles > ¿Con qué pago?* y demuestra en 5 segundos cuánto ahorras en dólares reales.
-  2. **"Calcula tu inicial y cuotas de Cashea/Krece en bolívares al instante"**: abre *Útiles > Inicial y cuotas* con tasa BCV y compártelo por WhatsApp.
+  2. **"Divide la cuenta o delivery con tus amigos en Bs. o $ al instante"**: abre *Útiles > Dividir cuenta* y manda el monto por persona al grupo de WhatsApp.
   3. **"¿Mañana es lunes bancario o a cuánto amanece el BCV?"**: abre el **Calendario SUDEBAN** desde la barra superior + *BCV Hoy vs Mañana*.
   4. **"Cobra o convierte pesos en la frontera sin perderte"**: activa el chip **`🇨🇴 COP`** y convierte directo pesos ⇄ bolívares.
   5. **"No pierdas dinero con el vuelto en Pago Móvil"**: muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. + *Tarjeta PNG* con logo propio (Ultra).
-  6. **"Escanea precios en el súper y calcula comisiones PayPal/Zinli"**: demuestra el escáner OCR local y la calculadora *Comisiones* + *Dividir cuenta* con amigos.
+  6. **"Escanea precios en el súper sin sacar la cuenta a mano"**: apunta la cámara al hablador y suma al carrito inteligente.
 
 ---
 

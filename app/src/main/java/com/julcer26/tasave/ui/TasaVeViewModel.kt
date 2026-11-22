@@ -119,23 +119,13 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _customBrandLogoRevision = MutableStateFlow(0L)
     val customBrandLogoRevision: StateFlow<Long> = _customBrandLogoRevision.asStateFlow()
 
-    // Privacy-safe Analytics & Útiles Favorite Fee Route
+    // Privacy-safe Analytics
     private val _analyticsEnabled = MutableStateFlow(localStorageHelper.isAnalyticsEnabled())
     val analyticsEnabled: StateFlow<Boolean> = _analyticsEnabled.asStateFlow()
-
-    private val _savedFeePercent = MutableStateFlow(localStorageHelper.getSavedFeePercent())
-    val savedFeePercent: StateFlow<Double> = _savedFeePercent.asStateFlow()
 
     fun setAnalyticsEnabled(enabled: Boolean) {
         _analyticsEnabled.value = enabled
         AnalyticsTracker.setCollectionEnabled(getApplication(), enabled)
-    }
-
-    fun saveFavoriteFeePercent(percent: Double) {
-        val clamped = percent.coerceIn(0.0, 50.0)
-        _savedFeePercent.value = clamped
-        localStorageHelper.saveFavoriteFeePercent(clamped)
-        AnalyticsTracker.logAction(getApplication(), "save_favorite_fee")
     }
 
     // Selection & Dynamic Calculator state

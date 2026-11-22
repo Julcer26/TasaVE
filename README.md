@@ -23,7 +23,7 @@
 - **Widgets en Pantalla de Inicio:** Widget gratuito **Tasas en Vivo** (BCV Hoy/Mañana y Brecha) y widget **Ultra Calculadora y Cobros** (tasas + accesos directos, calculadora rápida en pantalla y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).
 - **Carrito de Mercado Inteligente:** Controla tu presupuesto en USD y Bolívares con cálculo opcional de **IVA (16%)** e **IGTF (3%)**.
-- **Pestaña Útiles del Día a Día:** 4 herramientas prácticas (**¿Con qué pago?** USDT vs Efectivo/Zelle, **Inicial y cuotas** tipo Cashea/Krece, **Comisiones** PayPal/Zinli/Wally con ruta favorita en Ultra y **Dividir cuenta**), además de **Alertas** y **Widgets**.
+- **Pestaña Útiles del Día a Día:** 2 herramientas prácticas (**¿Con qué pago?** USDT vs Efectivo/Zelle y **Dividir cuenta** entre amigos), además de **Alertas** y **Widgets**.
 - **Cobros, Pago Mixto y Tarjeta PNG:** Calcula el vuelto en pagos mixtos y comparte tarjetas visuales en PNG con tus datos de Pago Móvil, Zelle o Binance Pay (y logo propio en **Ultra**).
 - **Privacidad Local, Analítica Opcional y Feedback Directo:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo, con métricas anónimas de uso desactivables en Configuración y centro de reportes integrado.
 

@@ -117,7 +117,6 @@ fun TasaVeScreen(
     val customBrandName by viewModel.customBrandName.collectAsStateWithLifecycle()
     val customBrandLogoRevision by viewModel.customBrandLogoRevision.collectAsStateWithLifecycle()
     val analyticsEnabled by viewModel.analyticsEnabled.collectAsStateWithLifecycle()
-    val savedFeePercent by viewModel.savedFeePercent.collectAsStateWithLifecycle()
 
     val adFreePassUntilMs by viewModel.adFreePassUntilMs.collectAsStateWithLifecycle()
     val isAdFreePassActive = adFreePassUntilMs > System.currentTimeMillis()
@@ -608,8 +607,6 @@ fun TasaVeScreen(
                         snapshots = rateSnapshots,
                         isHistoryLoading = isHistoryLoading,
                         alertSettings = alertSettings,
-                        savedFeePercent = savedFeePercent,
-                        onSaveFavoriteFee = { pct -> viewModel.saveFavoriteFeePercent(pct) },
                         onTrackUtilTool = { toolKey -> AnalyticsTracker.logUtilToolOpened(context, toolKey) },
                         onRefreshHistory = { viewModel.fetchHistoricalRates(forceRefresh = true) },
                         onUpdateAlerts = { viewModel.updateAlertSettings(it) },
@@ -3168,21 +3165,21 @@ private fun LegalCenterDialog(
             "1. Origen y actualización de los datos" to
                 "Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP de frontera e históricos diarios) provienen de APIs públicas (ve.dolarapi.com, co.dolarapi.com, open.er-api.com y rates.dolarvzla.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
             "2. Información y estadísticas anónimas" to
-                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF, comisión favorita y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay) se guardan únicamente en tu dispositivo. De forma adicional, usamos Google Firebase Analytics únicamente para registrar eventos anónimos de navegación (por ejemplo, qué pestaña o herramienta de Útiles se abre), SIN incluir jamás montos, tasas escritas, nombres, cédulas, teléfonos ni datos bancarios. Puedes desactivar estas estadísticas en cualquier momento desde Configuración > Legal y Privacidad.",
+                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay) se guardan únicamente en tu dispositivo. De forma adicional, usamos Google Firebase Analytics únicamente para registrar eventos anónimos de navegación (por ejemplo, qué pestaña o herramienta de Útiles se abre), SIN incluir jamás montos, tasas escritas, nombres, cédulas, teléfonos ni datos bancarios. Puedes desactivar estas estadísticas en cualquier momento desde Configuración > Legal y Privacidad.",
             "3. Uso de la información" to
-                "Los datos locales se usan exclusivamente para calcular conversiones (incluyendo COP de frontera), totales de carrito, IVA/IGTF, vuelto en pagos mixtos, herramientas de Útiles (¿Con qué pago?, Inicial y cuotas, Comisiones, Dividir cuenta), Calendario SUDEBAN, alertas locales, widgets de inicio y tarjetas visuales PNG temporales en caché (shared_cards).",
+                "Los datos locales se usan exclusivamente para calcular conversiones (incluyendo COP de frontera), totales de carrito, IVA/IGTF, vuelto en pagos mixtos, herramientas de Útiles (¿Con qué pago? y Dividir cuenta), Calendario SUDEBAN, alertas locales, widgets de inicio y tarjetas visuales PNG temporales en caché (shared_cards).",
             "4. Enlaces externos y compartición" to
                 "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en caché local compartido por FileProvider sin subirse a servidores externos.",
             "5. Seguridad de los datos" to
                 "Todas las consultas de red y la telemetría anónima usan cifrado HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar o desactivar estadísticas en cualquier momento desde Configuración.",
             "6. Publicidad, anuncios bonificados y suscripción Ultra" to
-                "El Plan Gratuito incluye el conversor multi-tasa (BCV, Euro, USDT y COP), BCV Mañana, Calendario SUDEBAN, todas las herramientas de Útiles, Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios (con anuncio bonificado opcional para +5 escaneos o 12 h sin banners). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, ruta favorita en Comisiones, marca personalizada en Tarjeta PNG, Alertas de tasa y Widget Calculadora y Cobros Ultra.",
+                "El Plan Gratuito incluye el conversor multi-tasa (BCV, Euro, USDT y COP), BCV Mañana, Calendario SUDEBAN, las herramientas de Útiles (¿Con qué pago? y Dividir cuenta), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios (con anuncio bonificado opcional para +5 escaneos o 12 h sin banners). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, marca personalizada en Tarjeta PNG, Alertas de tasa y Widget Calculadora y Cobros Ultra.",
             "7. Permisos del sistema" to
                 "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo.\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, estadísticas anónimas opt-out, anuncios y suscripción Ultra en Google Play.",
             "8. Uso de tecnologías de terceros" to
                 "Integramos SDKs certificados: Google Firebase Analytics (métricas anónimas agregadas de uso de funciones, desactivable en Configuración), Google Mobile Ads (AdMob), Google Play Billing, Google ML Kit Text Recognition (OCR local) y APIs públicas de tasas (DolarAPI, DolarVzla y OpenER).",
             "9. Cambios en esta política" to
-                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La versión vigente corresponde al 21 de noviembre de 2026 (v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
+                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La versión vigente corresponde al 22 de noviembre de 2026 (v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
                 "Responsable: Tasa VE\nCorreo de privacidad y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
         )
@@ -3191,13 +3188,13 @@ private fun LegalCenterDialog(
     val termsSections = remember {
         listOf(
             "1. Naturaleza y No Afiliación Oficial" to
-                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN, Cashea, Krece, PayPal, Zinli, Zelle, Binance ni entidad financiera alguna.",
+                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad financiera alguna.",
             "2. Catálogo de Bancos, Útiles, Calendario e Impuestos" to
-                "Las plantillas de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance), el calendario referencial de feriados SUDEBAN y las herramientas de Útiles (¿Con qué pago?, Inicial y cuotas, Comisiones y Dividir cuenta) son estrictamente referenciales. Tasa VE no valida cuentas ni procesa transferencias.",
+                "Las plantillas de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance), el calendario referencial de feriados SUDEBAN y las herramientas de Útiles (¿Con qué pago? y Dividir cuenta) son estrictamente referenciales. Tasa VE no valida cuentas ni procesa transferencias.",
             "3. Fuentes de Datos y Descargo" to
                 "Las tasas se consultan de fuentes públicas (ve.dolarapi.com, co.dolarapi.com, open.er-api.com y rates.dolarvzla.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales o decisiones tomadas con base en la app.",
             "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
-                "El Plan Gratuito ofrece el conversor (BCV, Euro, USDT, COP), Calendario SUDEBAN, las 4 herramientas de Útiles, Pago Mixto, Tarjeta PNG y Widget Tasas en Vivo con banners e intersticiales ocasionales. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año) se renueva automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones.",
+                "El Plan Gratuito ofrece el conversor (BCV, Euro, USDT, COP), Calendario SUDEBAN, las herramientas de Útiles (¿Con qué pago? y Dividir cuenta), Pago Mixto, Tarjeta PNG y Widget Tasas en Vivo con banners e intersticiales ocasionales. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año) se renueva automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones.",
             "5. Privacidad, Reembolsos y Contacto" to
                 "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Puedes desactivar el registro anónimo de uso (Firebase Analytics) en Configuración > Legal y Privacidad. Contacto: soporte@tasave.net."
         )

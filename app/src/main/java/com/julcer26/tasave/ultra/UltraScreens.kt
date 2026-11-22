@@ -772,8 +772,6 @@ private fun CartItemEditorDialog(
 // =========================================================================
 private enum class UtilTool(val title: String, val subtitle: String, val analyticsKey: String) {
     COMPARE("¿Con qué pago?", "USDT vs Efectivo/$", "compare_payment"),
-    INSTALLMENTS("Inicial y cuotas", "Cashea, Krece y apartados", "installments"),
-    FEES("Comisiones", "PayPal, Zinli, Wally", "commissions"),
     SPLIT("Dividir cuenta", "Entre amigos o grupo", "split_bill")
 }
 
@@ -798,8 +796,6 @@ fun MarketTab(
     snapshots: List<RateSnapshot>,
     isHistoryLoading: Boolean,
     alertSettings: AlertSettings,
-    savedFeePercent: Double = 3.5,
-    onSaveFavoriteFee: (Double) -> Unit = {},
     onTrackUtilTool: (String) -> Unit = {},
     onRefreshHistory: () -> Unit,
     onUpdateAlerts: (AlertSettings) -> Unit,
@@ -1061,334 +1057,6 @@ fun MarketTab(
                     }
                 }
 
-                UtilTool.INSTALLMENTS -> {
-                    var totalText by remember { mutableStateOf("120") }
-                    var initPct by remember { mutableIntStateOf(40) }
-                    var cuotasCount by remember { mutableIntStateOf(3) }
-
-                    val total = totalText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    val plan = UltraMath.calculateInstallmentPlan(
-                        totalUsd = total,
-                        initialPercent = initPct,
-                        installmentCount = cuotasCount,
-                        bcvRate = usdRate,
-                        usdtRate = usdtRate
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(cardBg)
-                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Calcula inicial hoy y cuotas futuras para Cashea, Krece o compras por apartado.",
-                            fontSize = 11.5.sp,
-                            color = textSecondary
-                        )
-
-                        OutlinedTextField(
-                            value = totalText,
-                            onValueChange = { if (it.length <= 10) totalText = it },
-                            label = { Text("Precio total de la compra ($)") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Text("Porcentaje de inicial", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondary)
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf(20, 40, 50, 60).forEach { pct ->
-                                val active = initPct == pct
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
-                                        .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(10.dp))
-                                        .clickable { initPct = pct }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("$pct%", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
-                                }
-                            }
-                        }
-
-                        Text("Cantidad de cuotas", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondary)
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf(3, 6, 9, 12).forEach { c ->
-                                val active = cuotasCount == c
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (active) BlueEuro.copy(alpha = 0.2f) else surfaceMuted)
-                                        .border(1.dp, if (active) BlueEuro else borderCol, RoundedCornerShape(10.dp))
-                                        .clickable { cuotasCount = c }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("$c cuotas", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (active) BlueEuro else textPrimary)
-                                }
-                            }
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0x1810B981))
-                                .border(1.dp, Color(0x4D10B981), RoundedCornerShape(16.dp))
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text("INICIAL A PAGAR HOY (${plan.initialPercent}%)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = EmeraldLight)
-                            Text("$${formatDec2(plan.initialUsd)}  •  Bs. ${formatDec2(plan.initialBs)}", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = textPrimary)
-                            Text("Equivalente aprox.: ${formatDec2(plan.initialUsdt)} USDT", fontSize = 11.sp, color = textSecondary)
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(surfaceMuted)
-                                .border(1.dp, borderCol, RoundedCornerShape(16.dp))
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text("CADA CUOTA (${plan.installmentCount} CUOTAS)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BlueEuro)
-                            Text("$${formatDec2(plan.installmentUsd)} c/u  •  ≈ Bs. ${formatDec2(plan.installmentBs)}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-                            Text(
-                                text = "Restante financiado: $${formatDec2(plan.remainingUsd)}. Las cuotas futuras en Bs. se ajustan a la tasa BCV de cada fecha de pago.",
-                                fontSize = 10.5.sp,
-                                color = textSecondary
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                sharePlainText(
-                                    context,
-                                    "Compartir plan de cuotas",
-                                    "Plan Inicial y Cuotas (Tasa VE)\n• Total: $${formatDec2(plan.totalUsd)}\n• Inicial (${plan.initialPercent}%): $${formatDec2(plan.initialUsd)} / Bs. ${formatDec2(plan.initialBs)}\n• ${plan.installmentCount} cuotas de $${formatDec2(plan.installmentUsd)} (≈ Bs. ${formatDec2(plan.installmentBs)} hoy)"
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Compartir desglose", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
-                    }
-                }
-
-                UtilTool.FEES -> {
-                    var amountText by remember { mutableStateOf("50") }
-                    var selectedPlatform by remember { mutableStateOf(FeePlatform.PAYPAL) }
-                    var customPctText by remember { mutableStateOf(formatDec2(savedFeePercent)) }
-                    var grossMode by remember { mutableStateOf(false) }
-
-                    val amount = amountText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    val activePct = if (selectedPlatform == FeePlatform.CUSTOM) {
-                        customPctText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    } else {
-                        selectedPlatform.defaultPercent
-                    }
-                    val feeRes = UltraMath.calculateNetOrGross(
-                        amountUsd = amount,
-                        percentFee = activePct,
-                        fixedFeeUsd = selectedPlatform.fixedFeeUsd,
-                        calculateGrossToReceive = grossMode,
-                        usdtRate = usdtRate
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(cardBg)
-                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(surfaceMuted)
-                                .padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            listOf(false to "Me envían \$", true to "Quiero recibir \$").forEach { (isGross, label) ->
-                                val active = grossMode == isGross
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(9.dp))
-                                        .background(if (active) Emerald else Color.Transparent)
-                                        .clickable { grossMode = isGross }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = label,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (active) Color.Black else textPrimary
-                                    )
-                                }
-                            }
-                        }
-
-                        OutlinedTextField(
-                            value = amountText,
-                            onValueChange = { if (it.length <= 10) amountText = it },
-                            label = {
-                                Text(if (grossMode) "Monto neto que quieres recibir ($)" else "Monto que te envían ($)")
-                            },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Text("Plataforma o pasarela", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondary)
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            FeePlatform.entries.forEach { platform ->
-                                val active = selectedPlatform == platform
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (active) AmberUltra.copy(alpha = 0.2f) else surfaceMuted)
-                                        .border(1.dp, if (active) AmberUltra else borderCol, RoundedCornerShape(10.dp))
-                                        .clickable { selectedPlatform = platform }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = platform.shortName,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (active) AmberUltra else textPrimary
-                                    )
-                                }
-                            }
-                        }
-
-                        if (selectedPlatform == FeePlatform.CUSTOM) {
-                            OutlinedTextField(
-                                value = customPctText,
-                                onValueChange = { if (it.length <= 6) customPctText = it },
-                                label = { Text("Comisión personalizada (%)") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(onClick = { customPctText = formatDec2(savedFeePercent) }) {
-                                    Text(
-                                        text = "Usar favorita (${formatDec2(savedFeePercent)}%)",
-                                        fontSize = 11.sp,
-                                        color = EmeraldLight
-                                    )
-                                }
-                                OutlinedButton(
-                                    onClick = {
-                                        if (isUltraUser) {
-                                            val pct = customPctText.replace(",", ".").toDoubleOrNull()
-                                            if (pct != null && pct in 0.0..50.0) {
-                                                onSaveFavoriteFee(pct)
-                                                Toast.makeText(context, "Ruta favorita guardada (${formatDec2(pct)}%)", Toast.LENGTH_SHORT).show()
-                                            }
-                                        } else {
-                                            onOpenPlans()
-                                        }
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                    border = BorderStroke(1.dp, AmberUltra.copy(alpha = 0.6f))
-                                ) {
-                                    Icon(
-                                        imageVector = if (isUltraUser) Icons.Default.Star else Icons.Default.Lock,
-                                        contentDescription = null,
-                                        tint = AmberUltra,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = if (isUltraUser) "Guardar favorita" else "Guardar (Ultra)",
-                                        fontSize = 10.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = AmberUltra
-                                    )
-                                }
-                            }
-                        } else {
-                            Text(
-                                text = "Tarifa estimada: ${selectedPlatform.label}",
-                                fontSize = 11.sp,
-                                color = textSecondary
-                            )
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(surfaceMuted)
-                                .border(1.dp, borderCol, RoundedCornerShape(16.dp))
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(if (grossMode) "Debes pedir (bruto):" else "Monto enviado:", fontSize = 12.sp, color = textSecondary)
-                                Text("$${formatDec2(feeRes.grossUsd)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-                            }
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Comisión estimada (${formatDec2(feeRes.effectiveFeePercent)}%):", fontSize = 12.sp, color = textSecondary)
-                                Text("-$${formatDec2(feeRes.feeUsd)}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = AmberUltra)
-                            }
-                            HorizontalDivider(color = borderCol)
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Recibes neto:", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = EmeraldLight)
-                                Text("$${formatDec2(feeRes.netUsd)}", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = EmeraldLight)
-                            }
-                            Text(
-                                text = "Equivale aprox. a Bs. ${formatDec2(feeRes.netVesAtUsdt)} (ref. USDT Binance)",
-                                fontSize = 11.sp,
-                                color = textSecondary
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                sharePlainText(
-                                    context,
-                                    "Compartir cálculo de comisión",
-                                    "Cálculo ${selectedPlatform.shortName} (Tasa VE)\n• Bruto a enviar: $${formatDec2(feeRes.grossUsd)}\n• Comisión: $${formatDec2(feeRes.feeUsd)}\n• Neto a recibir: $${formatDec2(feeRes.netUsd)} (≈ Bs. ${formatDec2(feeRes.netVesAtUsdt)})"
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Enviar desglose", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
-                    }
-                }
-
                 UtilTool.SPLIT -> {
                     var totalBillText by remember { mutableStateOf("60") }
                     var people by remember { mutableIntStateOf(4) }
@@ -1558,14 +1226,10 @@ fun MarketTab(
                         rowTools.forEach { tool ->
                             val icon = when (tool) {
                                 UtilTool.COMPARE -> Icons.Default.CompareArrows
-                                UtilTool.INSTALLMENTS -> Icons.Default.CalendarViewMonth
-                                UtilTool.FEES -> Icons.Default.Percent
                                 UtilTool.SPLIT -> Icons.Default.Group
                             }
                             val accent = when (tool) {
                                 UtilTool.COMPARE -> EmeraldLight
-                                UtilTool.INSTALLMENTS -> BlueEuro
-                                UtilTool.FEES -> AmberUltra
                                 UtilTool.SPLIT -> PurpleZelle
                             }
                             Column(
@@ -3423,8 +3087,7 @@ fun PlansComparisonDialog(
                     val rows = listOf(
                         listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
                         listOf("BCV Mañana + Calendario SUDEBAN", "✓", "✓"),
-                        listOf("Útiles (¿Con qué pago?, Cuotas, Comis., Dividir)", "✓", "✓"),
-                        listOf("Guardar ruta favorita en Comisiones", "—", "✓"),
+                        listOf("Útiles (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
                         listOf("Pago Mixto + Tarjeta PNG", "✓", "✓"),
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
