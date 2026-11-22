@@ -95,6 +95,7 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_COP_PER_USD = "cop_per_usd_exact"
         private const val KEY_COP_DATE = "cop_date"
         private const val KEY_ANALYTICS_ENABLED = "analytics_enabled"
+        private const val KEY_PERSISTENT_RATE_NOTIF_ENABLED = "persistent_rate_notif_enabled"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -656,5 +657,12 @@ class LocalStorageHelper(context: Context) {
 
     fun setAnalyticsEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_ANALYTICS_ENABLED, enabled).apply()
+    }
+
+    fun isPersistentRateNotifEnabled(): Boolean =
+        prefs.getBoolean(KEY_PERSISTENT_RATE_NOTIF_ENABLED, false)
+
+    fun setPersistentRateNotifEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_PERSISTENT_RATE_NOTIF_ENABLED, enabled).apply()
     }
 }

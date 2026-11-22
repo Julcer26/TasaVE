@@ -200,6 +200,7 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
      Características principales:
      • Conversor bidireccional exacto (BCV Hoy/Mañana, Euro, USDT y COP frontera).
      • Calendario Bancario SUDEBAN: identifica lunes bancarios, feriados y tasas históricas por día.
+     • Accesos Rápidos: selecciona montos en WhatsApp ("Tasa VE"), botón en Barra Rápida y notificación fija opcional (Ultra).
      • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/Zelle) y Dividir cuenta con amigos.
      • Carrito inteligente con escáner de cámara OCR local e IVA/IGTF referencial.
      • Módulo Cobros: Pago Mixto, perfiles locales de Pago Móvil/Zelle/Binance y Tarjeta PNG lista para WhatsApp.

@@ -38,6 +38,31 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".quick.QuickCalcActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:label="Tasa VE"
+            android:theme="@style/Theme.TasaVE.QuickOverlay">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".quick.TasaVeQuickTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_launcher_monochrome"
+            android:label="Tasa VE"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".widget.TasaVeRatesWidgetProvider"
             android:exported="true"

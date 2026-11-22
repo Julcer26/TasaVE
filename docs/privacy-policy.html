@@ -213,7 +213,7 @@
         <ul>
             <li>Calcular conversiones de divisas (BCV hoy/mañana, USDT y COP de frontera), totales de carrito, estimaciones referenciales de IVA/IGTF, herramientas de <strong>Útiles</strong> (<em>¿Con qué pago?</em> y <em>Dividir cuenta</em>), consultar feriados en el Calendario SUDEBAN y calcular vuelto en pagos mixtos.</li>
             <li>Generar resúmenes de texto o tarjetas visuales PNG (con marca personalizada opcional en Ultra) que tú <strong>decides explícitamente</strong> copiar o compartir por mensajería (como WhatsApp).</li>
-            <li>Actualizar los widgets de inicio (<em>Tasas en Vivo</em> gratis y <em>Calculadora y Cobros Ultra</em>) y emitir alertas locales de cambio de tasa cuando las activas.</li>
+            <li>Actualizar los widgets de inicio (<em>Tasas en Vivo</em> gratis y <em>Calculadora y Cobros Ultra</em>), emitir alertas locales de cambio de tasa, mostrar la <strong>notificación fija opcional (Ultra)</strong> y abrir el conversor rápido desde la <strong>Barra Rápida</strong> o el menú <em>"Tasa VE"</em> al seleccionar texto (<code>PROCESS_TEXT</code>), leyendo localmente solo la cifra seleccionada de forma manual.</li>
             <li>Medir de forma anónima y agregada qué herramientas ayudan más (si mantienes activas las estadísticas), mostrar anuncios no invasivos en la versión gratuita y validar el acceso a <strong>Tasa VE Ultra</strong>.</li>
         </ul>
 
@@ -223,15 +223,15 @@
         <h2 id="s5">5. Seguridad de los datos</h2>
         <ul>
             <li><strong>Cifrado HTTPS (SSL/TLS):</strong> Todas las comunicaciones de red y métricas anónimas utilizan canales cifrados.</li>
-            <li><strong>Procesamiento local:</strong> El escáner OCR por cámara, la creación de tarjetas PNG y las alertas de variación se ejecutan íntegramente dentro del dispositivo.</li>
+            <li><strong>Procesamiento local:</strong> El escáner OCR por cámara, el conversor en texto seleccionado (<code>PROCESS_TEXT</code>), la creación de tarjetas PNG y las alertas o barra fija se ejecutan íntegramente dentro del dispositivo sin leer chats ni pantallas automáticamente.</li>
             <li><strong>Exclusión de respaldo en la nube:</strong> Las preferencias locales con perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay se excluyen de la copia de seguridad automática en la nube de Android.</li>
             <li><strong>Control total:</strong> Puedes desactivar Firebase Analytics desde Configuración o eliminar tu historial, carrito o cuentas guardadas en cualquier momento desde la app o desde <em>Ajustes de Android &gt; Aplicaciones &gt; Tasa VE &gt; Almacenamiento</em>.</li>
         </ul>
 
         <h2 id="s6">6. Publicidad y suscripción Ultra</h2>
         <ul>
-            <li><strong>Versión gratuita (AdMob):</strong> Incluye calculadora BCV exacta, BCV Mañana, USDT paralelo, Peso Colombiano (COP) de frontera, Calendario SUDEBAN, las herramientas de <strong>Útiles</strong> (<em>¿Con qué pago?</em> y <em>Dividir cuenta</em>), Pago Mixto, Tarjeta PNG, <strong>Widget Tasas en Vivo</strong> en pantalla de inicio, hasta <strong>5 productos en carrito</strong>, <strong>1 perfil de cobro</strong> y <strong>3 escaneos OCR diarios</strong>. Muestra banners adaptativos, anuncios intersticiales ocasionales tras acciones clave (nunca al abrir la app y con pausas de control) y permite ver voluntariamente un anuncio bonificado para obtener <strong>+5 escaneos extra</strong> o activar <strong>12 horas sin banners ni intersticiales</strong>.</li>
-            <li><strong>Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):</strong> Elimina todos los anuncios y desbloquea de forma ilimitada todas las herramientas: escáner de cámara ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, <strong>logo propio en tarjetas PNG</strong>, Alertas locales y <strong>Widget Calculadora y Cobro Express</strong>.</li>
+            <li><strong>Versión gratuita (AdMob):</strong> Incluye calculadora BCV exacta, BCV Mañana, USDT paralelo, Peso Colombiano (COP) de frontera, Calendario SUDEBAN, <strong>menú rápido "Tasa VE" en USD BCV</strong> y <strong>Barra Rápida</strong> para abrir la app, las herramientas de <strong>Útiles</strong> (<em>¿Con qué pago?</em> y <em>Dividir cuenta</em>), Pago Mixto, Tarjeta PNG, <strong>Widget Tasas en Vivo</strong> en pantalla de inicio, hasta <strong>5 productos en carrito</strong>, <strong>1 perfil de cobro</strong> y <strong>3 escaneos OCR diarios</strong>. Muestra banners adaptativos, anuncios intersticiales ocasionales tras acciones clave (nunca al abrir la app y con pausas de control) y permite ver voluntariamente un anuncio bonificado para obtener <strong>+5 escaneos extra</strong> o activar <strong>12 horas sin banners ni intersticiales</strong>.</li>
+            <li><strong>Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):</strong> Elimina todos los anuncios y desbloquea de forma ilimitada todas las herramientas: <strong>notificación fija opcional con tasas y Pago Móvil</strong>, <strong>conversor flotante multi-tasa (EUR, USDT, COP) + Pago Móvil desde WhatsApp o Barra Rápida</strong>, escáner de cámara ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, <strong>logo propio en tarjetas PNG</strong>, Alertas locales y <strong>Widget Calculadora y Cobro Express</strong>.</li>
             <li><strong>Renovación y cancelación:</strong> Las suscripciones se renuevan automáticamente vía Google Play salvo cancelación con al menos 24 horas de antelación desde <em>Google Play Store &gt; Suscripciones</em>.</li>
         </ul>
         <div class="callout">
@@ -241,7 +241,8 @@
         <h2 id="s7">7. Permisos del sistema</h2>
         <ul>
             <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner de precios. El OCR se ejecuta localmente en el teléfono; <strong>no grabamos video ni almacenamos ni subimos fotografías</strong>.</li>
-            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para recibir alertas locales de variación de tasa.</li>
+            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para recibir alertas locales de variación de tasa o activar la barra fija opcional (sin servicio continuo).</li>
+            <li><strong>Barra Rápida y Selección de texto:</strong> Integraciones estándar de Android que solo operan cuando el usuario pulsa el botón o selecciona texto manualmente.</li>
             <li><strong>Internet y red (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>):</strong> Para obtener cotizaciones públicas, estadísticas anónimas agregadas (opt-out disponible), anuncios gratuitos/bonificados y validar suscripciones.</li>
             <li><strong>Facturación (<code>com.android.vending.BILLING</code>):</strong> Para gestionar la suscripción Ultra y la restauración de compras en Google Play.</li>
         </ul>

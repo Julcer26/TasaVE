@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.julcer26.tasave.analytics.AnalyticsTracker
 import com.julcer26.tasave.billing.BillingManager
 import com.julcer26.tasave.data.*
+import com.julcer26.tasave.quick.PersistentRateNotificationManager
 import com.julcer26.tasave.share.ShareCardGenerator
 import com.julcer26.tasave.ultra.*
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
@@ -123,9 +124,26 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _analyticsEnabled = MutableStateFlow(localStorageHelper.isAnalyticsEnabled())
     val analyticsEnabled: StateFlow<Boolean> = _analyticsEnabled.asStateFlow()
 
+    // Persistent Live-Rate Notification (Ultra opt-in)
+    private val _persistentNotifEnabled = MutableStateFlow(localStorageHelper.isPersistentRateNotifEnabled())
+    val persistentNotifEnabled: StateFlow<Boolean> = _persistentNotifEnabled.asStateFlow()
+
     fun setAnalyticsEnabled(enabled: Boolean) {
         _analyticsEnabled.value = enabled
         AnalyticsTracker.setCollectionEnabled(getApplication(), enabled)
+    }
+
+    fun setPersistentRateNotifEnabled(enabled: Boolean): Boolean {
+        if (enabled && !isUltraUser.value) return false
+        _persistentNotifEnabled.value = enabled
+        localStorageHelper.setPersistentRateNotifEnabled(enabled)
+        PersistentRateNotificationManager.sync(getApplication())
+        RateAlertWorker.scheduleOrCancel(getApplication(), _alertSettings.value.enabled || enabled)
+        AnalyticsTracker.logAction(
+            getApplication(),
+            if (enabled) "persistent_notif_enabled" else "persistent_notif_disabled"
+        )
+        return true
     }
 
     // Selection & Dynamic Calculator state
@@ -503,7 +521,10 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                 state.usdtParalelo?.rate ?: 0.0
             )
         }
-        RateAlertWorker.scheduleOrCancel(getApplication(), updated.enabled)
+        RateAlertWorker.scheduleOrCancel(
+            getApplication(),
+            updated.enabled || _persistentNotifEnabled.value
+        )
     }
 
     fun triggerTestAlertNotification(): Boolean {

@@ -41,7 +41,7 @@ Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guar
 La información procesada local y técnicamente se utiliza exclusivamente para:
 1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario SUDEBAN, calcular herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
 2. Formatear resúmenes y tarjetas visuales PNG de cobro o cálculo que el usuario **elige explícitamente** copiar al portapapeles o compartir mediante otras aplicaciones (como WhatsApp).
-3. Actualizar el Widget de pantalla de inicio y mostrar alertas locales de variación de tasa cuando el usuario las activa.
+3. Actualizar el Widget de pantalla de inicio, mostrar alertas locales de variación de tasa o mantener la **notificación fija opcional de tasas (Ultra)** y el acceso desde la **Barra Rápida** o el menú **"Tasa VE" al seleccionar texto (`PROCESS_TEXT`)**, procesando localmente solo la cifra seleccionada manualmente sin leer chats ni pantallas automáticamente.
 4. Medir de manera agregada y anónima qué pantallas se usan más (si las estadísticas están activadas), mostrar publicidad no invasiva en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
 
 ---
@@ -54,15 +54,15 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 
 ## 5. Seguridad de los datos
 - **Cifrado en tránsito:** Todas las consultas de red hacia APIs de tasas, Firebase Analytics y servicios de Google se realizan exclusivamente mediante protocolo cifrado **HTTPS (SSL/TLS)**.
-- **Procesamiento en el dispositivo:** El reconocimiento de precios por cámara (OCR), la generación de tarjetas PNG y la evaluación de alertas de tasas se ejecutan localmente en el teléfono.
+- **Procesamiento en el dispositivo:** El reconocimiento de precios por cámara (OCR), el conversor flotante en texto seleccionado (`PROCESS_TEXT`), la generación de tarjetas PNG y la evaluación de alertas o barra fija se ejecutan localmente en el teléfono.
 - **Aislamiento y exclusión de backup en la nube:** Los datos locales residen en el almacenamiento privado de la app en Android y los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos de la copia de seguridad automática en la nube.
 - **Control y borrado:** Puede desactivar Firebase Analytics desde Configuración o eliminar todo su historial, carrito o métodos de cobro dentro de la app / *Ajustes de Android > Aplicaciones > Tasa VE > Almacenamiento*.
 
 ---
 
 ## 6. Publicidad, anuncios bonificados y suscripción Ultra
-- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario SUDEBAN, las herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
-- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **logo propio en Tarjetas PNG**, **Alertas locales de variación de tasa** y **Widget Calculadora y Cobros Ultra**.
+- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario SUDEBAN, **menú rápido "Tasa VE" en WhatsApp/apps para USD BCV**, **botón en Barra Rápida** para abrir la app, las herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
+- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **Notificación fija opcional de tasas con copia rápida y Pago Móvil**, **conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil desde WhatsApp o Barra Rápida**, **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **logo propio en Tarjetas PNG**, **Alertas locales de variación de tasa** y **Widget Calculadora y Cobros Ultra**.
 - **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*.
 - **Seguridad de pagos:** Todas las transacciones son procesadas exclusivamente por **Google Play Billing**; el desarrollador nunca accede a tarjetas, cuentas ni credenciales financieras.
 
@@ -71,9 +71,10 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 ## 7. Permisos del sistema
 Tasa VE solicita únicamente los permisos estrictamente necesarios:
 1. **Cámara (`CAMERA`):** Opcional y solo en primer plano cuando el usuario abre el escáner de precios. El OCR se ejecuta localmente en el dispositivo; **no grabamos video ni almacenamos ni subimos fotografías a servidores**.
-2. **Notificaciones (`POST_NOTIFICATIONS`):** Opcional en Android 13+ para usuarios que activen las alertas locales de variación de tasa.
-3. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, enviar métricas anónimas agregadas (opt-out disponible), mostrar anuncios en la versión gratuita y validar suscripciones en Google Play.
-4. **Facturación de Google Play (`com.android.vending.BILLING`):** Necesario para gestionar la suscripción Tasa VE Ultra y la restauración de compras.
+2. **Notificaciones (`POST_NOTIFICATIONS`):** Opcional en Android 13+ para usuarios que activen las alertas locales de variación de tasa o la barra fija opcional de tasas (sin servicio continuo ni sonido).
+3. **Barra Rápida (`BIND_QUICK_SETTINGS_TILE`) y Menú de texto (`PROCESS_TEXT`):** Integraciones estándar de Android que solo operan cuando el usuario selecciona manualmente un texto o pulsa el botón en su panel rápido.
+4. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, enviar métricas anónimas agregadas (opt-out disponible), mostrar anuncios en la versión gratuita y validar suscripciones en Google Play.
+5. **Facturación de Google Play (`com.android.vending.BILLING`):** Necesario para gestionar la suscripción Tasa VE Ultra y la restauración de compras.
 
 ---
 

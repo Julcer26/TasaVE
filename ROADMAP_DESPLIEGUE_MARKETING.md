@@ -82,6 +82,7 @@ Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pa
   1. **"¿Cambio USDT o pago en efectivo/Zelle?"**: abre *Útiles > ¿Con qué pago?* y demuestra en 5 segundos cuánto ahorras en dólares reales.
   2. **"Divide la cuenta o delivery con tus amigos en Bs. o $ al instante"**: abre *Útiles > Dividir cuenta* y manda el monto por persona al grupo de WhatsApp.
   3. **"¿Mañana es lunes bancario o a cuánto amanece el BCV?"**: abre el **Calendario SUDEBAN** desde la barra superior + *BCV Hoy vs Mañana*.
+  4. **"Convierte montos directo en WhatsApp sin salir del chat"**: subraya un precio, toca *Tasa VE* y (en Ultra) copia el resultado con tu Pago Móvil o desde la Barra Fija.
   4. **"Cobra o convierte pesos en la frontera sin perderte"**: activa el chip **`🇨🇴 COP`** y convierte directo pesos ⇄ bolívares.
   5. **"No pierdas dinero con el vuelto en Pago Móvil"**: muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. + *Tarjeta PNG* con logo propio (Ultra).
   6. **"Escanea precios en el súper sin sacar la cuenta a mano"**: apunta la cámara al hablador y suma al carrito inteligente.

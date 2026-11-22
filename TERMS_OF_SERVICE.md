@@ -25,7 +25,7 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 ## 3. Modelo de Monetización, Compras In-App, Analítica y Suscripciones
 
 ### A. Versión Gratuita con Publicidad
-- Incluye la calculadora conversora multi-tasa exacta (**BCV, Euro, USDT**), **BCV Mañana**, **Peso Colombiano (COP)** de frontera, **Calendario SUDEBAN**, historial local, las herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), **Pago Mixto**, **Tarjeta visual PNG**, Widget **Tasas en Vivo**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** o **12 h sin anuncios**).
+- Incluye la calculadora conversora multi-tasa exacta (**BCV, Euro, USDT**), **BCV Mañana**, **Peso Colombiano (COP)** de frontera, **Calendario SUDEBAN**, **menú "Tasa VE" al seleccionar texto en USD BCV**, **botón en Barra Rápida** para abrir la app, historial local, las herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), **Pago Mixto**, **Tarjeta visual PNG**, Widget **Tasas en Vivo**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** o **12 h sin anuncios**).
 - Muestra banners, intersticiales ocasionales tras acciones y anuncios bonificados opcionales gestionados a través de **Google Mobile Ads (AdMob)**.
 
 ### B. Estadísticas Anónimas de Uso (Opt-Out)
@@ -33,6 +33,8 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 
 ### C. Tasa VE Ultra (Suscripción Mensual $0.99 USD / Anual $7.99 USD)
 - **Beneficios completos:** Mientras la suscripción **Tasa VE Ultra** esté activa, elimina por completo la publicidad y desbloquea todas las funciones ilimitadas:
+  - **Notificación fija opcional de tasas** con botones de copiado rápido, calculadora y Pago Móvil.
+  - **Conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil en 1 toque** desde WhatsApp (`PROCESS_TEXT`) o desde la **Barra Rápida** de Android.
   - **Escáner de precios OCR ilimitado** por cámara.
   - **Carrito Inteligente ilimitado** con escaneo directo, edición de productos y cálculos referenciales de **IVA (16 %)** e **IGTF (3 %)**.
   - **Alertas locales de cambio de tasa** y **Widget Calculadora y Cobros Ultra**.

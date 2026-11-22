@@ -35,7 +35,8 @@ class RateAlertWorker(
     override suspend fun doWork(): Result {
         val storage = LocalStorageHelper(appContext)
         val settings = storage.getAlertSettings()
-        if (!settings.enabled) return Result.success()
+        val persistentEnabled = storage.isPersistentRateNotifEnabled()
+        if (!settings.enabled && !persistentEnabled) return Result.success()
 
         val dao = AppDatabase.getDatabase(appContext).conversionHistoryDao
         val repository = TasaVeRepository(appContext, dao)
@@ -46,6 +47,8 @@ class RateAlertWorker(
         }
 
         TasaVeRatesWidgetProvider.updateAllWidgets(appContext)
+        com.julcer26.tasave.quick.PersistentRateNotificationManager.sync(appContext)
+        if (!settings.enabled) return Result.success()
 
         val (prevUsd, prevEur, prevUsdt) = storage.getLastNotifiedRates()
         val currUsd = result.usdBcv.rate

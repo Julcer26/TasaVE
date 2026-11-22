@@ -1,6 +1,7 @@
 package com.julcer26.tasave.ultra
 
 import android.Manifest
+import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -9,9 +10,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon as AndroidIcon
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import com.julcer26.tasave.R
+import com.julcer26.tasave.quick.TasaVeQuickTileService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -796,9 +800,11 @@ fun MarketTab(
     snapshots: List<RateSnapshot>,
     isHistoryLoading: Boolean,
     alertSettings: AlertSettings,
+    persistentNotifEnabled: Boolean = false,
     onTrackUtilTool: (String) -> Unit = {},
     onRefreshHistory: () -> Unit,
     onUpdateAlerts: (AlertSettings) -> Unit,
+    onTogglePersistentNotif: (Boolean) -> Boolean = { false },
     onTestNotification: () -> Boolean,
     onOpenPlans: () -> Unit
 ) {
@@ -821,6 +827,18 @@ fun MarketTab(
         if (granted) {
             onUpdateAlerts(alertSettings.copy(enabled = true))
             Toast.makeText(context, "Alertas de tasa activadas", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val persistentNotifPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            if (onTogglePersistentNotif(true)) {
+                Toast.makeText(context, "Notificación fija de tasas activada", Toast.LENGTH_SHORT).show()
+            }
         } else {
             Toast.makeText(context, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
         }
@@ -1454,7 +1472,236 @@ fun MarketTab(
             }
         }
 
-        // 4. Home Screen Widgets Card (Tasas Gratis + Centro Rápido Ultra)
+        // Accesos Rápidos (Notificación Fija + Menú WhatsApp + Barra Rápida)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(cardBg)
+                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(Icons.Default.Bolt, contentDescription = null, tint = EmeraldLight)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Accesos Rápidos (Sin abrir la app)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    Text(
+                        text = "Calcula directo desde WhatsApp, notificaciones o la barra superior.",
+                        fontSize = 11.sp,
+                        color = textSecondary
+                    )
+                }
+            }
+
+            // 1) Notificación fija de tasas (Ultra opt-in)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(surfaceMuted)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "Notificación fija de tasas",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        if (!isUltraUser) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0x26F59E0B))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "ULTRA",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AmberUltra
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = "Barra silenciosa con USD, EUR, USDT, copiar tasas, calc. y Pago Móvil.",
+                        fontSize = 11.sp,
+                        color = textSecondary
+                    )
+                }
+                Switch(
+                    checked = isUltraUser && persistentNotifEnabled,
+                    onCheckedChange = { enable ->
+                        if (!isUltraUser) {
+                            Toast.makeText(
+                                context,
+                                "La barra fija de tasas es exclusiva de Tasa VE Ultra.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onOpenPlans()
+                        } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                            PackageManager.PERMISSION_GRANTED
+                        ) {
+                            persistentNotifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            val ok = onTogglePersistentNotif(enable)
+                            if (ok) {
+                                Toast.makeText(
+                                    context,
+                                    if (enable) "Notificación fija activada" else "Notificación fija desactivada",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Emerald,
+                        checkedTrackColor = Color(0x4D10B981)
+                    )
+                )
+            }
+
+            // 2) Conversor al seleccionar montos (WhatsApp y otras apps)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(surfaceMuted)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "Menú al seleccionar un monto",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0x2610B981))
+                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = if (isUltraUser) "MULTI-TASA + PM" else "BCV GRATIS",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = EmeraldLight
+                        )
+                    }
+                }
+                Text(
+                    text = "Selecciona cualquier cifra en WhatsApp (ej. \"\$35\") → toca \"Tasa VE\". Gratis en USD BCV; en Ultra cambia a EUR/USDT/COP y copia tu Pago Móvil en 1 toque.",
+                    fontSize = 11.sp,
+                    color = textSecondary,
+                    lineHeight = 15.sp
+                )
+            }
+
+            // 3) Botón en Barra Rápida de Android (Quick Settings Tile)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(surfaceMuted)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Botón en Barra Rápida",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = if (isUltraUser) {
+                                "Abre el conversor flotante directo sobre cualquier app."
+                            } else {
+                                "Abre Tasa VE desde el panel superior (conversor flotante en Ultra)."
+                            },
+                            fontSize = 11.sp,
+                            color = textSecondary
+                        )
+                    }
+                }
+                OutlinedButton(
+                    onClick = {
+                        onTrackUtilTool("add_quick_tile")
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            val statusBarManager = context.getSystemService(StatusBarManager::class.java)
+                            statusBarManager?.requestAddTileService(
+                                ComponentName(context, TasaVeQuickTileService::class.java),
+                                "Tasa VE",
+                                AndroidIcon.createWithResource(context, R.drawable.ic_launcher_monochrome),
+                                ContextCompat.getMainExecutor(context)
+                            ) { resultCode ->
+                                val msg = when (resultCode) {
+                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                                        "Botón añadido a tu Barra Rápida"
+                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                                        "Tasa VE ya está en tu Barra Rápida"
+                                    else ->
+                                        "Puedes añadir Tasa VE editando tu Barra Rápida"
+                                }
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Desliza la barra superior → Editar (lápiz) → arrastra \"Tasa VE\"",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, borderCol)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AddCircleOutline,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = EmeraldLight
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Añadir a Barra Rápida",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                }
+            }
+        }
+
+        // Home Screen Widgets Card (Tasas Gratis + Calculadora y Cobro Express Ultra)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -3096,6 +3343,8 @@ fun PlansComparisonDialog(
                         listOf("Widget Tasas en Vivo", "✓", "✓"),
                         listOf("Widget Calculadora y Cobros", "—", "✓"),
                         listOf("Alertas de tasa", "—", "✓"),
+                        listOf("Menú rápido WhatsApp", "BCV USD", "Todos + PM"),
+                        listOf("Barra fija y Barra Rápida", "—", "✓"),
                         listOf("Logo propio en Tarjeta PNG", "—", "✓")
                     )
                     rows.forEach { cols ->
@@ -3131,7 +3380,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, escáner ilimitado, carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget Calculadora y Cobros. Cancela cuando quieras.",
+                        text = "Cero anuncios, notificación fija de tasas, conversor flotante en WhatsApp/Barra Rápida con Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, logo propio, Alertas y Widgets. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp
