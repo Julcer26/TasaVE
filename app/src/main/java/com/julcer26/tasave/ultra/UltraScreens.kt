@@ -36,6 +36,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AddToHomeScreen
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -92,6 +95,10 @@ fun CartTab(
     cartItems: List<CartItem>,
     applyIva: Boolean,
     applyIgtf: Boolean,
+    paymentProfiles: List<PaymentMethodProfile> = emptyList(),
+    selectedProfileId: Long? = null,
+    customBrandName: String = "",
+    customBrandLogoRevision: Long = 0L,
     onAddManualItem: (name: String, amount: Double, isVes: Boolean, quantity: Int) -> Boolean,
     onEditItem: (id: Long, name: String, amount: Double, isVes: Boolean, quantity: Int) -> Unit,
     onScanToCart: () -> Unit,
@@ -311,6 +318,125 @@ fun CartTab(
                     fontSize = 10.5.sp,
                     color = textSecondary
                 )
+            }
+
+            if (cartItems.isNotEmpty()) {
+                val activeProfile = remember(paymentProfiles, selectedProfileId) {
+                    paymentProfiles.firstOrNull { it.id == selectedProfileId }
+                        ?: paymentProfiles.firstOrNull()
+                }
+                val customLogoFile = remember(customBrandLogoRevision, isUltraUser) {
+                    if (isUltraUser) ShareCardGenerator.getCustomBrandLogoFile(context) else null
+                }
+                val quoteText = remember(
+                    cartItems,
+                    summary,
+                    usdRate,
+                    effectiveApplyIva,
+                    effectiveApplyIgtf,
+                    activeProfile,
+                    isUltraUser,
+                    customBrandName
+                ) {
+                    ShareCardGenerator.formatCartQuoteText(
+                        items = cartItems,
+                        summary = summary,
+                        usdRate = usdRate,
+                        applyIva = effectiveApplyIva,
+                        applyIgtf = effectiveApplyIgtf,
+                        profile = activeProfile,
+                        customBrandName = if (isUltraUser) customBrandName else null
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            ShareCardGenerator.shareCartQuoteCard(
+                                context = context,
+                                isDark = isDark,
+                                items = cartItems,
+                                summary = summary,
+                                usdRate = usdRate,
+                                applyIva = effectiveApplyIva,
+                                applyIgtf = effectiveApplyIgtf,
+                                profile = activeProfile,
+                                captionText = quoteText,
+                                customBrandName = if (isUltraUser) customBrandName else null,
+                                customBrandLogoFile = customLogoFile
+                            )
+                        },
+                        modifier = Modifier
+                            .weight(1.25f)
+                            .heightIn(min = 40.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0x2610B981),
+                            contentColor = EmeraldLight
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = "Tarjeta (IMG)",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            sharePlainText(context, "Compartir presupuesto", quoteText)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 40.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        border = BorderStroke(1.dp, borderCol)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = textPrimary
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = "WhatsApp",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("Presupuesto Tasa VE", quoteText))
+                            Toast.makeText(context, "Presupuesto copiado", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.heightIn(min = 40.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        border = BorderStroke(1.dp, borderCol)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copiar presupuesto",
+                            modifier = Modifier.size(15.dp),
+                            tint = textPrimary
+                        )
+                    }
+                }
             }
         }
 
@@ -868,7 +994,7 @@ fun MarketTab(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Volver a Útiles",
                     tint = EmeraldLight,
                     modifier = Modifier.size(18.dp)
@@ -1243,7 +1369,7 @@ fun MarketTab(
                     ) {
                         rowTools.forEach { tool ->
                             val icon = when (tool) {
-                                UtilTool.COMPARE -> Icons.Default.CompareArrows
+                                UtilTool.COMPARE -> Icons.AutoMirrored.Filled.CompareArrows
                                 UtilTool.SPLIT -> Icons.Default.Group
                             }
                             val accent = when (tool) {
@@ -3335,7 +3461,7 @@ fun PlansComparisonDialog(
                         listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
                         listOf("BCV Mañana + Calendario SUDEBAN", "✓", "✓"),
                         listOf("Útiles (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
-                        listOf("Pago Mixto + Tarjeta PNG", "✓", "✓"),
+                        listOf("Pago Mixto + Tarjeta PNG (Cobro y Carrito)", "✓", "✓"),
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),

@@ -187,6 +187,11 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             isFromCache = true
         )
         recalculateVES()
+        PersistentRateNotificationManager.sync(application)
+        RateAlertWorker.scheduleOrCancel(
+            application,
+            _alertSettings.value.enabled || _persistentNotifEnabled.value
+        )
         fetchRates()
         fetchHistoricalRates()
     }

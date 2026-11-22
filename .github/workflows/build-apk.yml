@@ -50,7 +50,7 @@ jobs:
           TAG="v1.2.0-ultra-test"
           ASSET="TasaVE-v1.2-ultra-test.apk"
           TITLE="Tasa VE v1.2.0 - Prueba Ultra"
-          NOTES="APK de prueba independiente para Tasa VE v1.2 Ultra (Carrito, Brecha, Alertas, Cobros y Widget)."
+          NOTES="APK de prueba para Tasa VE v1.2 Ultra (BCV Hoy/Mañana, COP, Calendario SUDEBAN, Conversor flotante en WhatsApp, Barra Rápida, Notificación fija, Útiles, Carrito con Tarjeta PNG y Cobros)."
         else
           TAG="v1.1.0-scanner-test"
           ASSET="TasaVE-scanner-test.apk"

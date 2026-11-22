@@ -80,7 +80,7 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
             ACTION_PAY_PREV -> {
                 val profiles = storage.getPaymentProfiles()
                 if (profiles.isNotEmpty()) {
-                    val cur = storage.getUltraWidgetProfileIndex().coerceIn(0, profiles.lastIndex)
+                    val cur = storage.resolveActivePaymentProfileIndex(profiles)
                     val prev = if (cur - 1 < 0) profiles.lastIndex else cur - 1
                     storage.setUltraWidgetProfileIndex(prev)
                 }
@@ -88,14 +88,14 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
             ACTION_PAY_NEXT -> {
                 val profiles = storage.getPaymentProfiles()
                 if (profiles.isNotEmpty()) {
-                    val cur = storage.getUltraWidgetProfileIndex().coerceIn(0, profiles.lastIndex)
+                    val cur = storage.resolveActivePaymentProfileIndex(profiles)
                     val next = (cur + 1) % profiles.size
                     storage.setUltraWidgetProfileIndex(next)
                 }
             }
             ACTION_PAY_COPY -> {
                 val profiles = storage.getPaymentProfiles()
-                val idx = if (profiles.isEmpty()) 0 else storage.getUltraWidgetProfileIndex().coerceIn(0, profiles.lastIndex)
+                val idx = storage.resolveActivePaymentProfileIndex(profiles)
                 val profile = profiles.getOrNull(idx)
                 val data = WidgetCalcMath.formatProfileForWidget(profile, idx, profiles.size)
                 if (data.copyText.isNotBlank()) {
@@ -367,7 +367,7 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
 
                 // Panel 3: Cobro Express
                 val profiles = storage.getPaymentProfiles()
-                val idx = if (profiles.isEmpty()) 0 else storage.getUltraWidgetProfileIndex().coerceIn(0, profiles.lastIndex)
+                val idx = storage.resolveActivePaymentProfileIndex(profiles)
                 val profileData = WidgetCalcMath.formatProfileForWidget(
                     profile = profiles.getOrNull(idx),
                     index = idx,
@@ -379,7 +379,17 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                 setViewVisibility(R.id.ultra_pay_next, if (profiles.size > 1) View.VISIBLE else View.GONE)
                 setOnClickPendingIntent(R.id.ultra_pay_prev, actionBroadcast(context, 520, ACTION_PAY_PREV))
                 setOnClickPendingIntent(R.id.ultra_pay_next, actionBroadcast(context, 521, ACTION_PAY_NEXT))
-                setOnClickPendingIntent(R.id.ultra_pay_copy, actionBroadcast(context, 522, ACTION_PAY_COPY))
+                val copyPmIntent = com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
+                    context,
+                    com.julcer26.tasave.quick.QuickCalcActivity.MODE_COPY_PM
+                )
+                val copyPmPendingIntent = PendingIntent.getActivity(
+                    context,
+                    522,
+                    copyPmIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                setOnClickPendingIntent(R.id.ultra_pay_copy, copyPmPendingIntent)
                 setOnClickPendingIntent(R.id.ultra_pay_open, launchActivityIntent(context, 523, LAUNCH_CHECKOUT))
             }
 

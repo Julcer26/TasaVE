@@ -1,6 +1,6 @@
 # Roadmap de Despliegue, Marketing y Tasa VE Business
 
-**Última actualización:** 21 de noviembre de 2026  
+**Última actualización:** 22 de noviembre de 2026  
 **Rama de desarrollo actual:** `feat/v1.2-ultra`  
 **Dominio oficial:** `https://tasave.net` • **Soporte:** `soporte@tasave.net`  
 **Redes oficiales:** Instagram [`@tasa.ve`](https://www.instagram.com/tasa.ve/) • TikTok [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)

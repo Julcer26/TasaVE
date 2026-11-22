@@ -570,7 +570,26 @@ class LocalStorageHelper(context: Context) {
     }
 
     fun setSelectedPaymentProfileId(id: Long?) {
-        prefs.edit().putLong(KEY_SELECTED_PAYMENT_PROFILE_ID, id ?: -1L).apply()
+        val editor = prefs.edit().putLong(KEY_SELECTED_PAYMENT_PROFILE_ID, id ?: -1L)
+        if (id != null) {
+            val idx = getPaymentProfiles().indexOfFirst { it.id == id }
+            if (idx >= 0) {
+                editor.putInt(KEY_ULTRA_WIDGET_PROFILE_IDX, idx)
+            }
+        }
+        editor.apply()
+    }
+
+    fun resolveActivePaymentProfileIndex(
+        profiles: List<PaymentMethodProfile> = getPaymentProfiles()
+    ): Int {
+        if (profiles.isEmpty()) return 0
+        val selectedId = getSelectedPaymentProfileId()
+        if (selectedId != null) {
+            val idxById = profiles.indexOfFirst { it.id == selectedId }
+            if (idxById >= 0) return idxById
+        }
+        return getUltraWidgetProfileIndex().coerceIn(0, profiles.lastIndex)
     }
 
     // Legacy single Pago Móvil support
@@ -650,7 +669,14 @@ class LocalStorageHelper(context: Context) {
     fun getUltraWidgetProfileIndex(): Int = prefs.getInt(KEY_ULTRA_WIDGET_PROFILE_IDX, 0)
 
     fun setUltraWidgetProfileIndex(index: Int) {
-        prefs.edit().putInt(KEY_ULTRA_WIDGET_PROFILE_IDX, index.coerceAtLeast(0)).apply()
+        val safeIdx = index.coerceAtLeast(0)
+        val profiles = getPaymentProfiles()
+        val matchedId = profiles.getOrNull(safeIdx)?.id
+        val editor = prefs.edit().putInt(KEY_ULTRA_WIDGET_PROFILE_IDX, safeIdx)
+        if (matchedId != null) {
+            editor.putLong(KEY_SELECTED_PAYMENT_PROFILE_ID, matchedId)
+        }
+        editor.apply()
     }
 
     fun isAnalyticsEnabled(): Boolean = prefs.getBoolean(KEY_ANALYTICS_ENABLED, true)

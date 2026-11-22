@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -166,7 +167,8 @@ fun TasaVeScreen(
                 showScanner = true
                 onConsumeWidgetAction()
             }
-            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_PLANS -> {
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_PLANS,
+            "open_plans" -> {
                 showPlansDialog = true
                 onConsumeWidgetAction()
             }
@@ -579,6 +581,10 @@ fun TasaVeScreen(
                         cartItems = cartItems,
                         applyIva = cartIvaEnabled,
                         applyIgtf = cartIgtfEnabled,
+                        paymentProfiles = paymentProfiles,
+                        selectedProfileId = selectedPaymentProfileId,
+                        customBrandName = customBrandName,
+                        customBrandLogoRevision = customBrandLogoRevision,
                         onAddManualItem = { name, amount, isVes, quantity ->
                             viewModel.addCartItem(name, amount, isVes, quantity = quantity)
                         },
@@ -2043,7 +2049,7 @@ fun HistoryDialog(
                     }
                 }
 
-                Divider(color = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569))
+                HorizontalDivider(color = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569))
 
                 if (historyList.isEmpty()) {
                     Box(
@@ -3138,7 +3144,7 @@ private fun FeedbackReportDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Enviando...", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                     } else {
-                        Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Enviar reporte / sugerencia", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                     }
@@ -3236,7 +3242,7 @@ private fun LegalCenterDialog(
                             color = textPrimary
                         )
                         Text(
-                            text = "Actualizado: 21 nov 2026 • Versión 1.2.0",
+                            text = "Actualizado: 22 nov 2026 • Versión 1.2.0",
                             fontSize = 10.5.sp,
                             color = Color(0xFF10B981),
                             fontWeight = FontWeight.SemiBold

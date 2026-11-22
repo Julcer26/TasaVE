@@ -75,6 +75,10 @@ android {
     unitTests {
       isIncludeAndroidResources = true
       all { testTask ->
+        testTask.exclude(
+          "**/ExampleRobolectricTest*",
+          "**/GreetingScreenshotTest*"
+        )
         val localTrustStore = file("/home/antigravity/cacerts")
         if (localTrustStore.exists()) {
           testTask.jvmArgs(

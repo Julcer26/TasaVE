@@ -1,6 +1,6 @@
 # Términos de Servicio y Descargo de Responsabilidad — Tasa VE
 
-**Última actualización:** 21 de noviembre de 2026 (Versión 1.2.0)
+**Última actualización:** 22 de noviembre de 2026 (Versión 1.2.0)
 
 Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de ellos, por favor no utilice la aplicación.
 

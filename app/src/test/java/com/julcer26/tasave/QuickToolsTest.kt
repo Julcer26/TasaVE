@@ -4,6 +4,11 @@ import com.julcer26.tasave.data.CachedRatesBundle
 import com.julcer26.tasave.data.RateInfo
 import com.julcer26.tasave.quick.PersistentRateNotificationManager
 import com.julcer26.tasave.quick.QuickAmountParser
+import com.julcer26.tasave.share.ShareCardGenerator
+import com.julcer26.tasave.ultra.CartItem
+import com.julcer26.tasave.ultra.PaymentMethodProfile
+import com.julcer26.tasave.ultra.PaymentMethodType
+import com.julcer26.tasave.ultra.UltraMath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -19,6 +24,7 @@ class QuickToolsTest {
         assertNotNull(dollar)
         assertEquals(35.0, dollar!!.amount, 0.0001)
         assertFalse(dollar.inputIsVes)
+        assertEquals("USD_BCV", dollar.suggestedRateKey)
 
         val commaDecimal = QuickAmountParser.parse("35,50")
         assertNotNull(commaDecimal)
@@ -29,6 +35,40 @@ class QuickToolsTest {
         assertNotNull(integerOnly)
         assertEquals(32082.0, integerOnly!!.amount, 0.0001)
         assertFalse(integerOnly.inputIsVes)
+    }
+
+    @Test
+    fun parsePrioritizesCurrencyTaggedNumberInMultiNumberMessages() {
+        val multiCombo = QuickAmountParser.parse("2 combos por \$35")
+        assertNotNull(multiCombo)
+        assertEquals(35.0, multiCombo!!.amount, 0.0001)
+        assertFalse(multiCombo.inputIsVes)
+        assertEquals("USD_BCV", multiCombo.suggestedRateKey)
+
+        val promoSuffix = QuickAmountParser.parse("Promo 1: 25,50\$")
+        assertNotNull(promoSuffix)
+        assertEquals(25.5, promoSuffix!!.amount, 0.0001)
+        assertFalse(promoSuffix.inputIsVes)
+
+        val multiVes = QuickAmountParser.parse("3 unidades por Bs. 1.500,25")
+        assertNotNull(multiVes)
+        assertEquals(1500.25, multiVes!!.amount, 0.0001)
+        assertTrue(multiVes.inputIsVes)
+
+        val eurMsg = QuickAmountParser.parse("48,50 €")
+        assertNotNull(eurMsg)
+        assertEquals(48.5, eurMsg!!.amount, 0.0001)
+        assertEquals("EUR_BCV", eurMsg.suggestedRateKey)
+
+        val usdtMsg = QuickAmountParser.parse("120 USDT")
+        assertNotNull(usdtMsg)
+        assertEquals(120.0, usdtMsg!!.amount, 0.0001)
+        assertEquals("USDT", usdtMsg.suggestedRateKey)
+
+        val copMsg = QuickAmountParser.parse("85.000 COP")
+        assertNotNull(copMsg)
+        assertEquals(85000.0, copMsg!!.amount, 0.0001)
+        assertEquals("COP", copMsg.suggestedRateKey)
     }
 
     @Test
@@ -107,5 +147,49 @@ class QuickToolsTest {
         assertTrue(summary.compactLine.contains("USDT 49.85"))
         assertTrue(summary.bigText.contains("BCV Mañana (2026-11-23): Bs. 44.6500"))
         assertTrue(summary.copyClipboardText.contains("Tasas del día"))
+    }
+
+    @Test
+    fun formatCartQuoteTextIncludesItemsTaxesAndPaymentProfile() {
+        val items = listOf(
+            CartItem(id = 1L, name = "Harina PAN", unitPriceUsd = 2.0, quantity = 3),
+            CartItem(id = 2L, name = "Queso Blanco", unitPriceUsd = 4.0, quantity = 1)
+        )
+        val summary = UltraMath.calculateCartSummary(
+            items = items,
+            applyIva = true,
+            applyIgtf = false,
+            usdRate = 45.0,
+            eurRate = 49.0,
+            usdtRate = 50.0
+        )
+        val profile = PaymentMethodProfile(
+            id = 10L,
+            alias = "Tienda",
+            type = PaymentMethodType.PAGO_MOVIL,
+            bankCode = "0134",
+            bankName = "Banesco",
+            docPrefix = "V",
+            docNumber = "12345678",
+            phonePrefix = "0414",
+            phoneNumber = "1234567"
+        )
+
+        val quote = ShareCardGenerator.formatCartQuoteText(
+            items = items,
+            summary = summary,
+            usdRate = 45.0,
+            applyIva = true,
+            applyIgtf = false,
+            profile = profile,
+            customBrandName = "Bodegón Central"
+        )
+
+        assertTrue(quote.contains("*Bodegón Central • Presupuesto / Pedido*"))
+        assertTrue(quote.contains("1. 3x Harina PAN: \$6.00 (Bs. 270.00)"))
+        assertTrue(quote.contains("IVA (16%): \$1.60"))
+        assertTrue(quote.contains("*Total a pagar: \$11.60 • Bs. 522.00*"))
+        assertTrue(quote.contains("DATOS PAGO MÓVIL • Tienda"))
+        assertTrue(quote.contains("0134 - Banesco"))
     }
 }

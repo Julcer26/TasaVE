@@ -18,6 +18,8 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.julcer26.tasave.R
+import com.julcer26.tasave.ultra.CartItem
+import com.julcer26.tasave.ultra.CartSummary
 import com.julcer26.tasave.ultra.PaymentMethodProfile
 import com.julcer26.tasave.ultra.PaymentMethodType
 import java.io.File
@@ -489,6 +491,326 @@ object ShareCardGenerator {
             )
         }.onFailure {
             Toast.makeText(context, "No se pudo compartir la tarjeta de cobro", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun formatCartQuoteText(
+        items: List<CartItem>,
+        summary: CartSummary,
+        usdRate: Double,
+        applyIva: Boolean,
+        applyIgtf: Boolean,
+        profile: PaymentMethodProfile? = null,
+        customBrandName: String? = null
+    ): String {
+        val brandHeader = customBrandName?.trim()?.takeIf { it.isNotBlank() } ?: "Tasa VE"
+        val profileLines = buildProfileLines(profile)
+        return buildString {
+            appendLine("*$brandHeader • Presupuesto / Pedido*")
+            items.forEachIndexed { idx, item ->
+                val lineUsd = item.unitPriceUsd * item.quantity
+                val lineVes = lineUsd * usdRate
+                appendLine(
+                    "${idx + 1}. ${item.quantity}x ${item.name}: $${String.format(Locale.US, "%,.2f", lineUsd)} (Bs. ${String.format(Locale.US, "%,.2f", lineVes)})"
+                )
+            }
+            appendLine()
+            if (applyIva || applyIgtf) {
+                appendLine("Subtotal: $${String.format(Locale.US, "%,.2f", summary.subtotalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.subtotalUsd * usdRate)}")
+                if (applyIva) {
+                    appendLine("IVA (16%): $${String.format(Locale.US, "%,.2f", summary.ivaUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.ivaUsd * usdRate)}")
+                }
+                if (applyIgtf) {
+                    appendLine("IGTF (3%): $${String.format(Locale.US, "%,.2f", summary.igtfUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.igtfUsd * usdRate)}")
+                }
+            }
+            appendLine("*Total a pagar: $${String.format(Locale.US, "%,.2f", summary.totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.totalVes)}*")
+            if (usdRate > 0.0) {
+                appendLine("Tasa (Dólar BCV): Bs. ${String.format(Locale.US, "%.4f", usdRate)}")
+            }
+            if (profileLines.isNotEmpty()) {
+                appendLine()
+                profileLines.forEach { appendLine(it) }
+            }
+            appendLine()
+            append(buildDownloadLinksBlock())
+        }.trim()
+    }
+
+    fun shareCartQuoteCard(
+        context: Context,
+        isDark: Boolean,
+        items: List<CartItem>,
+        summary: CartSummary,
+        usdRate: Double,
+        applyIva: Boolean,
+        applyIgtf: Boolean,
+        profile: PaymentMethodProfile? = null,
+        captionText: String? = null,
+        customBrandName: String? = null,
+        customBrandLogoFile: File? = null
+    ) {
+        if (items.isEmpty()) return
+        runCatching {
+            val visibleItems = items.take(7)
+            val hiddenCount = (items.size - visibleItems.size).coerceAtLeast(0)
+            val itemRowCount = visibleItems.size + if (hiddenCount > 0) 1 else 0
+            val taxLinesCount = (if (applyIva || applyIgtf) 1 else 0) +
+                (if (applyIva) 1 else 0) +
+                (if (applyIgtf) 1 else 0)
+            val profileLines = buildProfileLines(profile)
+
+            val width = 1080
+            val itemsBoxHeight = 92 + itemRowCount * 62
+            val totalsBoxHeight = 224 + taxLinesCount * 48
+            val profileBoxHeight = if (profileLines.isNotEmpty()) 96 + profileLines.size * 54 else 0
+            val gapProfile = if (profileLines.isNotEmpty()) 32 else 0
+            val height = 480 + itemsBoxHeight + 32 + totalsBoxHeight + gapProfile + profileBoxHeight
+
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+
+            val bgTop = if (isDark) Color.parseColor("#0A0A0D") else Color.parseColor("#F8FAFC")
+            val bgBottom = if (isDark) Color.parseColor("#13151B") else Color.parseColor("#E2E8F0")
+            val cardBg = if (isDark) Color.parseColor("#181920") else Color.WHITE
+            val subCardBg = if (isDark) Color.parseColor("#21232C") else Color.parseColor("#F1F5F9")
+            val textPrimary = if (isDark) Color.WHITE else Color.parseColor("#0F172A")
+            val textSecondary = if (isDark) Color.parseColor("#94A3B8") else Color.parseColor("#475569")
+            val emeraldLight = if (isDark) Color.parseColor("#34D399") else Color.parseColor("#047857")
+
+            val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = LinearGradient(0f, 0f, 0f, height.toFloat(), bgTop, bgBottom, Shader.TileMode.CLAMP)
+            }
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
+
+            val cardPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = cardBg }
+            val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = if (isDark) Color.parseColor("#2634D399") else Color.parseColor("#CBD5E1")
+                style = Paint.Style.STROKE
+                strokeWidth = 3f
+            }
+            val outerRect = RectF(56f, 56f, width - 56f, height - 56f)
+            canvas.drawRoundRect(outerRect, 48f, 48f, cardPaint)
+            canvas.drawRoundRect(outerRect, 48f, 48f, borderPaint)
+
+            val customLogoBitmap = runCatching {
+                customBrandLogoFile?.takeIf { it.exists() && it.length() > 0L }?.let {
+                    BitmapFactory.decodeFile(it.absolutePath)
+                }
+            }.getOrNull()
+
+            val totalUnits = items.sumOf { it.quantity }
+            val subtitleText = "Dólar BCV: Bs. ${String.format(Locale.US, "%.4f", usdRate)} • $totalUnits art."
+            try {
+                drawCenteredBrandHeader(
+                    context = context,
+                    canvas = canvas,
+                    width = width,
+                    isDark = isDark,
+                    textPrimary = textPrimary,
+                    textSecondary = textSecondary,
+                    pillText = "PRESUPUESTO / PEDIDO",
+                    pillTextColor = emeraldLight,
+                    pillBgColor = Color.parseColor("#2410B981"),
+                    subtitle = subtitleText,
+                    customBrandName = customBrandName,
+                    customBrandLogo = customLogoBitmap
+                )
+            } finally {
+                customLogoBitmap?.recycle()
+            }
+
+            val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = subCardBg }
+            var currentY = 326f
+
+            // 1. Items Box
+            val itemsBottom = currentY + itemsBoxHeight
+            canvas.drawRoundRect(RectF(104f, currentY, width - 104f, itemsBottom), 34f, 34f, innerPaint)
+
+            val sectionLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textSecondary
+                textSize = 24f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            val itemNamePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textPrimary
+                textSize = 28f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            val itemPricePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = emeraldLight
+                textSize = 27f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textAlign = Paint.Align.RIGHT
+            }
+
+            canvas.drawText("DETALLE DE PRODUCTOS", 148f, currentY + 52f, sectionLabelPaint)
+
+            visibleItems.forEachIndexed { idx, item ->
+                val rowY = currentY + 108f + idx * 62f
+                val lineUsd = item.unitPriceUsd * item.quantity
+                val lineVes = lineUsd * usdRate
+                var title = "${item.quantity}x ${item.name.trim()}"
+                if (title.length > 26) {
+                    title = title.take(25).trimEnd() + "…"
+                }
+                val rightPrice = "$${String.format(Locale.US, "%,.2f", lineUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", lineVes)}"
+                canvas.drawText(title, 148f, rowY, itemNamePaint)
+                canvas.drawText(rightPrice, width - 148f, rowY, itemPricePaint)
+            }
+
+            if (hiddenCount > 0) {
+                val hiddenItems = items.drop(visibleItems.size)
+                val hiddenUsd = hiddenItems.sumOf { it.unitPriceUsd * it.quantity }
+                val hiddenVes = hiddenUsd * usdRate
+                val rowY = currentY + 108f + visibleItems.size * 62f
+                canvas.drawText("+$hiddenCount producto(s) más", 148f, rowY, sectionLabelPaint)
+                canvas.drawText(
+                    "$${String.format(Locale.US, "%,.2f", hiddenUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", hiddenVes)}",
+                    width - 148f,
+                    rowY,
+                    itemPricePaint
+                )
+            }
+
+            currentY = itemsBottom + 32f
+
+            // 2. Totals Box
+            val totalsBottom = currentY + totalsBoxHeight
+            canvas.drawRoundRect(RectF(104f, currentY, width - 104f, totalsBottom), 34f, 34f, innerPaint)
+
+            var rowCursorY = currentY + 54f
+            val subTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textSecondary
+                textSize = 27f
+            }
+            val subValPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textPrimary
+                textSize = 27f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                textAlign = Paint.Align.RIGHT
+            }
+
+            if (applyIva || applyIgtf) {
+                canvas.drawText("Subtotal", 148f, rowCursorY, subTextPaint)
+                canvas.drawText(
+                    "$${String.format(Locale.US, "%,.2f", summary.subtotalUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.subtotalUsd * usdRate)}",
+                    width - 148f,
+                    rowCursorY,
+                    subValPaint
+                )
+                rowCursorY += 48f
+                if (applyIva) {
+                    canvas.drawText("IVA (16%)", 148f, rowCursorY, subTextPaint)
+                    canvas.drawText(
+                        "$${String.format(Locale.US, "%,.2f", summary.ivaUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.ivaUsd * usdRate)}",
+                        width - 148f,
+                        rowCursorY,
+                        subValPaint
+                    )
+                    rowCursorY += 48f
+                }
+                if (applyIgtf) {
+                    canvas.drawText("IGTF (3%)", 148f, rowCursorY, subTextPaint)
+                    canvas.drawText(
+                        "$${String.format(Locale.US, "%,.2f", summary.igtfUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.igtfUsd * usdRate)}",
+                        width - 148f,
+                        rowCursorY,
+                        subValPaint
+                    )
+                    rowCursorY += 48f
+                }
+
+                val divPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = if (isDark) Color.parseColor("#22FFFFFF") else Color.parseColor("#CBD5E1")
+                    strokeWidth = 2f
+                }
+                canvas.drawLine(148f, rowCursorY - 18f, width - 148f, rowCursorY - 18f, divPaint)
+                rowCursorY += 20f
+            }
+
+            canvas.drawText("TOTAL A PAGAR", 148f, rowCursorY, sectionLabelPaint)
+            val bigTotalPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = emeraldLight
+                textSize = 48f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            canvas.drawText(
+                "$${String.format(Locale.US, "%,.2f", summary.totalUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.totalVes)}",
+                148f,
+                rowCursorY + 62f,
+                bigTotalPaint
+            )
+            canvas.drawText(
+                "Equivalente: € ${String.format(Locale.US, "%,.2f", summary.totalEur)}  •  USDT ${String.format(Locale.US, "%,.2f", summary.totalUsdt)}",
+                148f,
+                rowCursorY + 108f,
+                subTextPaint
+            )
+
+            currentY = totalsBottom + 32f
+
+            // 3. Optional Active Payment Profile Box
+            if (profileLines.isNotEmpty()) {
+                val pBottom = currentY + 66f + profileLines.size * 54f
+                canvas.drawRoundRect(RectF(104f, currentY, width - 104f, pBottom), 34f, 34f, innerPaint)
+                val lineLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = textSecondary
+                    textSize = 27f
+                }
+                val lineValuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = emeraldLight
+                    textSize = 31f
+                    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                }
+                val headPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = emeraldLight
+                    textSize = 30f
+                    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                }
+                profileLines.forEachIndexed { idx, line ->
+                    val y = currentY + 60f + idx * 54f
+                    if (idx == 0) {
+                        canvas.drawText(line, 148f, y, headPaint)
+                    } else {
+                        val colonIdx = line.indexOf(':')
+                        if (colonIdx in 1 until line.length - 1) {
+                            val labelPart = line.substring(0, colonIdx + 1) + " "
+                            val valPart = line.substring(colonIdx + 1).trim()
+                            canvas.drawText(labelPart, 148f, y, lineLabelPaint)
+                            val offset = lineLabelPaint.measureText(labelPart)
+                            canvas.drawText(valPart, 148f + offset, y, lineValuePaint)
+                        } else {
+                            canvas.drawText(line, 148f, y, lineValuePaint)
+                        }
+                    }
+                }
+            }
+
+            val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textSecondary
+                textSize = 26f
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText("Generado con Tasa VE • https://tasave.net", width / 2f, height - 92f, footerPaint)
+
+            val fallbackCaption = formatCartQuoteText(
+                items = items,
+                summary = summary,
+                usdRate = usdRate,
+                applyIva = applyIva,
+                applyIgtf = applyIgtf,
+                profile = profile,
+                customBrandName = customBrandName
+            )
+
+            shareBitmap(
+                context,
+                bitmap,
+                captionText?.takeIf { it.isNotBlank() } ?: fallbackCaption
+            )
+        }.onFailure {
+            Toast.makeText(context, "No se pudo generar la tarjeta del carrito", Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -98,9 +98,10 @@ El código ya integra `AnalyticsTracker` (con interruptor opt-out en *Configurac
    `app/google-services.json`
 3. Eventos anónimos configurados (sin montos ni datos personales):
    - `tasave_tab_opened` (`tab_name`: Conversor / Carrito / Útiles / Cobros)
-   - `tasave_util_opened` (`tool_name`: `compare_payment`, `split_bill`)
+   - `tasave_util_opened` (`tool_name`: `compare_payment`, `split_bill`, `add_quick_tile`)
    - `tasave_rate_selected` (`rate_key`: `USD_BCV`, `EUR_BCV`, `USDT`, `COP`)
    - `tasave_calendar_opened` y `tasave_calendar_day_selected` (`is_bank_holiday`)
+   - `tasave_action` (`persistent_notif_enabled`, `quick_process_text_opened`, `quick_tile_ultra`, `quick_copy_with_pm`)
 
 ---
 

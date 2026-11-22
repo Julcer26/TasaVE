@@ -104,6 +104,7 @@ class BillingManager(
         _debugTier.value = tier
         storageHelper.setDebugTierOverride(tier.name)
         com.julcer26.tasave.widget.TasaVeRatesWidgetProvider.updateAllWidgets(context)
+        com.julcer26.tasave.quick.PersistentRateNotificationManager.sync(context)
         _purchaseStatusMessage.value = when (tier) {
             UserTier.FREE -> "Modo prueba: Plan Gratis"
             UserTier.ULTRA -> "Modo prueba: Plan Ultra activado"
@@ -278,6 +279,7 @@ class BillingManager(
         _purchasedUltra.value = isUltra
         storageHelper.setUltraUser(isUltra)
         com.julcer26.tasave.widget.TasaVeRatesWidgetProvider.updateAllWidgets(context)
+        com.julcer26.tasave.quick.PersistentRateNotificationManager.sync(context)
     }
 
     fun destroy() {

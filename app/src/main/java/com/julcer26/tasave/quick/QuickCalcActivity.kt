@@ -12,14 +12,17 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
@@ -38,6 +41,8 @@ import com.julcer26.tasave.analytics.AnalyticsTracker
 import com.julcer26.tasave.data.CachedRatesBundle
 import com.julcer26.tasave.data.LocalStorageHelper
 import com.julcer26.tasave.ui.theme.TasaVeTheme
+import com.julcer26.tasave.ultra.PaymentMethodProfile
+import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import com.julcer26.tasave.widget.TasaVeUltraWidgetProvider
 import com.julcer26.tasave.widget.WidgetCalcMath
 import java.util.Locale
@@ -48,6 +53,7 @@ import java.util.Locale
  * 1) Android text selection toolbar (ACTION_PROCESS_TEXT -> "Tasa VE")
  * 2) Persistent live-rate notification buttons (Copy rates, Quick calc, Copy Pago Movil)
  * 3) Android Quick Settings Tile (Ultra)
+ * 4) Ultra Home Screen Widget Copy button (Android 10+ foreground clipboard support)
  */
 class QuickCalcActivity : ComponentActivity() {
 
@@ -56,7 +62,7 @@ class QuickCalcActivity : ComponentActivity() {
         const val MODE_CALC = "calc"
         const val MODE_COPY_RATES = "copy_rates"
         const val MODE_COPY_PM = "copy_pm"
-        const val ACTION_OPEN_PLANS = "open_plans"
+        const val ACTION_OPEN_PLANS = TasaVeUltraWidgetProvider.LAUNCH_PLANS
 
         fun createIntent(context: Context, mode: String): Intent {
             return Intent(context, QuickCalcActivity::class.java).apply {
@@ -102,13 +108,13 @@ class QuickCalcActivity : ComponentActivity() {
                 if (profiles.isEmpty()) {
                     Toast.makeText(
                         this,
-                        "Guarda primero tu Pago Móvil en la pestaña Cobrar",
+                        "Guarda primero tu Pago Móvil en la pestaña Cobros",
                         Toast.LENGTH_SHORT
                     ).show()
                     openMainApp()
                     finish()
                 } else {
-                    val idx = storage.getUltraWidgetProfileIndex().coerceIn(0, profiles.lastIndex)
+                    val idx = storage.resolveActivePaymentProfileIndex(profiles)
                     val display = WidgetCalcMath.formatProfileForWidget(
                         profiles[idx],
                         idx,
@@ -127,14 +133,23 @@ class QuickCalcActivity : ComponentActivity() {
 
     private fun renderQuickOverlay(intent: Intent?) {
         val storage = LocalStorageHelper(this)
+        val isDark = storage.getTheme() == "DARK"
         val isUltra = storage.isEffectiveUltraActive()
         val rates = storage.getAllCachedRates()
+        val profiles = storage.getPaymentProfiles()
+        val initialProfileIndex = storage.resolveActivePaymentProfileIndex(profiles)
+
         val rawProcessText = if (intent?.action == Intent.ACTION_PROCESS_TEXT) {
             intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
         } else {
             null
         }
         val parsed = QuickAmountParser.parse(rawProcessText)
+        val initialRateKey = if (isUltra && parsed != null) {
+            parsed.suggestedRateKey
+        } else {
+            "USD_BCV"
+        }
 
         AnalyticsTracker.logAction(
             this,
@@ -142,33 +157,52 @@ class QuickCalcActivity : ComponentActivity() {
         )
 
         setContent {
-            TasaVeTheme(darkTheme = true, dynamicColor = false) {
+            TasaVeTheme(darkTheme = isDark, dynamicColor = false) {
                 QuickCalcOverlayContent(
+                    isDark = isDark,
                     rates = rates,
                     isUltra = isUltra,
                     rawSnippet = rawProcessText,
+                    initialRateKey = initialRateKey,
                     initialAmount = parsed?.amount?.let { formatCleanInput(it) } ?: "10",
                     initialInputIsVes = parsed?.inputIsVes ?: false,
-                    hasSavedProfile = storage.getPaymentProfiles().isNotEmpty(),
+                    profiles = profiles,
+                    initialProfileIndex = initialProfileIndex,
+                    onSelectProfileIndex = { idx ->
+                        val chosen = profiles.getOrNull(idx)
+                        if (chosen != null) {
+                            storage.setSelectedPaymentProfileId(chosen.id)
+                            TasaVeRatesWidgetProvider.updateAllWidgets(this)
+                        }
+                    },
                     onCopyResult = { text ->
                         copyToClipboard("Conversión Tasa VE", text)
                         Toast.makeText(this, "Conversión copiada", Toast.LENGTH_SHORT).show()
                         AnalyticsTracker.logAction(this, "quick_copy_result")
                         finish()
                     },
-                    onCopyWithPaymentProfile = { conversionLine ->
-                        val profiles = storage.getPaymentProfiles()
+                    onShareResult = { text ->
+                        AnalyticsTracker.logAction(this, "quick_share_result")
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, text)
+                        }
+                        startActivity(Intent.createChooser(sendIntent, "Compartir conversión Tasa VE"))
+                        finish()
+                    },
+                    onCopyWithPaymentProfile = { conversionLine, chosenIndex ->
                         if (profiles.isEmpty()) {
                             copyToClipboard("Conversión Tasa VE", conversionLine)
                             Toast.makeText(
                                 this,
-                                "Conversión copiada. Añade un Pago Móvil en Cobrar.",
+                                "Conversión copiada. Añade un Pago Móvil en Cobros.",
                                 Toast.LENGTH_SHORT
                             ).show()
                             finish()
                         } else {
-                            val idx = storage.getUltraWidgetProfileIndex()
-                                .coerceIn(0, profiles.lastIndex)
+                            val idx = chosenIndex.coerceIn(0, profiles.lastIndex)
+                            storage.setSelectedPaymentProfileId(profiles[idx].id)
+                            TasaVeRatesWidgetProvider.updateAllWidgets(this)
                             val display = WidgetCalcMath.formatProfileForWidget(
                                 profiles[idx],
                                 idx,
@@ -202,9 +236,9 @@ class QuickCalcActivity : ComponentActivity() {
 
     private fun openMainApp(openPlans: Boolean = false) {
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             if (openPlans) {
-                putExtra(TasaVeUltraWidgetProvider.EXTRA_WIDGET_ACTION, ACTION_OPEN_PLANS)
+                putExtra(TasaVeUltraWidgetProvider.EXTRA_WIDGET_ACTION, TasaVeUltraWidgetProvider.LAUNCH_PLANS)
             }
         }
         startActivity(intent)
@@ -226,33 +260,56 @@ class QuickCalcActivity : ComponentActivity() {
 
 @Composable
 private fun QuickCalcOverlayContent(
+    isDark: Boolean,
     rates: CachedRatesBundle,
     isUltra: Boolean,
     rawSnippet: String?,
+    initialRateKey: String,
     initialAmount: String,
     initialInputIsVes: Boolean,
-    hasSavedProfile: Boolean,
+    profiles: List<PaymentMethodProfile>,
+    initialProfileIndex: Int,
+    onSelectProfileIndex: (Int) -> Unit,
     onCopyResult: (String) -> Unit,
-    onCopyWithPaymentProfile: (String) -> Unit,
+    onShareResult: (String) -> Unit,
+    onCopyWithPaymentProfile: (String, Int) -> Unit,
     onOpenPlans: () -> Unit,
     onOpenApp: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedRateKey by remember { mutableStateOf("USD_BCV") }
+    var selectedRateKey by remember { mutableStateOf(initialRateKey) }
     var amountText by remember { mutableStateOf(initialAmount) }
     var inputIsVes by remember { mutableStateOf(initialInputIsVes) }
+    var useTomorrowBcv by remember { mutableStateOf(false) }
+    var selectedProfileIdx by remember {
+        mutableStateOf(initialProfileIndex.coerceIn(0, (profiles.size - 1).coerceAtLeast(0)))
+    }
     var upgradeHint by remember { mutableStateOf<String?>(null) }
 
-    val cardBg = Color(0xFF0F172A)
-    val surfaceElevated = Color(0xFF1E293B)
+    val cardBg = if (isDark) Color(0xFF0F172A) else Color(0xFFFFFFFF)
+    val surfaceElevated = if (isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9)
+    val innerResultBg = if (isDark) Color(0xFF090D16) else Color(0xFFE2E8F0)
     val emerald = Color(0xFF10B981)
+    val emeraldText = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
     val gold = Color(0xFFF59E0B)
-    val textPrimary = Color(0xFFF8FAFC)
-    val textSecondary = Color(0xFF94A3B8)
+    val textPrimary = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val subtleBorder = if (isDark) Color.White.copy(alpha = 0.10f) else Color(0xFFCBD5E1)
+
+    val hasTomorrowBcv = rates.nextUsdBcv != null && rates.nextUsdBcv.rate > 0.0
+    val effectiveTomorrow = useTomorrowBcv && hasTomorrowBcv && selectedRateKey != "USDT"
 
     val copPerUsd = rates.copPerUsd.takeIf { it > 0.0 } ?: 4320.0
-    val usdRate = rates.usdBcv.rate
-    val eurRate = rates.eurBcv.rate
+    val usdRate = if (effectiveTomorrow) {
+        rates.nextUsdBcv?.rate ?: rates.usdBcv.rate
+    } else {
+        rates.usdBcv.rate
+    }
+    val eurRate = if (effectiveTomorrow) {
+        rates.nextEurBcv?.rate ?: rates.eurBcv.rate
+    } else {
+        rates.eurBcv.rate
+    }
     val usdtRate = rates.usdtParalelo.rate
     val copRateVes = if (usdRate > 0.0) usdRate / copPerUsd else 0.0
 
@@ -263,11 +320,12 @@ private fun QuickCalcOverlayContent(
         else -> usdRate
     }
 
+    val tomorrowSuffix = if (effectiveTomorrow) " Mañana" else ""
     val (rateLabel, unitSymbol) = when (selectedRateKey) {
-        "EUR_BCV" -> "EUR BCV" to "€"
+        "EUR_BCV" -> "EUR BCV$tomorrowSuffix" to "€"
         "USDT" -> "USDT Binance" to "USDT"
-        "COP" -> "COP BCV (${String.format(Locale.US, "%.0f", copPerUsd)}/$)" to "COP"
-        else -> "USD BCV" to "$"
+        "COP" -> "COP BCV$tomorrowSuffix (${String.format(Locale.US, "%.0f", copPerUsd)}/$)" to "COP"
+        else -> "USD BCV$tomorrowSuffix" to "$"
     }
 
     val parsedAmount = amountText.replace(",", ".").toDoubleOrNull() ?: 0.0
@@ -298,6 +356,12 @@ private fun QuickCalcOverlayContent(
         "$left = $resultDisplay ($rateLabel)"
     }
 
+    val activeProfile = profiles.getOrNull(selectedProfileIdx)
+    val activeProfileLabel = activeProfile?.let {
+        val aliasPart = if (it.alias.isNotBlank()) " (${it.alias})" else ""
+        "${it.type.label}$aliasPart"
+    } ?: "Pago Móvil"
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -306,7 +370,7 @@ private fun QuickCalcOverlayContent(
                 indication = null,
                 onClick = onDismiss
             )
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .padding(horizontal = 16.dp, vertical = 20.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -326,7 +390,7 @@ private fun QuickCalcOverlayContent(
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Header
                 Row(
@@ -361,10 +425,35 @@ private fun QuickCalcOverlayContent(
                         ) {
                             Text(
                                 text = if (isUltra) "★ Ultra" else "Gratis",
-                                color = if (isUltra) gold else emerald,
+                                color = if (isUltra) gold else emeraldText,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
+                        }
+
+                        if (hasTomorrowBcv && selectedRateKey != "USDT") {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(
+                                        if (effectiveTomorrow) gold.copy(alpha = 0.18f)
+                                        else surfaceElevated
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (effectiveTomorrow) gold else subtleBorder,
+                                        RoundedCornerShape(50)
+                                    )
+                                    .clickable { useTomorrowBcv = !useTomorrowBcv }
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = if (effectiveTomorrow) "BCV Mañana" else "BCV Hoy",
+                                    color = if (effectiveTomorrow) gold else textSecondary,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
 
@@ -417,10 +506,10 @@ private fun QuickCalcOverlayContent(
                                     }
                                 },
                             shape = RoundedCornerShape(10.dp),
-                            color = if (selected) emerald.copy(alpha = 0.2f) else surfaceElevated,
+                            color = if (selected) emerald.copy(alpha = 0.18f) else surfaceElevated,
                             border = BorderStroke(
                                 1.dp,
-                                if (selected) emerald else Color.White.copy(alpha = 0.08f)
+                                if (selected) emerald else subtleBorder
                             )
                         ) {
                             Row(
@@ -440,7 +529,7 @@ private fun QuickCalcOverlayContent(
                                 Text(
                                     text = label,
                                     color = when {
-                                        selected -> emerald
+                                        selected -> emeraldText
                                         locked -> textSecondary
                                         else -> textPrimary
                                     },
@@ -485,10 +574,10 @@ private fun QuickCalcOverlayContent(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = emerald,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.16f),
+                                unfocusedBorderColor = subtleBorder,
                                 focusedTextColor = textPrimary,
                                 unfocusedTextColor = textPrimary,
-                                focusedLabelColor = emerald,
+                                focusedLabelColor = emeraldText,
                                 unfocusedLabelColor = textSecondary
                             )
                         )
@@ -497,7 +586,7 @@ private fun QuickCalcOverlayContent(
                             onClick = { inputIsVes = !inputIsVes },
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = emerald.copy(alpha = 0.18f),
-                                contentColor = emerald
+                                contentColor = emeraldText
                             )
                         ) {
                             Icon(
@@ -511,7 +600,7 @@ private fun QuickCalcOverlayContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(cardBg.copy(alpha = 0.8f))
+                            .background(innerResultBg)
                             .padding(horizontal = 12.dp, vertical = 10.dp)
                     ) {
                         Text(
@@ -521,7 +610,7 @@ private fun QuickCalcOverlayContent(
                         )
                         Text(
                             text = resultDisplay,
-                            color = emerald,
+                            color = emeraldText,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
@@ -536,6 +625,49 @@ private fun QuickCalcOverlayContent(
                                 color = textSecondary,
                                 fontSize = 11.sp
                             )
+                        }
+                    }
+                }
+
+                // Ultra Payment Profile Selector (when user has 2+ profiles)
+                if (isUltra && profiles.size > 1) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        profiles.forEachIndexed { idx, profile ->
+                            val isSelected = idx == selectedProfileIdx
+                            val chipLabel = if (profile.alias.isNotBlank()) {
+                                "${profile.type.label} • ${profile.alias}"
+                            } else {
+                                profile.displayTitle()
+                            }
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        selectedProfileIdx = idx
+                                        onSelectProfileIndex(idx)
+                                    },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) gold.copy(alpha = 0.16f) else surfaceElevated,
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) gold else subtleBorder
+                                )
+                            ) {
+                                Text(
+                                    text = chipLabel,
+                                    color = if (isSelected) gold else textSecondary,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 }
@@ -578,32 +710,52 @@ private fun QuickCalcOverlayContent(
 
                 // Actions
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { onCopyResult(conversionCopyLine) },
-                        enabled = parsedAmount > 0.0 && activeRate > 0.0,
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = emerald,
-                            contentColor = Color(0xFF042F2E)
-                        )
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Copiar resultado", fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = { onCopyResult(conversionCopyLine) },
+                            enabled = parsedAmount > 0.0 && activeRate > 0.0,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = emerald,
+                                contentColor = Color(0xFF042F2E)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Copiar resultado", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { onShareResult(conversionCopyLine) },
+                            enabled = parsedAmount > 0.0 && activeRate > 0.0,
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, subtleBorder),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Compartir conversión",
+                                tint = textPrimary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
 
                     OutlinedButton(
                         onClick = {
                             if (isUltra) {
-                                onCopyWithPaymentProfile(conversionCopyLine)
+                                onCopyWithPaymentProfile(conversionCopyLine, selectedProfileIdx)
                             } else {
-                                upgradeHint = if (hasSavedProfile) {
-                                    "Copia el monto convertido + tus datos de Pago Móvil en 1 toque con Tasa VE Ultra."
+                                upgradeHint = if (profiles.isNotEmpty()) {
+                                    "Copia el monto convertido + tus datos de $activeProfileLabel en 1 toque con Tasa VE Ultra."
                                 } else {
                                     "Desbloquea el envío rápido de monto + Pago Móvil en 1 toque con Tasa VE Ultra."
                                 }
@@ -614,7 +766,7 @@ private fun QuickCalcOverlayContent(
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(
                             1.dp,
-                            if (isUltra) gold.copy(alpha = 0.65f) else Color.White.copy(alpha = 0.16f)
+                            if (isUltra) gold.copy(alpha = 0.65f) else subtleBorder
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = if (isUltra) gold else textSecondary
@@ -627,9 +779,15 @@ private fun QuickCalcOverlayContent(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = if (isUltra) "Copiar monto + Pago Móvil" else "★ Copiar monto + Pago Móvil (Ultra)",
+                            text = if (isUltra) {
+                                "Copiar monto + $activeProfileLabel"
+                            } else {
+                                "★ Copiar monto + Pago Móvil (Ultra)"
+                            },
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -647,7 +805,7 @@ private fun QuickCalcOverlayContent(
                     )
                     Text(
                         text = "Abrir app →",
-                        color = emerald,
+                        color = emeraldText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.clickable(onClick = onOpenApp)
