@@ -73,7 +73,12 @@ class QuickCalcActivity : ComponentActivity() {
         fun createIntent(context: Context, mode: String): Intent {
             return Intent(context, QuickCalcActivity::class.java).apply {
                 putExtra(EXTRA_OPEN_MODE, mode)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_MULTIPLE_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION
+                )
             }
         }
     }
@@ -81,8 +86,24 @@ class QuickCalcActivity : ComponentActivity() {
     private var clipboardSnippetState by mutableStateOf<String?>(null)
     private var hasCheckedClipboardOnFocus = false
 
+    private fun closeOverlay(preserveCallerTask: Boolean = intent?.action == Intent.ACTION_PROCESS_TEXT) {
+        if (preserveCallerTask) {
+            finish()
+        } else {
+            runCatching {
+                finishAndRemoveTask()
+            }.onFailure {
+                finish()
+            }
+        }
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
         if (handleDirectActionIfNeeded(intent)) {
             return
         }
@@ -146,7 +167,7 @@ class QuickCalcActivity : ComponentActivity() {
                 copyToClipboard("Tasas Tasa VE", summary.copyClipboardText)
                 Toast.makeText(this, "Tasas del día copiadas", Toast.LENGTH_SHORT).show()
                 AnalyticsTracker.logAction(this, "notif_copy_rates")
-                finish()
+                closeOverlay()
                 true
             }
             MODE_COPY_PM -> {
@@ -158,7 +179,7 @@ class QuickCalcActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                     openMainApp()
-                    finish()
+                    closeOverlay()
                 } else {
                     val idx = storage.resolveActivePaymentProfileIndex(profiles)
                     val display = WidgetCalcMath.formatProfileForWidget(
@@ -169,7 +190,7 @@ class QuickCalcActivity : ComponentActivity() {
                     copyToClipboard(display.title, display.copyText)
                     Toast.makeText(this, "${display.title} copiado", Toast.LENGTH_SHORT).show()
                     AnalyticsTracker.logAction(this, "notif_copy_pm")
-                    finish()
+                    closeOverlay()
                 }
                 true
             }
@@ -235,7 +256,7 @@ class QuickCalcActivity : ComponentActivity() {
                             Toast.makeText(this, "Conversión copiada", Toast.LENGTH_SHORT).show()
                         }
                         AnalyticsTracker.logAction(this, "quick_copy_result")
-                        finish()
+                        closeOverlay()
                     },
                     onShareResult = { text ->
                         AnalyticsTracker.logAction(this, "quick_share_result")
@@ -244,7 +265,7 @@ class QuickCalcActivity : ComponentActivity() {
                             putExtra(Intent.EXTRA_TEXT, text)
                         }
                         startActivity(Intent.createChooser(sendIntent, "Compartir conversión Tasa VE"))
-                        finish()
+                        closeOverlay()
                     },
                     onCopyWithPaymentProfile = { conversionLine, chosenIndex ->
                         if (profiles.isEmpty()) {
@@ -254,7 +275,7 @@ class QuickCalcActivity : ComponentActivity() {
                                 "Conversión copiada. Añade un Pago Móvil en Cobros.",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            finish()
+                            closeOverlay()
                         } else {
                             val idx = chosenIndex.coerceIn(0, profiles.lastIndex)
                             storage.setSelectedPaymentProfileId(profiles[idx].id)
@@ -284,19 +305,19 @@ class QuickCalcActivity : ComponentActivity() {
                                 ).show()
                             }
                             AnalyticsTracker.logAction(this, "quick_copy_with_pm")
-                            finish()
+                            closeOverlay()
                         }
                     },
                     onOpenPlans = {
                         AnalyticsTracker.logAction(this, "quick_upgrade_click")
                         openMainApp(openPlans = true)
-                        finish()
+                        closeOverlay()
                     },
                     onOpenApp = {
                         openMainApp(openPlans = false)
-                        finish()
+                        closeOverlay()
                     },
-                    onDismiss = { finish() }
+                    onDismiss = { closeOverlay() }
                 )
             }
         }

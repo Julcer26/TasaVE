@@ -96,6 +96,19 @@ class QuickToolsTest {
         assertNull(QuickAmountParser.parse("   "))
         assertNull(QuickAmountParser.parse("Hola, me pasas el Pago Móvil?"))
         assertNull(QuickAmountParser.parse("0"))
+        assertNull(QuickAmountParser.parse("0134"))
+        assertNull(
+            QuickAmountParser.parse(
+                "*Pago Móvil*\nBanco: 0134 - Banesco\nCI/RIF: V-18730066\nTel: 0414-1533502"
+            )
+        )
+        assertNull(
+            QuickAmountParser.parse("$ 35.00 = Bs. 32,122.13 (USD BCV)")
+        )
+
+        val zeroDecimal = QuickAmountParser.parse("0,50")
+        assertNotNull(zeroDecimal)
+        assertEquals(0.5, zeroDecimal!!.amount, 0.0001)
     }
 
     @Test

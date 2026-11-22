@@ -41,21 +41,43 @@
         <activity
             android:name=".quick.QuickCalcActivity"
             android:exported="true"
+            android:taskAffinity=""
             android:excludeFromRecents="true"
-            android:launchMode="singleTop"
+            android:noHistory="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="Tasa VE"
+            android:icon="@mipmap/ic_launcher"
             android:theme="@style/Theme.TasaVE.QuickOverlay">
-            <intent-filter>
-                <action android:name="android.intent.action.PROCESS_TEXT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <!-- Dedicated alias without excludeFromRecents so Samsung One UI ("Administrar aplicaciones")
+             and WhatsApp on Android 11-16 display "Tasa VE" in the text selection toolbar -->
+        <activity-alias
+            android:name=".quick.ProcessTextAlias"
+            android:targetActivity=".quick.QuickCalcActivity"
+            android:label="Tasa VE"
+            android:icon="@mipmap/ic_launcher"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="tasave.net"
+                    android:pathPrefix="/calc" />
+            </intent-filter>
+        </activity-alias>
 
         <service
             android:name=".quick.TasaVeQuickTileService"
