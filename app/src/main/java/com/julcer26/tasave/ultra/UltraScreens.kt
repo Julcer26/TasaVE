@@ -1704,21 +1704,21 @@ fun MarketTab(
                 )
             }
 
-            // 2) Conversor al seleccionar montos (WhatsApp y otras apps)
+            // 2) Conversor flotante en WhatsApp (burbujas copiadas o texto seleccionado)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
                     .background(surfaceMuted)
                     .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = "Menú al seleccionar un monto",
+                        text = "Conversor flotante en WhatsApp",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = textPrimary
@@ -1738,11 +1738,39 @@ fun MarketTab(
                     }
                 }
                 Text(
-                    text = "Selecciona cualquier cifra en WhatsApp (ej. \"\$35\") → toca \"Tasa VE\". Gratis en USD BCV; en Ultra cambia a EUR/USDT/COP y copia tu Pago Móvil en 1 toque.",
+                    text = "• Si te enviaron una burbuja (ej. \"\$35\"): cópiala en WhatsApp y toca \"Calc. rápida\" en la notificación fija o el botón \"Tasa VE\" en tu Barra Rápida (detecta el monto copiado automáticamente).\n• Si estás escribiendo en \"Mensaje\": escribe 35 → selecciónalo (doble toque) → toca ⋮ → \"Tasa VE\" y reemplázalo en el chat en 1 toque.",
                     fontSize = 11.sp,
                     color = textSecondary,
                     lineHeight = 15.sp
                 )
+                OutlinedButton(
+                    onClick = {
+                        onTrackUtilTool("test_floating_calc")
+                        context.startActivity(
+                            com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
+                                context,
+                                com.julcer26.tasave.quick.QuickCalcActivity.MODE_CALC
+                            )
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, borderCol)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bolt,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = EmeraldLight
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Abrir conversor flotante ahora",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                }
             }
 
             // 3) Botón en Barra Rápida de Android (Quick Settings Tile)

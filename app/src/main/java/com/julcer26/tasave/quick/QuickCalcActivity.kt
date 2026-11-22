@@ -1,5 +1,6 @@
 package com.julcer26.tasave.quick
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -50,10 +51,15 @@ import java.util.Locale
 /**
  * Floating translucent quick-converter and clipboard helper.
  * Launched from:
- * 1) Android text selection toolbar (ACTION_PROCESS_TEXT -> "Tasa VE")
+ * 1) Android text selection toolbar (ACTION_PROCESS_TEXT -> "Tasa VE", supports in-place replacement!)
  * 2) Persistent live-rate notification buttons (Copy rates, Quick calc, Copy Pago Movil)
- * 3) Android Quick Settings Tile (Ultra)
- * 4) Ultra Home Screen Widget Copy button (Android 10+ foreground clipboard support)
+ * 3) Android Quick Settings Tile ("Tasa VE" in Barra Rápida)
+ * 4) Android Share menu (ACTION_SEND text/plain -> "Tasa VE")
+ * 5) Ultra Home Screen Widget Copy button (Android 10+ foreground clipboard support)
+ *
+ * When opened from Notification or Quick Settings Tile without explicit text,
+ * automatically inspects the clipboard on window focus so any amount copied
+ * from a WhatsApp chat bubble (e.g. "$35") is converted immediately.
  */
 class QuickCalcActivity : ComponentActivity() {
 
@@ -72,6 +78,9 @@ class QuickCalcActivity : ComponentActivity() {
         }
     }
 
+    private var clipboardSnippetState by mutableStateOf<String?>(null)
+    private var hasCheckedClipboardOnFocus = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (handleDirectActionIfNeeded(intent)) {
@@ -83,10 +92,47 @@ class QuickCalcActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        hasCheckedClipboardOnFocus = false
+        clipboardSnippetState = null
         if (handleDirectActionIfNeeded(intent)) {
             return
         }
         renderQuickOverlay(intent)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && !hasCheckedClipboardOnFocus) {
+            hasCheckedClipboardOnFocus = true
+            if (extractIncomingText(intent).isNullOrBlank()) {
+                val clipText = readClipboardTextSafely()
+                if (!clipText.isNullOrBlank() && QuickAmountParser.parse(clipText) != null) {
+                    clipboardSnippetState = clipText.trim().take(80)
+                }
+            }
+        }
+    }
+
+    private fun extractIncomingText(intent: Intent?): String? {
+        return when (intent?.action) {
+            Intent.ACTION_PROCESS_TEXT ->
+                intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
+            Intent.ACTION_SEND ->
+                intent.getStringExtra(Intent.EXTRA_TEXT)
+            else -> null
+        }
+    }
+
+    private fun readClipboardTextSafely(): String? {
+        return runCatching {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val clip = clipboard?.primaryClip
+            if (clip != null && clip.itemCount > 0) {
+                clip.getItemAt(0)?.coerceToText(this)?.toString()
+            } else {
+                null
+            }
+        }.getOrNull()
     }
 
     private fun handleDirectActionIfNeeded(intent: Intent?): Boolean {
@@ -139,30 +185,32 @@ class QuickCalcActivity : ComponentActivity() {
         val profiles = storage.getPaymentProfiles()
         val initialProfileIndex = storage.resolveActivePaymentProfileIndex(profiles)
 
-        val rawProcessText = if (intent?.action == Intent.ACTION_PROCESS_TEXT) {
-            intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
-        } else {
-            null
-        }
-        val parsed = QuickAmountParser.parse(rawProcessText)
-        val initialRateKey = if (isUltra && parsed != null) {
-            parsed.suggestedRateKey
-        } else {
-            "USD_BCV"
-        }
+        val explicitText = extractIncomingText(intent)
+        val isEditableProcessText = intent?.action == Intent.ACTION_PROCESS_TEXT &&
+            !intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
 
         AnalyticsTracker.logAction(
             this,
-            if (rawProcessText != null) "quick_process_text_opened" else "quick_calc_opened"
+            if (explicitText != null) "quick_process_text_opened" else "quick_calc_opened"
         )
 
         setContent {
+            val activeSnippet = explicitText ?: clipboardSnippetState
+            val parsed = remember(activeSnippet) { QuickAmountParser.parse(activeSnippet) }
+            val initialRateKey = if (isUltra && parsed != null) {
+                parsed.suggestedRateKey
+            } else {
+                "USD_BCV"
+            }
+
             TasaVeTheme(darkTheme = isDark, dynamicColor = false) {
                 QuickCalcOverlayContent(
                     isDark = isDark,
                     rates = rates,
                     isUltra = isUltra,
-                    rawSnippet = rawProcessText,
+                    rawSnippet = activeSnippet,
+                    isFromClipboard = explicitText == null && clipboardSnippetState != null,
+                    isEditableTextTarget = isEditableProcessText,
                     initialRateKey = initialRateKey,
                     initialAmount = parsed?.amount?.let { formatCleanInput(it) } ?: "10",
                     initialInputIsVes = parsed?.inputIsVes ?: false,
@@ -177,7 +225,15 @@ class QuickCalcActivity : ComponentActivity() {
                     },
                     onCopyResult = { text ->
                         copyToClipboard("Conversión Tasa VE", text)
-                        Toast.makeText(this, "Conversión copiada", Toast.LENGTH_SHORT).show()
+                        if (isEditableProcessText) {
+                            setResult(
+                                Activity.RESULT_OK,
+                                Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, text)
+                            )
+                            Toast.makeText(this, "Insertado en el chat y copiado", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Conversión copiada", Toast.LENGTH_SHORT).show()
+                        }
                         AnalyticsTracker.logAction(this, "quick_copy_result")
                         finish()
                     },
@@ -210,11 +266,23 @@ class QuickCalcActivity : ComponentActivity() {
                             )
                             val combined = "$conversionLine\n\n${display.copyText}"
                             copyToClipboard("Cobro Tasa VE", combined)
-                            Toast.makeText(
-                                this,
-                                "Monto + ${display.title} copiado",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            if (isEditableProcessText) {
+                                setResult(
+                                    Activity.RESULT_OK,
+                                    Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, combined)
+                                )
+                                Toast.makeText(
+                                    this,
+                                    "Insertado y copiado con ${display.title}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    this,
+                                    "Monto + ${display.title} copiado",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                             AnalyticsTracker.logAction(this, "quick_copy_with_pm")
                             finish()
                         }
@@ -264,6 +332,8 @@ private fun QuickCalcOverlayContent(
     rates: CachedRatesBundle,
     isUltra: Boolean,
     rawSnippet: String?,
+    isFromClipboard: Boolean,
+    isEditableTextTarget: Boolean,
     initialRateKey: String,
     initialAmount: String,
     initialInputIsVes: Boolean,
@@ -277,9 +347,9 @@ private fun QuickCalcOverlayContent(
     onOpenApp: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedRateKey by remember { mutableStateOf(initialRateKey) }
-    var amountText by remember { mutableStateOf(initialAmount) }
-    var inputIsVes by remember { mutableStateOf(initialInputIsVes) }
+    var selectedRateKey by remember(initialRateKey) { mutableStateOf(initialRateKey) }
+    var amountText by remember(initialAmount) { mutableStateOf(initialAmount) }
+    var inputIsVes by remember(initialInputIsVes) { mutableStateOf(initialInputIsVes) }
     var useTomorrowBcv by remember { mutableStateOf(false) }
     var selectedProfileIdx by remember {
         mutableStateOf(initialProfileIndex.coerceIn(0, (profiles.size - 1).coerceAtLeast(0)))
@@ -470,10 +540,16 @@ private fun QuickCalcOverlayContent(
                 }
 
                 if (!rawSnippet.isNullOrBlank()) {
+                    val sourceLabel = if (isFromClipboard) {
+                        "Detectado del portapapeles"
+                    } else {
+                        "Texto seleccionado"
+                    }
                     Text(
-                        text = "Texto seleccionado: \"${rawSnippet.trim()}\"",
-                        color = textSecondary,
+                        text = "$sourceLabel: \"${rawSnippet.trim()}\"",
+                        color = if (isFromClipboard) emeraldText else textSecondary,
                         fontSize = 11.sp,
+                        fontWeight = if (isFromClipboard) FontWeight.SemiBold else FontWeight.Normal,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -730,7 +806,11 @@ private fun QuickCalcOverlayContent(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Copiar resultado", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text(
+                                text = if (isEditableTextTarget) "Insertar y copiar" else "Copiar resultado",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
                         }
 
                         OutlinedButton(
@@ -780,7 +860,11 @@ private fun QuickCalcOverlayContent(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = if (isUltra) {
-                                "Copiar monto + $activeProfileLabel"
+                                if (isEditableTextTarget) {
+                                    "Insertar monto + $activeProfileLabel"
+                                } else {
+                                    "Copiar monto + $activeProfileLabel"
+                                }
                             } else {
                                 "★ Copiar monto + Pago Móvil (Ultra)"
                             },
@@ -799,7 +883,7 @@ private fun QuickCalcOverlayContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Solo procesa el texto que seleccionas",
+                        text = "Solo procesa el texto que seleccionas o copias",
                         color = textSecondary,
                         fontSize = 10.sp
                     )
