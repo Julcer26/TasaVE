@@ -767,8 +767,27 @@ private fun CartItemEditorDialog(
 }
 
 // =========================================================================
-// TAB 3: BRECHA CAMBIARIA Y TENDENCIA (GRÁFICOS POR MONEDA, ALERTAS Y WIDGET)
 // =========================================================================
+// TAB 3: ÚTILES (HERRAMIENTAS DEL DÍA A DÍA, ALERTAS Y WIDGETS)
+// =========================================================================
+private enum class UtilTool(val title: String, val subtitle: String, val analyticsKey: String) {
+    COMPARE("¿Con qué pago?", "USDT vs Efectivo/$", "compare_payment"),
+    INSTALLMENTS("Inicial y cuotas", "Cashea, Krece y apartados", "installments"),
+    FEES("Comisiones", "PayPal, Zinli, Wally", "commissions"),
+    SPLIT("Dividir cuenta", "Entre amigos o grupo", "split_bill")
+}
+
+private fun formatDec2(value: Double): String = String.format(Locale.US, "%.2f", value)
+
+private fun sharePlainText(context: Context, title: String, body: String) {
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, body)
+    }
+    context.startActivity(Intent.createChooser(sendIntent, title))
+}
+
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun MarketTab(
     isDark: Boolean,
@@ -779,6 +798,9 @@ fun MarketTab(
     snapshots: List<RateSnapshot>,
     isHistoryLoading: Boolean,
     alertSettings: AlertSettings,
+    savedFeePercent: Double = 3.5,
+    onSaveFavoriteFee: (Double) -> Unit = {},
+    onTrackUtilTool: (String) -> Unit = {},
     onRefreshHistory: () -> Unit,
     onUpdateAlerts: (AlertSettings) -> Unit,
     onTestNotification: () -> Boolean,
@@ -789,35 +811,13 @@ fun MarketTab(
     val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
     val cardBg = if (isDark) Color(0xFF141418) else Color.White
     val borderCol = if (isDark) Color(0x1F94A3B8) else Color(0x19475569)
+    val surfaceMuted = if (isDark) Color(0xFF1B1C22) else Color(0xFFF1F5F9)
 
     val usdRate = uiState.usdBcv?.rate ?: 0.0
-    val eurRate = uiState.eurBcv?.rate ?: 0.0
     val usdtRate = uiState.usdtParalelo?.rate ?: 0.0
-
     val spreadUsdtVsBcv = UltraMath.calculateSpreadPercent(usdtRate, usdRate)
-    val diffBsUsdtBcv = usdtRate - usdRate
-    val spreadEurVsUsd = UltraMath.calculateSpreadPercent(eurRate, usdRate)
 
-    var selectedCurrency by remember { mutableStateOf(TrendCurrency.USD_BCV) }
-    var selectedRange by remember { mutableStateOf(TrendRange.M1) }
-    var touchedIndex by remember { mutableStateOf<Int?>(null) }
-
-    val filteredPoints = remember(snapshots, selectedRange, usdRate, eurRate, usdtRate) {
-        val base = UltraMath.filterSnapshotsForRange(snapshots, selectedRange)
-        if (base.size >= 2) {
-            base
-        } else {
-            val now = System.currentTimeMillis()
-            listOf(
-                RateSnapshot(now - 3600_000L, "Prev.", usdRate, eurRate, usdtRate),
-                RateSnapshot(now, "Hoy", usdRate, eurRate, usdtRate)
-            )
-        }
-    }
-
-    LaunchedEffect(selectedCurrency, selectedRange) {
-        touchedIndex = null
-    }
+    var selectedTool by remember { mutableStateOf<UtilTool?>(null) }
 
     val notifPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -839,443 +839,788 @@ fun MarketTab(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         TopBannerAd(isDark = isDark, isUltraUser = isUltraUser, isAdFreePassActive = isAdFreePassActive)
-        // 1. Brecha Cambiaria Card
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+
+        if (selectedTool != null) {
+            // Cabecera ← Volver a Útiles
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(cardBg)
+                    .border(1.dp, borderCol, RoundedCornerShape(14.dp))
+                    .clickable { selectedTool = null }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Volver a Útiles",
+                    tint = EmeraldLight,
+                    modifier = Modifier.size(18.dp)
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = selectedTool!!.title,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    Text(
+                        text = "Volver a todas las herramientas",
+                        fontSize = 10.5.sp,
+                        color = textSecondary
+                    )
+                }
+            }
+
+            when (selectedTool!!) {
+                UtilTool.COMPARE -> {
+                    var priceText by remember { mutableStateOf("100") }
+                    var discountText by remember { mutableStateOf("0") }
+                    val price = priceText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val discount = discountText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val res = UltraMath.calculatePaymentComparison(
+                        priceUsd = price,
+                        bcvRate = usdRate,
+                        usdtRate = usdtRate,
+                        cashDiscountPercent = discount
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(cardBg)
+                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Compara en segundos si te rinde más cambiar USDT a bolívares (pagando a BCV) o pagar directo en efectivo \$ / Zelle.",
+                            fontSize = 11.5.sp,
+                            color = textSecondary
+                        )
+
+                        OutlinedTextField(
+                            value = priceText,
+                            onValueChange = { if (it.length <= 10) priceText = it },
+                            label = { Text("Monto a pagar ($)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "¿Te ofrecen descuento en efectivo / Zelle?",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textSecondary
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                listOf("0", "5", "10", "15").forEach { pct ->
+                                    val active = discountText == pct
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                            .border(
+                                                1.dp,
+                                                if (active) Emerald else borderCol,
+                                                RoundedCornerShape(10.dp)
+                                            )
+                                            .clickable { discountText = pct }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = if (pct == "0") "Sin desc." else "-$pct%",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (active) EmeraldLight else textPrimary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (res.recommendUsdt) Color(0x1810B981) else surfaceMuted)
+                                    .border(1.5.dp, if (res.recommendUsdt) Emerald else borderCol, RoundedCornerShape(16.dp))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "1. Cambiando USDT",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (res.recommendUsdt) EmeraldLight else textPrimary
+                                )
+                                Text(
+                                    text = "${formatDec2(res.usdtNeededToCoverBs)} USDT",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = textPrimary
+                                )
+                                Text(
+                                    text = "Para cubrir Bs. ${formatDec2(res.bsAmount)}",
+                                    fontSize = 10.5.sp,
+                                    color = textSecondary
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (!res.recommendUsdt) Color(0x1860A5FA) else surfaceMuted)
+                                    .border(1.5.dp, if (!res.recommendUsdt) BlueEuro else borderCol, RoundedCornerShape(16.dp))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "2. Efectivo \$ / Zelle",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (!res.recommendUsdt) BlueEuro else textPrimary
+                                )
+                                Text(
+                                    text = "$${formatDec2(res.cashOrZelleEffectiveUsd)}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = textPrimary
+                                )
+                                Text(
+                                    text = if (discount > 0.0) "Con ${discount.toInt()}% de desc." else "Pago directo en divisas",
+                                    fontSize = 10.5.sp,
+                                    color = textSecondary
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(if (res.recommendUsdt) Color(0x2210B981) else Color(0x2260A5FA))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = if (res.recommendUsdt) EmeraldLight else BlueEuro,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = if (res.recommendUsdt) {
+                                    "Conviene cambiar USDT: ahorras $${formatDec2(res.usdtSavingsVsCashUsd)} frente al pago directo."
+                                } else {
+                                    "Conviene pagar en Efectivo \$ / Zelle: ahorras $${formatDec2(res.cashSavingsVsUsdtUsd)} frente a cambiar USDT."
+                                },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textPrimary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val rec = if (res.recommendUsdt) {
+                                    "Conviene cambiar ${formatDec2(res.usdtNeededToCoverBs)} USDT (ahorro $${formatDec2(res.usdtSavingsVsCashUsd)})"
+                                } else {
+                                    "Conviene pagar $${formatDec2(res.cashOrZelleEffectiveUsd)} directo (ahorro $${formatDec2(res.cashSavingsVsUsdtUsd)})"
+                                }
+                                sharePlainText(
+                                    context,
+                                    "Compartir comparación",
+                                    "¿Con qué pago $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}\n👉 $rec\nCalculado con Tasa VE"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Compartir resultado", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                UtilTool.INSTALLMENTS -> {
+                    var totalText by remember { mutableStateOf("120") }
+                    var initPct by remember { mutableIntStateOf(40) }
+                    var cuotasCount by remember { mutableIntStateOf(3) }
+
+                    val total = totalText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val plan = UltraMath.calculateInstallmentPlan(
+                        totalUsd = total,
+                        initialPercent = initPct,
+                        installmentCount = cuotasCount,
+                        bcvRate = usdRate,
+                        usdtRate = usdtRate
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(cardBg)
+                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Calcula inicial hoy y cuotas futuras para Cashea, Krece o compras por apartado.",
+                            fontSize = 11.5.sp,
+                            color = textSecondary
+                        )
+
+                        OutlinedTextField(
+                            value = totalText,
+                            onValueChange = { if (it.length <= 10) totalText = it },
+                            label = { Text("Precio total de la compra ($)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text("Porcentaje de inicial", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondary)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(20, 40, 50, 60).forEach { pct ->
+                                val active = initPct == pct
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                        .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(10.dp))
+                                        .clickable { initPct = pct }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("$pct%", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
+                                }
+                            }
+                        }
+
+                        Text("Cantidad de cuotas", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondary)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(3, 6, 9, 12).forEach { c ->
+                                val active = cuotasCount == c
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (active) BlueEuro.copy(alpha = 0.2f) else surfaceMuted)
+                                        .border(1.dp, if (active) BlueEuro else borderCol, RoundedCornerShape(10.dp))
+                                        .clickable { cuotasCount = c }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("$c cuotas", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (active) BlueEuro else textPrimary)
+                                }
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0x1810B981))
+                                .border(1.dp, Color(0x4D10B981), RoundedCornerShape(16.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("INICIAL A PAGAR HOY (${plan.initialPercent}%)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = EmeraldLight)
+                            Text("$${formatDec2(plan.initialUsd)}  •  Bs. ${formatDec2(plan.initialBs)}", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = textPrimary)
+                            Text("Equivalente aprox.: ${formatDec2(plan.initialUsdt)} USDT", fontSize = 11.sp, color = textSecondary)
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(surfaceMuted)
+                                .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("CADA CUOTA (${plan.installmentCount} CUOTAS)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BlueEuro)
+                            Text("$${formatDec2(plan.installmentUsd)} c/u  •  ≈ Bs. ${formatDec2(plan.installmentBs)}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                            Text(
+                                text = "Restante financiado: $${formatDec2(plan.remainingUsd)}. Las cuotas futuras en Bs. se ajustan a la tasa BCV de cada fecha de pago.",
+                                fontSize = 10.5.sp,
+                                color = textSecondary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                sharePlainText(
+                                    context,
+                                    "Compartir plan de cuotas",
+                                    "Plan Inicial y Cuotas (Tasa VE)\n• Total: $${formatDec2(plan.totalUsd)}\n• Inicial (${plan.initialPercent}%): $${formatDec2(plan.initialUsd)} / Bs. ${formatDec2(plan.initialBs)}\n• ${plan.installmentCount} cuotas de $${formatDec2(plan.installmentUsd)} (≈ Bs. ${formatDec2(plan.installmentBs)} hoy)"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Compartir desglose", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                UtilTool.FEES -> {
+                    var amountText by remember { mutableStateOf("50") }
+                    var selectedPlatform by remember { mutableStateOf(FeePlatform.PAYPAL) }
+                    var customPctText by remember { mutableStateOf(formatDec2(savedFeePercent)) }
+                    var grossMode by remember { mutableStateOf(false) }
+
+                    val amount = amountText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val activePct = if (selectedPlatform == FeePlatform.CUSTOM) {
+                        customPctText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    } else {
+                        selectedPlatform.defaultPercent
+                    }
+                    val feeRes = UltraMath.calculateNetOrGross(
+                        amountUsd = amount,
+                        percentFee = activePct,
+                        fixedFeeUsd = selectedPlatform.fixedFeeUsd,
+                        calculateGrossToReceive = grossMode,
+                        usdtRate = usdtRate
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(cardBg)
+                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(surfaceMuted)
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            listOf(false to "Me envían \$", true to "Quiero recibir \$").forEach { (isGross, label) ->
+                                val active = grossMode == isGross
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(9.dp))
+                                        .background(if (active) Emerald else Color.Transparent)
+                                        .clickable { grossMode = isGross }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (active) Color.Black else textPrimary
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = amountText,
+                            onValueChange = { if (it.length <= 10) amountText = it },
+                            label = {
+                                Text(if (grossMode) "Monto neto que quieres recibir ($)" else "Monto que te envían ($)")
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text("Plataforma o pasarela", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = textSecondary)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            FeePlatform.entries.forEach { platform ->
+                                val active = selectedPlatform == platform
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (active) AmberUltra.copy(alpha = 0.2f) else surfaceMuted)
+                                        .border(1.dp, if (active) AmberUltra else borderCol, RoundedCornerShape(10.dp))
+                                        .clickable { selectedPlatform = platform }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = platform.shortName,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (active) AmberUltra else textPrimary
+                                    )
+                                }
+                            }
+                        }
+
+                        if (selectedPlatform == FeePlatform.CUSTOM) {
+                            OutlinedTextField(
+                                value = customPctText,
+                                onValueChange = { if (it.length <= 6) customPctText = it },
+                                label = { Text("Comisión personalizada (%)") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(onClick = { customPctText = formatDec2(savedFeePercent) }) {
+                                    Text(
+                                        text = "Usar favorita (${formatDec2(savedFeePercent)}%)",
+                                        fontSize = 11.sp,
+                                        color = EmeraldLight
+                                    )
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        if (isUltraUser) {
+                                            val pct = customPctText.replace(",", ".").toDoubleOrNull()
+                                            if (pct != null && pct in 0.0..50.0) {
+                                                onSaveFavoriteFee(pct)
+                                                Toast.makeText(context, "Ruta favorita guardada (${formatDec2(pct)}%)", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            onOpenPlans()
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, AmberUltra.copy(alpha = 0.6f))
+                                ) {
+                                    Icon(
+                                        imageVector = if (isUltraUser) Icons.Default.Star else Icons.Default.Lock,
+                                        contentDescription = null,
+                                        tint = AmberUltra,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (isUltraUser) "Guardar favorita" else "Guardar (Ultra)",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AmberUltra
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "Tarifa estimada: ${selectedPlatform.label}",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(surfaceMuted)
+                                .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(if (grossMode) "Debes pedir (bruto):" else "Monto enviado:", fontSize = 12.sp, color = textSecondary)
+                                Text("$${formatDec2(feeRes.grossUsd)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                            }
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Comisión estimada (${formatDec2(feeRes.effectiveFeePercent)}%):", fontSize = 12.sp, color = textSecondary)
+                                Text("-$${formatDec2(feeRes.feeUsd)}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = AmberUltra)
+                            }
+                            HorizontalDivider(color = borderCol)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Recibes neto:", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = EmeraldLight)
+                                Text("$${formatDec2(feeRes.netUsd)}", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = EmeraldLight)
+                            }
+                            Text(
+                                text = "Equivale aprox. a Bs. ${formatDec2(feeRes.netVesAtUsdt)} (ref. USDT Binance)",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                sharePlainText(
+                                    context,
+                                    "Compartir cálculo de comisión",
+                                    "Cálculo ${selectedPlatform.shortName} (Tasa VE)\n• Bruto a enviar: $${formatDec2(feeRes.grossUsd)}\n• Comisión: $${formatDec2(feeRes.feeUsd)}\n• Neto a recibir: $${formatDec2(feeRes.netUsd)} (≈ Bs. ${formatDec2(feeRes.netVesAtUsdt)})"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Enviar desglose", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                UtilTool.SPLIT -> {
+                    var totalBillText by remember { mutableStateOf("60") }
+                    var people by remember { mutableIntStateOf(4) }
+                    var useUsdtRate by remember { mutableStateOf(false) }
+
+                    val billTotal = totalBillText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val chosenRate = if (useUsdtRate && usdtRate > 0.0) usdtRate else usdRate
+                    val splitRes = UltraMath.calculateSplitBill(
+                        totalUsd = billTotal,
+                        peopleCount = people,
+                        rate = chosenRate
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(cardBg)
+                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = totalBillText,
+                            onValueChange = { if (it.length <= 10) totalBillText = it },
+                            label = { Text("Cuenta total ($)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Personas ($people)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                OutlinedIconButton(onClick = { if (people > 2) people-- }, modifier = Modifier.size(34.dp)) {
+                                    Text("-", fontWeight = FontWeight.Bold, color = textPrimary)
+                                }
+                                OutlinedIconButton(onClick = { if (people < 30) people++ }, modifier = Modifier.size(34.dp)) {
+                                    Text("+", fontWeight = FontWeight.Bold, color = textPrimary)
+                                }
+                            }
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(2, 3, 4, 6, 8).forEach { cnt ->
+                                val active = people == cnt
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                        .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(10.dp))
+                                        .clickable { people = cnt }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("$cnt", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
+                                }
+                            }
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(false to "Tasa BCV", true to "USDT Binance").forEach { (isUsdt, lbl) ->
+                                val active = useUsdtRate == isUsdt
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                        .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(10.dp))
+                                        .clickable { useUsdtRate = isUsdt }
+                                        .padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(lbl, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
+                                }
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0x1810B981))
+                                .border(1.dp, Color(0x4D10B981), RoundedCornerShape(16.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("CADA PERSONA PAGA (${splitRes.peopleCount} PERS.)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = EmeraldLight)
+                            Text(
+                                text = "$${formatDec2(splitRes.perPersonUsd)}  •  Bs. ${formatDec2(splitRes.perPersonBs)}",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = textPrimary
+                            )
+                            Text(
+                                text = "Cuenta total: $${formatDec2(splitRes.totalUsd)} (Bs. ${formatDec2(splitRes.totalBs)})",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val rateLbl = if (useUsdtRate) "USDT Binance" else "BCV"
+                                sharePlainText(
+                                    context,
+                                    "Compartir cuenta dividida",
+                                    "Cuenta dividida entre ${splitRes.peopleCount} personas ($rateLbl):\n• Total: $${formatDec2(splitRes.totalUsd)} / Bs. ${formatDec2(splitRes.totalBs)}\n👉 Cada uno paga: $${formatDec2(splitRes.perPersonUsd)} o Bs. ${formatDec2(splitRes.perPersonBs)}\nCalculado con Tasa VE"
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Mandar al grupo", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        } else {
+            // Resumen compacto de referencia BCV vs USDT
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(cardBg)
+                    .border(1.dp, borderCol, RoundedCornerShape(14.dp))
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "BRECHA CAMBIARIA EN VIVO",
+                    text = "BCV Bs. ${formatDec2(usdRate)}  •  USDT Bs. ${formatDec2(usdtRate)}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textSecondary
+                )
+                Text(
+                    text = "Dif. ${if (spreadUsdtVsBcv >= 0) "+" else ""}${formatDec2(spreadUsdtVsBcv)}%",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AmberUltra
+                )
+            }
+
+            // Hub de 4 herramientas del día a día
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "HERRAMIENTAS DEL DÍA A DÍA",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AmberUltra,
+                    color = EmeraldLight,
                     letterSpacing = 0.6.sp
                 )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (spreadUsdtVsBcv > 15.0) Color(0x26EF4444) else Color(0x2610B981))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = "${String.format(Locale.US, "%.2f", spreadUsdtVsBcv)}% USDT vs BCV",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (spreadUsdtVsBcv > 15.0) Color(0xFFF87171) else EmeraldLight
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC))
-                        .padding(12.dp)
-                ) {
-                    Text("Diferencia USDT / BCV", fontSize = 10.sp, color = textSecondary)
-                    Text(
-                        text = "+Bs. ${String.format(Locale.US, "%.2f", diffBsUsdtBcv)}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = textPrimary
-                    )
-                    Text("Por cada $1 USD", fontSize = 9.5.sp, color = textSecondary)
-                }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC))
-                        .padding(12.dp)
-                ) {
-                    Text("Relación EUR / USD BCV", fontSize = 10.sp, color = textSecondary)
-                    Text(
-                        text = "+${String.format(Locale.US, "%.2f", spreadEurVsUsd)}%",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = BlueEuro
-                    )
-                    Text("Bs. ${String.format(Locale.US, "%.2f", eurRate - usdRate)} dif.", fontSize = 9.5.sp, color = textSecondary)
-                }
-            }
-        }
-
-        // 2. Per-Currency Historical Trend Chart with 1D / 1S / 15D / 1M / 3M / Todo
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "TENDENCIA POR MONEDA",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldLight,
-                        letterSpacing = 0.6.sp
-                    )
-                    Text(
-                        text = "Toca o desliza sobre el gráfico para ver el valor",
-                        fontSize = 10.sp,
-                        color = textSecondary
-                    )
-                }
-                IconButton(
-                    onClick = onRefreshHistory,
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    if (isHistoryLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = EmeraldLight
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Actualizar histórico",
-                            tint = textSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-
-            // Currency Selector Chips
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                TrendCurrency.entries.forEach { currency ->
-                    val chipColor = when (currency) {
-                        TrendCurrency.USD_BCV -> EmeraldLight
-                        TrendCurrency.EUR_BCV -> BlueEuro
-                        TrendCurrency.USDT -> AmberUltra
-                        TrendCurrency.ALL -> textPrimary
-                    }
-                    FilterChip(
-                        selected = selectedCurrency == currency,
-                        onClick = { selectedCurrency = currency },
-                        shape = RoundedCornerShape(14.dp),
-                        label = { Text(currency.label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = chipColor.copy(alpha = 0.2f),
-                            selectedLabelColor = chipColor
-                        )
-                    )
-                }
-            }
-
-            // Timeframe Selector Chips (1D, 1S, 15D, 1M, 3M, Todo)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                TrendRange.entries.forEach { range ->
-                    FilterChip(
-                        selected = selectedRange == range,
-                        onClick = { selectedRange = range },
-                        shape = RoundedCornerShape(14.dp),
-                        label = { Text(range.label, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0x2610B981),
-                            selectedLabelColor = EmeraldLight
-                        )
-                    )
-                }
-            }
-
-            // Stats for selected series / point
-            val inspectedPoint = touchedIndex?.let { idx -> filteredPoints.getOrNull(idx) }
-            val activeSingleSeries = when (selectedCurrency) {
-                TrendCurrency.USD_BCV -> filteredPoints.map { it.usdBcv }
-                TrendCurrency.EUR_BCV -> filteredPoints.map { it.eurBcv }
-                TrendCurrency.USDT -> filteredPoints.map { it.usdt }
-                TrendCurrency.ALL -> null
-            }
-
-            if (activeSingleSeries != null) {
-                val valid = activeSingleSeries.filter { it > 0.0 }
-                val firstVal = valid.firstOrNull() ?: 0.0
-                val lastVal = valid.lastOrNull() ?: 0.0
-                val minVal = valid.minOrNull() ?: 0.0
-                val maxVal = valid.maxOrNull() ?: 0.0
-                val deltaBs = lastVal - firstVal
-                val deltaPct = if (firstVal > 0.0) (deltaBs / firstVal) * 100.0 else 0.0
-                val displayVal = inspectedPoint?.let {
-                    when (selectedCurrency) {
-                        TrendCurrency.USD_BCV -> it.usdBcv
-                        TrendCurrency.EUR_BCV -> it.eurBcv
-                        TrendCurrency.USDT -> it.usdt
-                        TrendCurrency.ALL -> lastVal
-                    }
-                } ?: lastVal
-                val displayLabel = inspectedPoint?.label ?: "Actual"
-                val rateFmt = if (selectedCurrency == TrendCurrency.USDT) "%.2f" else "%.4f"
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(if (isDark) Color(0xFF1B1B21) else Color(0xFFF8FAFC))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(displayLabel, fontSize = 10.sp, color = textSecondary)
-                        Text(
-                            text = "Bs. ${String.format(Locale.US, rateFmt, displayVal)}",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = textPrimary
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        val deltaColor = if (deltaBs >= 0) EmeraldLight else Color(0xFFF87171)
-                        val sign = if (deltaBs >= 0) "+" else ""
-                        Text(
-                            text = "$sign${String.format(Locale.US, "%.2f", deltaBs)} Bs. ($sign${String.format(Locale.US, "%.2f", deltaPct)}%)",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = deltaColor
-                        )
-                        Text(
-                            text = "Mín ${String.format(Locale.US, rateFmt, minVal)} • Máx ${String.format(Locale.US, rateFmt, maxVal)}",
-                            fontSize = 9.5.sp,
-                            color = textSecondary
-                        )
-                    }
-                }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val p = inspectedPoint ?: filteredPoints.lastOrNull()
-                    Text("● USD: ${String.format(Locale.US, "%.4f", p?.usdBcv ?: usdRate)}", fontSize = 10.sp, color = EmeraldLight, fontWeight = FontWeight.Bold)
-                    Text("● EUR: ${String.format(Locale.US, "%.4f", p?.eurBcv ?: eurRate)}", fontSize = 10.sp, color = BlueEuro, fontWeight = FontWeight.Bold)
-                    Text("● USDT: ${String.format(Locale.US, "%.2f", p?.usdt ?: usdtRate)}", fontSize = 10.sp, color = AmberUltra, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            // Interactive Line Chart Box
-            val singleLineColor = when (selectedCurrency) {
-                TrendCurrency.USD_BCV -> EmeraldLight
-                TrendCurrency.EUR_BCV -> BlueEuro
-                TrendCurrency.USDT -> AmberUltra
-                TrendCurrency.ALL -> EmeraldLight
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(if (isDark) Color(0xFF0E0E12) else Color(0xFFF1F5F9))
-                    .pointerInput(filteredPoints) {
-                        detectTapGestures { offset ->
-                            if (filteredPoints.size >= 2 && size.width > 0) {
-                                val ratio = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
-                                touchedIndex = (ratio * (filteredPoints.size - 1)).roundToInt()
-                                    .coerceIn(0, filteredPoints.lastIndex)
+                UtilTool.entries.chunked(2).forEach { rowTools ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        rowTools.forEach { tool ->
+                            val icon = when (tool) {
+                                UtilTool.COMPARE -> Icons.Default.CompareArrows
+                                UtilTool.INSTALLMENTS -> Icons.Default.CalendarViewMonth
+                                UtilTool.FEES -> Icons.Default.Percent
+                                UtilTool.SPLIT -> Icons.Default.Group
                             }
-                        }
-                    }
-                    .pointerInput(filteredPoints) {
-                        detectHorizontalDragGestures(
-                            onDragEnd = { },
-                            onHorizontalDrag = { change, _ ->
-                                change.consume()
-                                if (filteredPoints.size >= 2 && size.width > 0) {
-                                    val ratio = (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
-                                    touchedIndex = (ratio * (filteredPoints.size - 1)).roundToInt()
-                                        .coerceIn(0, filteredPoints.lastIndex)
-                                }
+                            val accent = when (tool) {
+                                UtilTool.COMPARE -> EmeraldLight
+                                UtilTool.INSTALLMENTS -> BlueEuro
+                                UtilTool.FEES -> AmberUltra
+                                UtilTool.SPLIT -> PurpleZelle
                             }
-                        )
-                    }
-                    .padding(14.dp)
-                    .drawWithCache {
-                        val allVals = when (selectedCurrency) {
-                            TrendCurrency.USD_BCV -> filteredPoints.map { it.usdBcv }
-                            TrendCurrency.EUR_BCV -> filteredPoints.map { it.eurBcv }
-                            TrendCurrency.USDT -> filteredPoints.map { it.usdt }
-                            TrendCurrency.ALL -> filteredPoints.flatMap { listOf(it.usdBcv, it.eurBcv, it.usdt) }
-                        }.filter { it > 0.0 }
-
-                        val rawMin = allVals.minOrNull() ?: 0.0
-                        val rawMax = allVals.maxOrNull() ?: 1.0
-                        val pad = ((rawMax - rawMin) * 0.12).coerceAtLeast(rawMax * 0.004).coerceAtLeast(0.5)
-                        val minVal = rawMin - pad
-                        val maxVal = rawMax + pad
-                        val range = (maxVal - minVal).coerceAtLeast(0.01)
-                        val count = filteredPoints.size.coerceAtLeast(2)
-
-                        fun yFor(value: Double): Float {
-                            return size.height - (((value - minVal) / range).toFloat() * size.height)
-                        }
-
-                        val bcvPath = Path()
-                        val eurPath = Path()
-                        val usdtPath = Path()
-                        val singleFillPath = Path()
-
-                        filteredPoints.forEachIndexed { index, snap ->
-                            val x = (index.toFloat() / (count - 1).toFloat()) * size.width
-                            val yBcv = yFor(snap.usdBcv)
-                            val yEur = yFor(snap.eurBcv)
-                            val yUsdt = yFor(snap.usdt)
-
-                            if (index == 0) {
-                                bcvPath.moveTo(x, yBcv)
-                                eurPath.moveTo(x, yEur)
-                                usdtPath.moveTo(x, yUsdt)
-                                val activeY = when (selectedCurrency) {
-                                    TrendCurrency.USD_BCV -> yBcv
-                                    TrendCurrency.EUR_BCV -> yEur
-                                    TrendCurrency.USDT -> yUsdt
-                                    TrendCurrency.ALL -> yBcv
-                                }
-                                singleFillPath.moveTo(x, size.height)
-                                singleFillPath.lineTo(x, activeY)
-                            } else {
-                                bcvPath.lineTo(x, yBcv)
-                                eurPath.lineTo(x, yEur)
-                                usdtPath.lineTo(x, yUsdt)
-                                val activeY = when (selectedCurrency) {
-                                    TrendCurrency.USD_BCV -> yBcv
-                                    TrendCurrency.EUR_BCV -> yEur
-                                    TrendCurrency.USDT -> yUsdt
-                                    TrendCurrency.ALL -> yBcv
-                                }
-                                singleFillPath.lineTo(x, activeY)
-                            }
-                            if (index == filteredPoints.lastIndex) {
-                                singleFillPath.lineTo(x, size.height)
-                                singleFillPath.close()
-                            }
-                        }
-
-                        onDrawBehind {
-                            // Grid lines
-                            listOf(0.25f, 0.5f, 0.75f).forEach { frac ->
-                                drawLine(
-                                    color = Color(0x18FFFFFF),
-                                    start = Offset(0f, size.height * frac),
-                                    end = Offset(size.width, size.height * frac),
-                                    strokeWidth = 1.dp.toPx()
-                                )
-                            }
-
-                            if (selectedCurrency == TrendCurrency.ALL) {
-                                drawPath(
-                                    path = usdtPath,
-                                    color = AmberUltra,
-                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                )
-                                drawPath(
-                                    path = eurPath,
-                                    color = BlueEuro,
-                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                )
-                                drawPath(
-                                    path = bcvPath,
-                                    color = EmeraldLight,
-                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                )
-                            } else {
-                                val activePath = when (selectedCurrency) {
-                                    TrendCurrency.USD_BCV -> bcvPath
-                                    TrendCurrency.EUR_BCV -> eurPath
-                                    TrendCurrency.USDT -> usdtPath
-                                    TrendCurrency.ALL -> bcvPath
-                                }
-                                drawPath(
-                                    path = singleFillPath,
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(singleLineColor.copy(alpha = 0.28f), Color.Transparent)
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(cardBg)
+                                    .border(1.dp, borderCol, RoundedCornerShape(18.dp))
+                                    .clickable {
+                                        selectedTool = tool
+                                        onTrackUtilTool(tool.analyticsKey)
+                                    }
+                                    .padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(accent.copy(alpha = 0.16f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = tool.title,
+                                        tint = accent,
+                                        modifier = Modifier.size(18.dp)
                                     )
+                                }
+                                Text(
+                                    text = tool.title,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                                drawPath(
-                                    path = activePath,
-                                    color = singleLineColor,
-                                    style = Stroke(width = 2.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                Text(
+                                    text = tool.subtitle,
+                                    fontSize = 10.5.sp,
+                                    color = textSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                            }
-
-                            // Highlighted cursor / last point
-                            val highlightIdx = (touchedIndex ?: filteredPoints.lastIndex).coerceIn(0, filteredPoints.lastIndex)
-                            val hlX = (highlightIdx.toFloat() / (count - 1).toFloat()) * size.width
-                            val hlSnap = filteredPoints[highlightIdx]
-                            val hlVal = when (selectedCurrency) {
-                                TrendCurrency.USD_BCV -> hlSnap.usdBcv
-                                TrendCurrency.EUR_BCV -> hlSnap.eurBcv
-                                TrendCurrency.USDT -> hlSnap.usdt
-                                TrendCurrency.ALL -> hlSnap.usdBcv
-                            }
-                            val hlY = yFor(hlVal)
-
-                            if (touchedIndex != null) {
-                                drawLine(
-                                    color = singleLineColor.copy(alpha = 0.45f),
-                                    start = Offset(hlX, 0f),
-                                    end = Offset(hlX, size.height),
-                                    strokeWidth = 1.2.dp.toPx()
+                                Text(
+                                    text = "Abrir →",
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = accent
                                 )
                             }
-                            drawCircle(
-                                color = singleLineColor,
-                                radius = 4.5.dp.toPx(),
-                                center = Offset(hlX, hlY)
-                            )
                         }
                     }
-            )
-
-            // X-Axis Date Labels
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                val firstLbl = filteredPoints.firstOrNull()?.label ?: ""
-                val midLbl = filteredPoints.getOrNull(filteredPoints.size / 2)?.label ?: ""
-                val lastLbl = filteredPoints.lastOrNull()?.label ?: ""
-                Text(firstLbl, fontSize = 9.5.sp, color = textSecondary)
-                if (filteredPoints.size >= 3) {
-                    Text(midLbl, fontSize = 9.5.sp, color = textSecondary)
                 }
-                Text(lastLbl, fontSize = 9.5.sp, color = textSecondary)
             }
-        }
 
         // 3. Rate Alerts Card (Exclusivo Ultra)
         Column(
@@ -1542,6 +1887,7 @@ fun MarketTab(
                     Text("Desbloquear Widget Calc. + Cobro ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
                 }
             }
+        }
         }
     }
 }
@@ -3075,9 +3421,10 @@ fun PlansComparisonDialog(
                     HorizontalDivider(color = Color(0x1A94A3B8))
 
                     val rows = listOf(
-                        listOf("Calculadora exacta BCV y USDT", "✓", "✓"),
-                        listOf("BCV Mañana + Tendencias", "✓", "✓"),
-                        listOf("Brecha + Gráficos históricos", "✓", "✓"),
+                        listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
+                        listOf("BCV Mañana + Calendario SUDEBAN", "✓", "✓"),
+                        listOf("Útiles (¿Con qué pago?, Cuotas, Comis., Dividir)", "✓", "✓"),
+                        listOf("Guardar ruta favorita en Comisiones", "—", "✓"),
                         listOf("Pago Mixto + Tarjeta PNG", "✓", "✓"),
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),

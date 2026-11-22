@@ -26,7 +26,9 @@ data class CachedRatesBundle(
     val usdtParalelo: RateInfo,
     val nextUsdBcv: RateInfo? = null,
     val nextEurBcv: RateInfo? = null,
-    val nextBcvDateIso: String? = null
+    val nextBcvDateIso: String? = null,
+    val copPerUsd: Double = 4320.0,
+    val copDate: String = "N/D"
 )
 
 class LocalStorageHelper(context: Context) {
@@ -90,6 +92,11 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_ULTRA_WIDGET_TAB = "ultra_widget_active_tab"
         private const val KEY_ULTRA_WIDGET_PROFILE_IDX = "ultra_widget_profile_idx"
 
+        private const val KEY_COP_PER_USD = "cop_per_usd_exact"
+        private const val KEY_COP_DATE = "cop_date"
+        private const val KEY_ANALYTICS_ENABLED = "analytics_enabled"
+        private const val KEY_SAVED_FEE_PERCENT = "saved_fee_percent"
+
         const val MAX_FREE_SCANS_PER_DAY = 3
 
         private const val CACHE_EXPIRATION_MS = 4 * 60 * 60 * 1000L // 4 Hours
@@ -99,6 +106,7 @@ class LocalStorageHelper(context: Context) {
         const val FALLBACK_USD = 850.00
         const val FALLBACK_EUR = 950.00
         const val FALLBACK_USDT = 1000.00
+        const val FALLBACK_COP_PER_USD = 4320.0
     }
 
     fun isCacheExpired(): Boolean {
@@ -124,7 +132,9 @@ class LocalStorageHelper(context: Context) {
         eurChangePct: Double? = null,
         nextUsd: Double? = null,
         nextEur: Double? = null,
-        nextBcvDateIso: String? = null
+        nextBcvDateIso: String? = null,
+        copPerUsd: Double? = null,
+        copDate: String? = null
     ) {
         prefs.edit().apply {
             putFloat(KEY_USD_BCV_RATE, usd.toFloat())
@@ -142,6 +152,11 @@ class LocalStorageHelper(context: Context) {
             putFloat(KEY_USDT_RATE, usdt.toFloat())
             putString(KEY_USDT_RATE_EXACT, usdt.toString())
             putString(KEY_USDT_DATE, usdtDate)
+
+            if (copPerUsd != null && copPerUsd > 0.0) {
+                putString(KEY_COP_PER_USD, copPerUsd.toString())
+                if (!copDate.isNullOrBlank()) putString(KEY_COP_DATE, copDate)
+            }
 
             if (nextUsd != null && nextUsd > 0.0 && nextEur != null && nextEur > 0.0 && !nextBcvDateIso.isNullOrBlank()) {
                 putString(KEY_NEXT_USD_BCV_EXACT, nextUsd.toString())
@@ -187,6 +202,9 @@ class LocalStorageHelper(context: Context) {
         val usdt = readExactDouble(KEY_USDT_RATE_EXACT, KEY_USDT_RATE, FALLBACK_USDT)
         val usdtDate = prefs.getString(KEY_USDT_DATE, "N/D") ?: "N/D"
 
+        val copPerUsd = readExactDouble(KEY_COP_PER_USD, null, FALLBACK_COP_PER_USD)
+        val copDate = prefs.getString(KEY_COP_DATE, "N/D") ?: "N/D"
+
         val isLocalOffline = !hasCachedData()
 
         val usdInfo = RateInfo("USD_BCV", "Dólar BCV", "$", usd, usdDate, isLocalOffline, usdEff, usdPct)
@@ -216,7 +234,9 @@ class LocalStorageHelper(context: Context) {
             usdtParalelo = usdtInfo,
             nextUsdBcv = nextUsdInfo,
             nextEurBcv = nextEurInfo,
-            nextBcvDateIso = if (validNext) nextDateIso else null
+            nextBcvDateIso = if (validNext) nextDateIso else null,
+            copPerUsd = copPerUsd,
+            copDate = copDate
         )
     }
 
@@ -631,5 +651,20 @@ class LocalStorageHelper(context: Context) {
 
     fun setUltraWidgetProfileIndex(index: Int) {
         prefs.edit().putInt(KEY_ULTRA_WIDGET_PROFILE_IDX, index.coerceAtLeast(0)).apply()
+    }
+
+    fun isAnalyticsEnabled(): Boolean = prefs.getBoolean(KEY_ANALYTICS_ENABLED, true)
+
+    fun setAnalyticsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ANALYTICS_ENABLED, enabled).apply()
+    }
+
+    fun getSavedFeePercent(): Double {
+        val raw = prefs.getString(KEY_SAVED_FEE_PERCENT, null)?.toDoubleOrNull()
+        return if (raw != null && raw in 0.0..50.0) raw else 3.5
+    }
+
+    fun saveFavoriteFeePercent(percent: Double) {
+        prefs.edit().putString(KEY_SAVED_FEE_PERCENT, percent.coerceIn(0.0, 50.0).toString()).apply()
     }
 }

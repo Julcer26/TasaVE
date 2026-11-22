@@ -82,19 +82,25 @@ Para comenzar a generar ingresos con la barra publicitaria superior:
 
 ---
 
-## 💳 PASO 3: Configurar el Producto de $2.99 USD en Google Play Console
+## 💳 PASO 3: Configurar Suscripción Tasa VE Ultra + Firebase Analytics
 
-Para habilitar la compra de eliminación de anuncios:
+### A. Suscripciones en Google Play Console (`tasave_ultra`)
+1. En tu aplicación dentro de [Google Play Console](https://play.google.com/console/), ve a **Monetizar con Play** > **Suscripciones** (`tasave_ultra`).
+2. Crea los planes base vigentes:
+   - **Mensual (`ultra-monthly`):** `$0.99 USD`.
+   - **Anual (`ultra-yearly`):** `$7.99 USD`.
+3. Mantén el ID de producto `tasave_ultra` activo y verifica la prueba cerrada con cuentas de licencia de prueba.
 
-1. En tu aplicación dentro de [Google Play Console](https://play.google.com/console/):
-2. Ve al menú lateral: **Monetizar con Play** > **Productos integrados en la aplicación** (In-app products).
-3. Haz clic en **Crear producto**:
-   - **ID de producto:** `tasave_pro_remove_ads` *(Debe ser exactamente este ID, ya que está configurado en el código)*.
-   - **Nombre:** `Tasa VE Pro — Sin Publicidad`.
-   - **Descripción:** `Elimina permanentemente los anuncios publicitarios en Tasa VE mediante un pago único de por vida.`
-   - **Estado:** Activo.
-   - **Precio:** Configura el precio base en **$2.99 USD** (Google Play calculará automáticamente la conversión de divisas en los países admitidos).
-4. Guarda y activa el producto.
+### B. Activar Firebase Analytics (Seguimiento Anónimo de Uso)
+El código ya integra `AnalyticsTracker` (con interruptor opt-out en *Configuración > Legal y Privacidad*) y aplica automáticamente el plugin `com.google.gms.google-services` si detecta el archivo de Firebase:
+1. Crea o abre tu proyecto en [Firebase Console](https://console.firebase.google.com/) y agrega la app Android con paquete **`com.julcer26.tasave`**.
+2. Descarga **`google-services.json`** y colócalo exactamente en:
+   `app/google-services.json`
+3. Eventos anónimos configurados (sin montos ni datos personales):
+   - `tasave_tab_opened` (`tab_name`: Conversor / Carrito / Útiles / Cobros)
+   - `tasave_util_opened` (`tool_name`: `compare_payment`, `installments`, `commissions`, `split_bill`)
+   - `tasave_rate_selected` (`rate_key`: `USD_BCV`, `EUR_BCV`, `USDT`, `COP`)
+   - `tasave_calendar_opened` y `tasave_calendar_day_selected` (`is_bank_holiday`)
 
 ---
 
@@ -126,26 +132,30 @@ app/build/outputs/bundle/release/app-release.aab
 
 ## 🛡️ PASO 5: Sección "Seguridad de los Datos" (Data Safety) en Play Console
 
-Google Play exige rellenar un cuestionario sobre cómo se manejan los datos. Rellénalo con las siguientes respuestas exactas para evitar revisiones rechazadas:
+Google Play exige rellenar un cuestionario sobre cómo se manejan los datos. Rellénalo con las siguientes respuestas exactas para reflejar AdMob, Play Billing y Firebase Analytics:
 
 1. **¿Tu aplicación recopila o comparte alguno de los tipos de datos de usuario obligatorios?**
-   - Respuesta: **Sí** (Debido a las librerías oficiales de Google AdMob y Google Play Billing).
+   - Respuesta: **Sí** (Debido a las librerías oficiales de Google AdMob, Google Play Billing y Firebase Analytics).
 2. **¿Se cifran en tránsito todos los datos de usuario que recopila la aplicación?**
-   - Respuesta: **Sí** (Todas las conexiones usan HTTPS).
+   - Respuesta: **Sí** (Todas las conexiones usan HTTPS/TLS).
 3. **¿Ofreces a los usuarios una forma de solicitar que se eliminen sus datos?**
-   - Respuesta: **Sí** (Los usuarios pueden borrar el historial de cálculos directamente desde la app o borrando los datos de la app).
+   - Respuesta: **Sí** (Los usuarios pueden desactivar Firebase Analytics en *Configuración > Legal y Privacidad*, y borrar historial, carrito o perfiles desde la app o Ajustes de Android).
 4. **Detalle de Datos Específicos:**
+   - **Actividad en la aplicación (Interacciones con la aplicación):**
+     - Recopilados: Sí (vía Firebase Analytics: solo nombres de pestañas/herramientas abiertas, nunca montos ni datos personales).
+     - Compartidos: No se venden ni se comparten con anunciantes externos.
+     - ¿Es obligatorio o el usuario puede elegir?: **El usuario puede elegir** (Opt-out integrado en *Configuración > Estadísticas anónimas de uso*).
+     - Finalidad: **Estadísticas / Análisis** y mejora de funciones.
    - **Identificadores del dispositivo u otros IDs (Device or other IDs):**
-     - Recopilados: Sí (por Google Mobile Ads).
-     - Compartidos: Sí (con Google para fines de publicidad y análisis).
-     - Procesamiento efímero: No.
-     - ¿Es obligatorio o el usuario puede elegir?: Obligatorio para la versión gratuita con anuncios.
+     - Recopilados: Sí (por Google Mobile Ads y Firebase Instance ID).
+     - Compartidos: Sí (con Google para fines de publicidad en el plan gratuito y prevención de fraude).
+     - ¿Es obligatorio o el usuario puede elegir?: Obligatorio en la versión gratuita con anuncios (y opcional/no publicitario en Ultra).
      - Finalidad: **Publicidad o marketing**, **Prevención del fraude y seguridad**, **Estadísticas**.
-   - **Información financiera (Datos de compras):**
-     - Recopilados: Sí (Gestionados por Google Play Billing para la compra de $2.99 USD).
-     - Finalidad: **Gestión de la cuenta** y **Servicios de la aplicación**.
+   - **Información financiera (Historial de compras / suscripciones):**
+     - Recopilados: Sí (Gestionados exclusivamente por Google Play Billing para **Tasa VE Ultra** `$0.99/mes` o `$7.99/año`).
+     - Finalidad: **Gestión de suscripciones** y **Servicios de la aplicación**.
    - **Ubicación aproximada:**
-     - Sí (recopilada automáticamente por AdMob a nivel de país para servir anuncios pertinentes).
+     - Sí (derivada por IP a nivel de país/región por AdMob y Firebase Analytics; sin GPS).
 
 ---
 
@@ -157,7 +167,7 @@ Google Play exige rellenar un cuestionario sobre cómo se manejan los datos. Rel
    - Resultado esperado: Apta para todo público (**PEGI 3** / **Everyone**).
 2. **Aplicaciones Financieras / Criptomonedas:**
    - Si Google pregunta si la app ofrece préstamos, negociación bursátil directa o intercambio de criptoactivos: marca **NO**.
-   - Declara: *"Tasa VE es una calculadora y herramienta de conversión referencial basada en cotizaciones públicas del Banco Central de Venezuela y promedios de mercado. No realiza transacciones financieras, custodia ni intermediación bancaria."*
+   - Declara: *"Tasa VE es una calculadora y herramienta de conversión referencial basada en cotizaciones públicas del Banco Central de Venezuela, TRM Colombia y promedios de mercado. No realiza transacciones financieras, custodia ni intermediación bancaria."*
 3. **Público Objetivo:**
    - Selecciona **Mayores de 18 años** (o mayores de 13 años). No incluyas niños menores de 13 años en el público objetivo para evitar requisitos estrictos de la política familiar de Google.
 
@@ -172,30 +182,28 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
 2. **Gráfico de funciones (Feature Graphic):**
    - Tamaño: `1024 x 500 px` (Formato JPG o PNG de 24 bits, sin transparencia).
 3. **Capturas de pantalla (Screenshots):**
-   - Mínimo 4 capturas en resolución de teléfono (por ejemplo `1080 x 2400 px`).
-   - Sugerencia:
-     - Captura 1: Pantalla principal con la calculadora y cotizaciones del BCV y USDT.
-     - Captura 2: Live Multi-Rate Comparison (Equivalencias en tiempo real de USD, EUR y USDT).
-     - Captura 3: Historial de conversiones inteligente.
-     - Captura 4: Modo Oscuro vs Modo Claro.
+   - Mínimo 5 capturas en resolución de teléfono (`1080 x 2400 px`):
+     - Captura 1: Conversor BCV Hoy/Mañana, Euro, USDT y chip 🇨🇴 COP + botón Calendario.
+     - Captura 2: Calendario SUDEBAN con feriados marcados y cálculo rápido por fecha.
+     - Captura 3: Pestaña **Útiles** (`¿Con qué pago?`, `Inicial y cuotas`, `Comisiones`, `Dividir cuenta`).
+     - Captura 4: Carrito Inteligente con Escáner OCR + IVA/IGTF.
+     - Captura 5: Cobros (Pago Mixto, Tarjeta PNG con tu logo y WhatsApp).
 4. **Textos para la Ficha:**
    - **Título de la app (máx. 30 caracteres):** `Tasa VE: Dólar BCV y USDT`
-   - **Descripción breve (máx. 80 caracteres):** `Cotizador y calculadora de tasas de cambio en tiempo real para Venezuela.`
+   - **Descripción breve (máx. 80 caracteres):** `BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros VE.`
    - **Descripción completa:**
      ```
-     Tasa VE es la calculadora y cotizadora de divisas más elegante, rápida y confiable para Venezuela.
+     Tasa VE es la calculadora financiera todo-en-uno para tu día a día en Venezuela.
 
-     Consulta al instante el valor oficial del Dólar BCV, Euro BCV y USDT paralelo con un diseño moderno, fluido y soporte offline para calcular incluso sin conexión a Internet.
+     Consulta al instante el Dólar y Euro BCV (hoy y mañana), USDT Binance P2P y Peso Colombiano (COP) de frontera, incluso en modo offline.
 
      Características principales:
-     • Tasas oficiales del Banco Central de Venezuela (BCV) en tiempo real.
-     • Cotización del Euro y USDT P2P de mercado.
-     • Calculadora inteligente bidireccional (Bolívares a Divisas y Divisas a Bolívares).
-     • Tabla comparativa de equivalencias en todas las monedas en simultáneo.
-     • Historial de conversiones integrado con respaldo local.
-     • Funcionamiento offline con memoria caché inteligente.
-     • Interfaz moderna con modo oscuro y modo claro optimizados.
-     • Opción Tasa VE Pro: desbloqueo de por vida para disfrutar de una experiencia 100% libre de publicidad.
+     • Conversor bidireccional exacto (BCV Hoy/Mañana, Euro, USDT y COP frontera).
+     • Calendario Bancario SUDEBAN: identifica lunes bancarios, feriados y tasas históricas por día.
+     • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/Zelle), Inicial y cuotas (Cashea/Krece), Comisiones (PayPal/Zinli/Wally) y Dividir cuenta.
+     • Carrito inteligente con escáner de cámara OCR local e IVA/IGTF referencial.
+     • Módulo Cobros: Pago Mixto, perfiles locales de Pago Móvil/Zelle/Binance y Tarjeta PNG lista para WhatsApp.
+     • Widgets en pantalla de inicio y Plan Ultra opcional sin anuncios ($0.99/mes o $7.99/año).
 
      Nota: Esta herramienta tiene carácter estrictamente informativo y de cálculo matemático referencial.
      ```

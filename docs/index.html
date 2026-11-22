@@ -38,7 +38,7 @@
         "applicationCategory": "FinanceApplication",
         "url": "https://tasave.net/",
         "image": "https://tasave.net/assets/app_icon_512x512.png",
-        "description": "Calculadora financiera para Venezuela con Dólar y Euro BCV exactos, BCV Mañana, USDT paralelo, escáner OCR por cámara, carrito con IVA/IGTF, gráficos de tendencia y resúmenes de Pago Móvil.",
+        "description": "Calculadora financiera para Venezuela con Dólar y Euro BCV exactos, BCV Mañana, Peso Colombiano COP de frontera, Calendario SUDEBAN, USDT paralelo, Útiles del día a día, escáner OCR por cámara, carrito con IVA/IGTF y resúmenes de Pago Móvil.",
         "offers": [
           {
             "@type": "Offer",
@@ -78,15 +78,15 @@
             "name": "¿Qué incluye gratis Tasa VE?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "El Plan Gratuito incluye la calculadora multi-tasa completa con USD/EUR BCV exactos, BCV Mañana, USDT paralelo, brecha cambiaria, calculadora de pago mixto, tarjetas PNG para WhatsApp, Widget Tasas en Vivo en pantalla de inicio, hasta 5 productos en el carrito, 1 perfil de cobro y 3 escaneos OCR diarios (+5 extra viendo un anuncio opcional)."
+              "text": "El Plan Gratuito incluye la calculadora multi-tasa completa con USD/EUR BCV exactos, BCV Mañana, Peso Colombiano (COP) de frontera, Calendario Bancario SUDEBAN, USDT paralelo, las 4 calculadoras de Útiles (¿Con qué pago?, Inicial y cuotas, Comisiones y Dividir cuenta), pago mixto, tarjetas PNG para WhatsApp, Widget Tasas en Vivo en pantalla de inicio, hasta 5 productos en el carrito, 1 perfil de cobro y 3 escaneos OCR diarios (+5 extra viendo un anuncio opcional)."
             }
           },
           {
             "@type": "Question",
-            "name": "¿Qué es la tasa BCV Mañana y por qué importa ver la tasa exacta?",
+            "name": "¿Qué es la tasa BCV Mañana y el Calendario SUDEBAN?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Cuando el Banco Central de Venezuela publica una cotización vigente para el día hábil siguiente, Tasa VE te permite consultarla anticipadamente con un toque y sin redondeos imprecisos al facturar o cuadrar caja."
+              "text": "Cuando el Banco Central de Venezuela publica una cotización vigente para el día hábil siguiente, Tasa VE te permite consultarla anticipadamente con un toque. Además, el Calendario SUDEBAN marca feriados bancarios, fines de semana y te muestra la tasa histórica y un cálculo rápido para cualquier fecha."
             }
           },
           {
@@ -94,7 +94,7 @@
             "name": "¿Mis datos de Pago Móvil, Zelle o Binance salen de mi teléfono?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Tasa VE no solicita registro ni cuentas en servidores propios. Todos tus perfiles de Pago Móvil, cuentas bancarias, Zelle, Binance Pay y carrito se almacenan exclusivamente en el almacenamiento privado de tu Android y se excluyen del respaldo en la nube."
+              "text": "No. Tasa VE no solicita registro ni cuentas en servidores propios. Todos tus perfiles de Pago Móvil, cuentas bancarias, Zelle, Binance Pay y carrito se almacenan exclusivamente en el almacenamiento privado de tu Android y se excluyen del respaldo en la nube. Las estadísticas anónimas de navegación son opcionales y desactivables desde Configuración."
             }
           },
           {
@@ -102,7 +102,7 @@
             "name": "¿Qué desbloquea la suscripción Tasa VE Ultra?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Tasa VE Ultra ($0.99 USD/mes o $7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea sin límites el escáner de cámara OCR, el carrito de compras con cálculos de IVA (16%) e IGTF (3%), múltiples perfiles de cobro, logo propio en tarjetas PNG, alertas locales de variación de tasa y Widget Calculadora y Cobro Express."
+              "text": "Tasa VE Ultra ($0.99 USD/mes o $7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea sin límites el escáner de cámara OCR, el carrito de compras con cálculos de IVA (16%) e IGTF (3%), múltiples perfiles de cobro, guardado de ruta favorita en Comisiones, logo propio en tarjetas PNG, alertas locales de variación de tasa y Widget Calculadora y Cobro Express."
             }
           }
         ]
@@ -240,8 +240,8 @@
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h13m-3-3 3 3-3 3M19 16H6m3-3-3 3 3 3"></path></svg>
                 </span>
                 <span class="demo-tab-copy">
-                  <strong>1. Conversor Multi-Tasa + BCV Mañana</strong>
-                  <span>USD/EUR exactos, USDT paralelo, cambio bidireccional instantáneo y comparativa de equivalencias.</span>
+                  <strong>1. Conversor Multi-Tasa + BCV Mañana + COP</strong>
+                  <span>USD/EUR exactos, USDT paralelo, chip 🇨🇴 COP de frontera y Calendario SUDEBAN con cálculo por fecha.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
@@ -268,13 +268,13 @@
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
 
-              <button type="button" class="demo-tab-btn" role="tab" aria-selected="false" data-tab="trends">
+              <button type="button" class="demo-tab-btn" role="tab" aria-selected="false" data-tab="utiles">
                 <span class="demo-tab-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
                 </span>
                 <span class="demo-tab-copy">
-                  <strong>4. Brecha Cambiaria y Tendencias</strong>
-                  <span>Compara el diferencial exacto entre tasa oficial BCV y USDT paralelo con históricos interactivos.</span>
+                  <strong>4. Pestaña Útiles del Día a Día</strong>
+                  <span>¿Con qué pago? (USDT vs Efectivo/$), Inicial y cuotas (Cashea/Krece), Comisiones (PayPal/Zinli/Wally) y Dividir cuenta.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
@@ -317,8 +317,8 @@
             <div class="feature-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             </div>
-            <h3>BCV Hoy + BCV Mañana</h3>
-            <p>Consulta la tasa oficial del día y anticipa la tasa publicada para la próxima jornada sin redondeos imprecisos.</p>
+            <h3>BCV Mañana + 🇨🇴 COP + Calendario</h3>
+            <p>Anticipa la próxima tasa oficial BCV, convierte pesos colombianos de frontera en el mismo conversor y revisa feriados bancarios SUDEBAN por fecha.</p>
           </article>
 
           <article class="feature-card">
@@ -341,8 +341,8 @@
             <div class="feature-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10M7 13h6M7 17h4"></path></svg>
             </div>
-            <h3>Tarjetas PNG y Texto Listo para Copiar</h3>
-            <p>Genera comprobantes visuales en PNG con el logo de Tasa VE y resúmenes limpios para WhatsApp con tus datos de los 24 bancos de Venezuela, Zelle o Binance.</p>
+            <h3>Útiles + Tarjetas PNG de Cobro</h3>
+            <p>Decide si pagar cambiando USDT o en efectivo, calcula cuotas tipo Cashea, estima comisiones PayPal/Zinli, divide cuentas y envía tu Pago Móvil en Tarjeta PNG.</p>
           </article>
 
           <article class="feature-card">
@@ -358,7 +358,7 @@
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
             <h3>Privacidad Local Garantizada</h3>
-            <p>Sin correos, contraseñas ni servidores propios. Tus cuentas de cobro se guardan cifradas en tu dispositivo fuera del respaldo en la nube.</p>
+            <p>Sin cuentas ni contraseñas. Tus perfiles de cobro quedan solo en tu teléfono y las métricas anónimas de uso son 100% desactivables en Configuración.</p>
           </article>
         </div>
       </div>
@@ -383,15 +383,15 @@
             <ul class="plan-list">
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Conversor USD/EUR BCV exacto, BCV Mañana y USDT paralelo
+                Conversor USD/EUR BCV exacto, BCV Mañana, USDT y 🇨🇴 COP de frontera
               </li>
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Widget Tasas en Vivo en pantalla de inicio, brecha, pago mixto y tarjeta PNG
+                Calendario SUDEBAN, las 4 herramientas de Útiles, Pago Mixto y Tarjeta PNG
               </li>
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                3 escaneos OCR al día (+5 extra opcionales con anuncio bonificado)
+                Widget Tasas en Vivo y 3 escaneos OCR/día (+5 extra o 12h sin ads vía video)
               </li>
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -421,7 +421,7 @@
               </li>
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Perfiles de cobro ilimitados, logo propio en tarjetas PNG, Alertas y Widget Calculadora y Cobros
+                Perfiles de cobro ilimitados, ruta favorita en Comisiones, logo propio en PNG, Alertas y Widget Calculadora y Cobros
               </li>
             </ul>
           </article>
@@ -440,11 +440,11 @@
         <div class="faq-list">
           <article class="faq-item">
             <h3>¿Por qué elegir Tasa VE frente a otras calculadoras de tasas?</h3>
-            <p>Tasa VE elimina los anuncios pantalla completa al abrir la app y suma herramientas prácticas en un mismo lugar: tasas oficiales sin redondeos, vista previa de BCV Mañana, USDT paralelo, escáner de precios por cámara, carrito con IVA/IGTF y tarjetas visuales de cobro sin errores de formato.</p>
+            <p>Tasa VE elimina los anuncios pantalla completa al abrir la app y suma herramientas que realmente usas a diario: tasas oficiales sin redondeos, vista previa de BCV Mañana, COP de frontera, Calendario SUDEBAN, Útiles (¿Con qué pago?, cuotas, comisiones y dividir cuenta), escáner OCR y tarjetas PNG de cobro.</p>
           </article>
           <article class="faq-item">
             <h3>¿Cómo se actualizan las cotizaciones y qué pasa si pierdo conexión?</h3>
-            <p>Las tasas de USD BCV, EUR BCV y USDT se actualizan automáticamente desde fuentes públicas especializadas al abrir la app. Si entras a un supermercado o zona sin cobertura, el Modo Offline utiliza las últimas tasas guardadas localmente para que puedas seguir calculando sin interrupciones.</p>
+            <p>Las tasas de USD BCV, EUR BCV, USDT y TRM COP se actualizan automáticamente desde fuentes públicas especializadas al abrir la app. Si entras a un supermercado o zona sin cobertura, el Modo Offline utiliza las últimas tasas guardadas localmente para que puedas seguir calculando sin interrupciones.</p>
           </article>
           <article class="faq-item">
             <h3>¿Dónde se guardan mis datos de Pago Móvil, cuentas bancarias o Zelle?</h3>

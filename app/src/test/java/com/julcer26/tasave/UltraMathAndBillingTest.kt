@@ -153,7 +153,7 @@ class UltraMathAndBillingTest {
         assertEquals("J-123456789", profile.formattedDoc())
         assertEquals("0412-5551234", profile.formattedPhone())
         assertEquals("Mi Comercio", profile.displayTitle())
-        assertEquals("Brecha", AppTab.MARKET.label)
+        assertEquals("Útiles", AppTab.MARKET.label)
 
         val zelleProfile = PaymentMethodProfile(
             id = 2L,
@@ -435,6 +435,75 @@ class UltraMathAndBillingTest {
         assertTrue(formatted.title.contains("(1/2)"))
         assertTrue(formatted.copyText.contains("0134 - Banesco"))
         assertTrue(formatted.copyText.contains("J-123456789"))
+    }
+
+    @Test
+    fun utilesCalculations_computeCompareInstallmentsFeesAndSplitAccurately() {
+        // 1. ¿Con qué pago?: $100 at BCV 50 -> Bs. 5000 / USDT 60 -> 83.3333 USDT (< $100 cash)
+        val usdtWins = UltraMath.calculatePaymentComparison(
+            priceUsd = 100.0,
+            bcvRate = 50.0,
+            usdtRate = 60.0,
+            cashDiscountPercent = 0.0
+        )
+        assertTrue(usdtWins.recommendUsdt)
+        assertEquals(5000.0, usdtWins.bsAmount, 0.001)
+        assertEquals(83.3333, usdtWins.usdtNeededToCoverBs, 0.01)
+        assertEquals(16.6667, usdtWins.usdtSavingsVsCashUsd, 0.01)
+
+        // With 25% cash discount: cash $75 < 83.33 USDT -> cash wins
+        val cashWins = UltraMath.calculatePaymentComparison(
+            priceUsd = 100.0,
+            bcvRate = 50.0,
+            usdtRate = 60.0,
+            cashDiscountPercent = 25.0
+        )
+        assertFalse(cashWins.recommendUsdt)
+        assertEquals(75.0, cashWins.cashOrZelleEffectiveUsd, 0.001)
+        assertEquals(8.3333, cashWins.cashSavingsVsUsdtUsd, 0.01)
+
+        // 2. Inicial y cuotas (Cashea / Krece): $120, 40% inicial, 3 cuotas
+        val plan = UltraMath.calculateInstallmentPlan(
+            totalUsd = 120.0,
+            initialPercent = 40,
+            installmentCount = 3,
+            bcvRate = 50.0,
+            usdtRate = 60.0
+        )
+        assertEquals(48.0, plan.initialUsd, 0.001)
+        assertEquals(2400.0, plan.initialBs, 0.001)
+        assertEquals(40.0, plan.initialUsdt, 0.001)
+        assertEquals(72.0, plan.remainingUsd, 0.001)
+        assertEquals(24.0, plan.installmentUsd, 0.001)
+        assertEquals(1200.0, plan.installmentBs, 0.001)
+
+        // 3. Comisiones: PayPal 5.4% + $0.30
+        val received = UltraMath.calculateNetOrGross(
+            amountUsd = 100.0,
+            percentFee = 5.4,
+            fixedFeeUsd = 0.30,
+            calculateGrossToReceive = false,
+            usdtRate = 60.0
+        )
+        assertEquals(5.70, received.feeUsd, 0.001)
+        assertEquals(94.30, received.netUsd, 0.001)
+        assertEquals(94.30 * 60.0, received.netVesAtUsdt, 0.01)
+
+        val grossNeeded = UltraMath.calculateNetOrGross(
+            amountUsd = 94.30,
+            percentFee = 5.4,
+            fixedFeeUsd = 0.30,
+            calculateGrossToReceive = true,
+            usdtRate = 60.0
+        )
+        assertEquals(100.0, grossNeeded.grossUsd, 0.02)
+        assertEquals(94.30, grossNeeded.netUsd, 0.001)
+
+        // 4. Dividir cuenta: $80 / 4 people @ 50 Bs.
+        val split = UltraMath.calculateSplitBill(totalUsd = 80.0, peopleCount = 4, rate = 50.0)
+        assertEquals(20.0, split.perPersonUsd, 0.001)
+        assertEquals(1000.0, split.perPersonBs, 0.001)
+        assertEquals(4000.0, split.totalBs, 0.001)
     }
 }
 

@@ -6,7 +6,8 @@
   const RATES = {
     USD_BCV: { label: "USD BCV", symbol: "$", rate: 916.6477, tomorrow: 921.4820, decimals: 4 },
     EUR_BCV: { label: "EUR BCV", symbol: "€", rate: 985.3240, tomorrow: 990.1150, decimals: 4 },
-    USDT: { label: "USDT Binance", symbol: "₮", rate: 1024.50, tomorrow: 1024.50, decimals: 2 }
+    USDT: { label: "USDT Binance", symbol: "₮", rate: 1024.50, tomorrow: 1024.50, decimals: 2 },
+    COP: { label: "🇨🇴 COP", symbol: "COP", rate: 916.6477 / 4320.0, tomorrow: 921.4820 / 4320.0, decimals: 4 }
   };
 
   // Theme Toggle
@@ -56,7 +57,7 @@
     Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 
   // ---------------- Interactive Simulator State ----------------
-  const TAB_ORDER = ["converter", "scanner", "cart", "trends", "checkout"];
+  const TAB_ORDER = ["converter", "scanner", "cart", "utiles", "checkout"];
   const state = {
     activeTab: "converter",
     autoplay: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -82,8 +83,8 @@
     ],
     useIva: true,
     useIgtf: false,
-    // Trends
-    trendRange: "1M",
+    // Útiles
+    utilMode: "compare",
     // Checkout
     checkoutTotalUsd: 20.00,
     paidCashUsd: 10.00,
@@ -144,12 +145,12 @@
     if (state.activeTab === "converter") renderConverter();
     else if (state.activeTab === "scanner") renderScanner();
     else if (state.activeTab === "cart") renderCart();
-    else if (state.activeTab === "trends") renderTrends();
+    else if (state.activeTab === "utiles") renderUtiles();
     else if (state.activeTab === "checkout") renderCheckout();
   }
 
   function renderConverter() {
-    const info = RATES[state.rateKey];
+    const info = RATES[state.rateKey] || RATES.USD_BCV;
     const activeRate = state.tomorrowBcv && state.rateKey !== "USDT" ? info.tomorrow : info.rate;
     const rawVal = Number(state.amount) || 0;
     const vesVal = state.vesToForeign ? rawVal : rawVal * activeRate;
@@ -159,7 +160,7 @@
       <div class="sim-topbar">
         <span class="sim-brand">Tasa VE</span>
         <span class="sim-badge ${state.tomorrowBcv ? "amber" : ""}">
-          ${state.tomorrowBcv ? "BCV Mañana" : "En Vivo • BCV"}
+          ${state.tomorrowBcv ? "BCV Mañana" : "📅 SUDEBAN • BCV"}
         </span>
       </div>
 
@@ -181,8 +182,8 @@
           <button type="button" class="sim-chip is-selected" id="sim-swap-dir" title="Invertir moneda">Bs. ↔ ${info.symbol}</button>
         </div>
         <div class="sim-sub-row">
-          <span>Tasa: Bs. ${fmtMoney(activeRate, info.decimals)}</span>
-          <span>${state.rateKey === "USDT" ? "P2P Tiempo Real" : (state.tomorrowBcv ? "Tasa Mañana" : "BCV Oficial")}</span>
+          <span>${state.rateKey === "COP" ? `1,000 COP = Bs. ${fmtMoney(activeRate * 1000, 2)}` : `Tasa: Bs. ${fmtMoney(activeRate, info.decimals)}`}</span>
+          <span>${state.rateKey === "USDT" ? "P2P Tiempo Real" : (state.rateKey === "COP" ? "Frontera TRM 4,320" : (state.tomorrowBcv ? "Tasa Mañana" : "BCV Oficial"))}</span>
         </div>
       </div>
 
@@ -362,68 +363,112 @@
     });
   }
 
-  function renderTrends() {
-    const spreadPct = ((RATES.USDT.rate - RATES.USD_BCV.rate) / RATES.USD_BCV.rate) * 100;
-    const curves = {
-      "1S": {
-        bcv: "M 10,108 L 70,102 L 130,95 L 190,89 L 250,82 L 310,76 L 360,70",
-        usdt: "M 10,78 L 70,72 L 130,68 L 190,56 L 250,48 L 310,44 L 360,34",
-        deltaBcv: "+1.84%",
-        deltaUsdt: "+2.45%"
-      },
-      "1M": {
-        bcv: "M 10,126 L 70,115 L 130,102 L 190,94 L 250,84 L 310,78 L 360,68",
-        usdt: "M 10,96 L 70,84 L 130,74 L 190,64 L 250,52 L 310,42 L 360,30",
-        deltaBcv: "+6.40%",
-        deltaUsdt: "+7.80%"
-      },
-      "3M": {
-        bcv: "M 10,142 L 70,128 L 130,118 L 190,102 L 250,88 L 310,76 L 360,64",
-        usdt: "M 10,116 L 70,104 L 130,90 L 190,74 L 250,58 L 310,42 L 360,26",
-        deltaBcv: "+15.20%",
-        deltaUsdt: "+18.60%"
-      }
-    }[state.trendRange];
+  function renderUtiles() {
+    const bcv = RATES.USD_BCV.rate;
+    const usdt = RATES.USDT.rate;
+    const modes = [
+      { id: "compare", label: "¿Con qué pago?" },
+      { id: "installments", label: "Cuotas" },
+      { id: "fees", label: "Comisiones" },
+      { id: "split", label: "Dividir" }
+    ];
+
+    let bodyHtml = "";
+    if (state.utilMode === "compare") {
+      const price = 100;
+      const bsNeeded = price * bcv;
+      const usdtNeeded = bsNeeded / usdt;
+      const savings = price - usdtNeeded;
+      bodyHtml = `
+        <div class="sim-card">
+          <span class="sim-label">Monto a pagar: $100.00</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+            <div style="padding:8px;border-radius:10px;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.45);">
+              <div style="font-size:0.72rem;color:#34D399;font-weight:700;">1. Cambiando USDT</div>
+              <strong style="font-size:1.05rem;">${fmtMoney(usdtNeeded, 2)} USDT</strong>
+              <div style="font-size:0.7rem;color:#94A3B8;">Bs. ${fmtMoney(bsNeeded, 2)} BCV</div>
+            </div>
+            <div style="padding:8px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);">
+              <div style="font-size:0.72rem;color:#94A3B8;font-weight:700;">2. Efectivo $ / Zelle</div>
+              <strong style="font-size:1.05rem;">$100.00</strong>
+              <div style="font-size:0.7rem;color:#94A3B8;">Pago directo</div>
+            </div>
+          </div>
+          <div class="sim-sub-row" style="margin-top:8px;color:#34D399;font-weight:700;">
+            <span>👉 Conviene USDT: ahorras $${fmtMoney(savings, 2)}</span>
+          </div>
+        </div>
+      `;
+    } else if (state.utilMode === "installments") {
+      const initUsd = 120 * 0.4;
+      const cuotaUsd = (120 - initUsd) / 3;
+      bodyHtml = `
+        <div class="sim-card">
+          <span class="sim-label">Cashea / Krece • Compra $120 (40% + 3 cuotas)</span>
+          <div style="margin-top:6px;">
+            <strong style="font-size:1.15rem;color:#34D399;">Inicial hoy: $${fmtMoney(initUsd, 2)}</strong>
+            <div style="font-size:0.82rem;color:#CBD5E1;">Bs. ${fmtMoney(initUsd * bcv, 2)} BCV &bull; ${fmtMoney((initUsd * bcv) / usdt, 2)} USDT</div>
+          </div>
+          <div class="sim-sub-row" style="margin-top:8px;">
+            <span>3 cuotas de $${fmtMoney(cuotaUsd, 2)} c/u</span>
+            <span>≈ Bs. ${fmtMoney(cuotaUsd * bcv, 2)}</span>
+          </div>
+        </div>
+      `;
+    } else if (state.utilMode === "fees") {
+      const gross = 100;
+      const fee = gross * 0.054 + 0.30;
+      const net = gross - fee;
+      bodyHtml = `
+        <div class="sim-card">
+          <span class="sim-label">PayPal (5.4% + $0.30) &bull; Me envían $100</span>
+          <div style="margin-top:6px;">
+            <strong style="font-size:1.2rem;color:#34D399;">Recibes neto: $${fmtMoney(net, 2)}</strong>
+            <div style="font-size:0.82rem;color:#CBD5E1;">Comisión: -$${fmtMoney(fee, 2)} &bull; ≈ Bs. ${fmtMoney(net * usdt, 2)} (USDT)</div>
+          </div>
+          <div class="sim-sub-row" style="margin-top:8px;">
+            <span>Zinli ~2.5% &bull; Wally ~1.5%</span>
+            <span style="color:#F59E0B;">★ Favorita Ultra</span>
+          </div>
+        </div>
+      `;
+    } else {
+      const total = 80;
+      const perPerson = total / 4;
+      bodyHtml = `
+        <div class="sim-card">
+          <span class="sim-label">Cuenta $80.00 entre 4 personas (BCV)</span>
+          <div style="margin-top:6px;">
+            <strong style="font-size:1.25rem;color:#34D399;">$${fmtMoney(perPerson, 2)} &bull; Bs. ${fmtMoney(perPerson * bcv, 2)} c/u</strong>
+          </div>
+          <div class="sim-sub-row" style="margin-top:8px;">
+            <span>Total: Bs. ${fmtMoney(total * bcv, 2)}</span>
+            <span>Listo para WhatsApp</span>
+          </div>
+        </div>
+      `;
+    }
 
     stageEl.innerHTML = `
       <div class="sim-topbar">
-        <span class="sim-brand">Brecha y Tendencia</span>
-        <span class="sim-badge amber">Brecha ${fmtMoney(spreadPct, 1)}%</span>
+        <span class="sim-brand">Útiles del Día a Día</span>
+        <span class="sim-badge">Gratis + Ultra</span>
       </div>
 
-      <div class="sim-card">
-        <span class="sim-label">Diferencial BCV vs Paralelo (USDT)</span>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;">
-          <strong style="font-size:1.35rem;color:#34D399;">Bs. ${fmtMoney(RATES.USD_BCV.rate, 4)}</strong>
-          <strong style="font-size:1.25rem;color:#F59E0B;">Bs. ${fmtMoney(RATES.USDT.rate, 2)}</strong>
-        </div>
-        <div class="sim-sub-row">
-          <span>USD BCV (${curves.deltaBcv})</span>
-          <span>USDT (${curves.deltaUsdt})</span>
-        </div>
+      <div class="sim-pill-row" style="margin-bottom:8px;">
+        ${modes.map((m) => `
+          <button type="button" class="sim-chip ${state.utilMode === m.id ? "is-selected" : ""}" data-util="${m.id}">${m.label}</button>
+        `).join("")}
       </div>
 
-      <div class="sim-card">
-        <div class="sim-pill-row" style="margin-bottom:10px;">
-          ${["1S", "1M", "3M"].map((r) => `
-            <button type="button" class="sim-chip ${state.trendRange === r ? "is-selected" : ""}" data-range="${r}">${r}</button>
-          `).join("")}
-        </div>
-        <svg viewBox="0 0 370 155" width="100%" height="155" role="img" aria-label="Gráfico comparativo BCV y USDT">
-          <line x1="10" y1="40" x2="360" y2="40" stroke="rgba(255,255,255,0.06)" />
-          <line x1="10" y1="85" x2="360" y2="85" stroke="rgba(255,255,255,0.06)" />
-          <line x1="10" y1="130" x2="360" y2="130" stroke="rgba(255,255,255,0.06)" />
-          <path d="${curves.usdt}" fill="none" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" />
-          <path d="${curves.bcv}" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" />
-        </svg>
-      </div>
+      ${bodyHtml}
     `;
 
-    stageEl.querySelectorAll("[data-range]").forEach((btn) => {
+    stageEl.querySelectorAll("[data-util]").forEach((btn) => {
       btn.addEventListener("click", () => {
         setAutoplay(false);
-        state.trendRange = btn.getAttribute("data-range");
-        renderTrends();
+        state.utilMode = btn.getAttribute("data-util");
+        renderUtiles();
       });
     });
   }

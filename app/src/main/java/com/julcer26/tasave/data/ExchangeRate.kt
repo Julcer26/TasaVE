@@ -44,10 +44,24 @@ data class DolarVzlaBcvResponse(
     @Json(name = "changePercentage") val changePercentage: DolarVzlaChangePct? = null
 )
 
+@JsonClass(generateAdapter = true)
+data class ColombiaTrmResponse(
+    @Json(name = "valor") val valor: Double? = null,
+    @Json(name = "nombre") val nombre: String? = null,
+    @Json(name = "unidad") val unidad: String? = null,
+    @Json(name = "fechaActualizacion") val fechaActualizacion: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class OpenErUsdResponse(
+    @Json(name = "result") val result: String? = null,
+    @Json(name = "rates") val rates: Map<String, Double>? = null
+)
+
 data class RateInfo(
-    val key: String, // "USD_BCV", "EUR_BCV", "USDT"
-    val label: String, // "Dólar BCV", "Euro BCV", "USDT Binance"
-    val symbol: String, // "$", "€", "₮"
+    val key: String, // "USD_BCV", "EUR_BCV", "USDT", "COP"
+    val label: String, // "Dólar BCV", "Euro BCV", "USDT Binance", "Peso Colombiano"
+    val symbol: String, // "$", "€", "₮", "COP"
     val rate: Double,
     val dateUpdated: String,
     val isLocalOffline: Boolean = false,

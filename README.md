@@ -18,13 +18,14 @@
 
 ## Características Principales
 
-- **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV exactos, vista anticipada de **BCV Mañana**, USDT paralelo y Modo Offline con caché local.
+- **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV exactos, vista anticipada de **BCV Mañana**, USDT paralelo, **Peso Colombiano (COP) de frontera** con TRM en vivo y Modo Offline con caché local.
+- **Calendario Bancario SUDEBAN y Tasas Históricas:** Botón rápido en barra superior con feriados bancarios 2025–2027, consulta de tasa por día y cálculo rápido integrado.
 - **Widgets en Pantalla de Inicio:** Widget gratuito **Tasas en Vivo** (BCV Hoy/Mañana y Brecha) y widget **Ultra Calculadora y Cobros** (tasas + accesos directos, calculadora rápida en pantalla y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).
 - **Carrito de Mercado Inteligente:** Controla tu presupuesto en USD y Bolívares con cálculo opcional de **IVA (16%)** e **IGTF (3%)**.
-- **Brecha Cambiaria y Tendencias:** Comparativa oficial vs. paralelo y gráficos históricos interactivos.
+- **Pestaña Útiles del Día a Día:** 4 herramientas prácticas (**¿Con qué pago?** USDT vs Efectivo/Zelle, **Inicial y cuotas** tipo Cashea/Krece, **Comisiones** PayPal/Zinli/Wally con ruta favorita en Ultra y **Dividir cuenta**), además de **Alertas** y **Widgets**.
 - **Cobros, Pago Mixto y Tarjeta PNG:** Calcula el vuelto en pagos mixtos y comparte tarjetas visuales en PNG con tus datos de Pago Móvil, Zelle o Binance Pay (y logo propio en **Ultra**).
-- **Privacidad Local y Feedback Directo:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo, con centro de reportes/sugerencias integrado en Configuración.
+- **Privacidad Local, Analítica Opcional y Feedback Directo:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo, con métricas anónimas de uso desactivables en Configuración y centro de reportes integrado.
 
 ---
 

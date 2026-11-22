@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.julcer26.tasave.analytics.AnalyticsTracker
 import com.julcer26.tasave.billing.BillingManager
 import com.julcer26.tasave.data.*
 import com.julcer26.tasave.share.ShareCardGenerator
@@ -30,6 +31,8 @@ data class TasaVeUiState(
     val nextUsdBcv: RateInfo? = null,
     val nextEurBcv: RateInfo? = null,
     val nextBcvDateIso: String? = null,
+    val copPerUsd: Double = 4320.0,
+    val copRate: RateInfo? = null,
     val isFromCache: Boolean = false,
     val isOfflineError: Boolean = false,
     val errorMessage: String? = null
@@ -116,6 +119,25 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _customBrandLogoRevision = MutableStateFlow(0L)
     val customBrandLogoRevision: StateFlow<Long> = _customBrandLogoRevision.asStateFlow()
 
+    // Privacy-safe Analytics & Útiles Favorite Fee Route
+    private val _analyticsEnabled = MutableStateFlow(localStorageHelper.isAnalyticsEnabled())
+    val analyticsEnabled: StateFlow<Boolean> = _analyticsEnabled.asStateFlow()
+
+    private val _savedFeePercent = MutableStateFlow(localStorageHelper.getSavedFeePercent())
+    val savedFeePercent: StateFlow<Double> = _savedFeePercent.asStateFlow()
+
+    fun setAnalyticsEnabled(enabled: Boolean) {
+        _analyticsEnabled.value = enabled
+        AnalyticsTracker.setCollectionEnabled(getApplication(), enabled)
+    }
+
+    fun saveFavoriteFeePercent(percent: Double) {
+        val clamped = percent.coerceIn(0.0, 50.0)
+        _savedFeePercent.value = clamped
+        localStorageHelper.saveFavoriteFeePercent(clamped)
+        AnalyticsTracker.logAction(getApplication(), "save_favorite_fee")
+    }
+
     // Selection & Dynamic Calculator state
     var selectedRateKey by mutableStateOf("USD_BCV")
         private set
@@ -136,6 +158,14 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         _themeMode.value = repository.getLocalTheme()
 
         val cached = repository.getCachedRatesBundle()
+        val cachedCopRate = RateInfo(
+            key = "COP",
+            label = "Peso Colombiano",
+            symbol = "COP",
+            rate = if (cached.copPerUsd > 0.0) cached.usdBcv.rate / cached.copPerUsd else 0.0,
+            dateUpdated = cached.copDate,
+            isLocalOffline = true
+        )
         _uiState.value = TasaVeUiState(
             isLoading = false,
             usdBcv = cached.usdBcv,
@@ -144,6 +174,8 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             nextUsdBcv = cached.nextUsdBcv,
             nextEurBcv = cached.nextEurBcv,
             nextBcvDateIso = cached.nextBcvDateIso,
+            copPerUsd = cached.copPerUsd,
+            copRate = cachedCopRate,
             isFromCache = true
         )
         recalculateVES()
@@ -196,6 +228,8 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                         nextUsdBcv = result.nextUsdBcv,
                         nextEurBcv = result.nextEurBcv,
                         nextBcvDateIso = result.nextBcvDateIso,
+                        copPerUsd = result.copPerUsd,
+                        copRate = result.copRate,
                         isFromCache = result.isFromCache,
                         isOfflineError = result.isOfflineError
                     )
@@ -226,6 +260,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     fun selectRate(key: String) {
         selectedRateKey = key
         recalculateVES()
+        AnalyticsTracker.logConverterRateSelected(getApplication(), key)
     }
 
     fun setTomorrowBcvPreview(useTomorrow: Boolean) {
@@ -242,6 +277,22 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     fun getEffectiveEurBcv(): RateInfo? {
         val state = _uiState.value
         return if (previewTomorrowBcv && state.nextEurBcv != null) state.nextEurBcv else state.eurBcv
+    }
+
+    fun getEffectiveCopRate(): RateInfo? {
+        val state = _uiState.value
+        val copPerUsd = state.copPerUsd
+        val usd = getEffectiveUsdBcv() ?: return state.copRate
+        return if (copPerUsd > 0.0) {
+            (state.copRate ?: RateInfo(
+                key = "COP",
+                label = "Peso Colombiano",
+                symbol = "COP",
+                rate = usd.rate / copPerUsd,
+                dateUpdated = usd.dateUpdated,
+                isLocalOffline = state.isFromCache
+            )).copy(rate = usd.rate / copPerUsd)
+        } else state.copRate
     }
 
     fun updateForeignAmount(input: String) {
@@ -576,10 +627,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             "$" -> "USD_BCV"
             "€" -> "EUR_BCV"
             "₮" -> "USDT"
+            "COP" -> "COP"
             else -> when (item.currencyTo) {
                 "$" -> "USD_BCV"
                 "€" -> "EUR_BCV"
                 "₮" -> "USDT"
+                "COP" -> "COP"
                 else -> null
             }
         }
@@ -614,6 +667,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             "USD_BCV" -> getEffectiveUsdBcv()
             "EUR_BCV" -> getEffectiveEurBcv()
             "USDT" -> state.usdtParalelo
+            "COP" -> getEffectiveCopRate()
             else -> null
         }
     }

@@ -67,6 +67,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.julcer26.tasave.BuildConfig
 import com.julcer26.tasave.R
 import androidx.compose.ui.res.painterResource
+import com.julcer26.tasave.analytics.AnalyticsTracker
+import com.julcer26.tasave.calendar.BcvCalendarHelper
 import com.julcer26.tasave.data.ConversionHistory
 import com.julcer26.tasave.data.RateInfo
 import com.julcer26.tasave.ultra.AppTab
@@ -74,9 +76,11 @@ import com.julcer26.tasave.ultra.CartTab
 import com.julcer26.tasave.ultra.CheckoutTab
 import com.julcer26.tasave.ultra.MarketTab
 import com.julcer26.tasave.ultra.PlansComparisonDialog
+import com.julcer26.tasave.ultra.RateSnapshot
 import com.julcer26.tasave.ultra.UltraMath
 import com.julcer26.tasave.ultra.UserTier
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -112,6 +116,8 @@ fun TasaVeScreen(
     val selectedPaymentProfileId by viewModel.selectedPaymentProfileId.collectAsStateWithLifecycle()
     val customBrandName by viewModel.customBrandName.collectAsStateWithLifecycle()
     val customBrandLogoRevision by viewModel.customBrandLogoRevision.collectAsStateWithLifecycle()
+    val analyticsEnabled by viewModel.analyticsEnabled.collectAsStateWithLifecycle()
+    val savedFeePercent by viewModel.savedFeePercent.collectAsStateWithLifecycle()
 
     val adFreePassUntilMs by viewModel.adFreePassUntilMs.collectAsStateWithLifecycle()
     val isAdFreePassActive = adFreePassUntilMs > System.currentTimeMillis()
@@ -138,6 +144,7 @@ fun TasaVeScreen(
     var scannerForCart by remember { mutableStateOf(false) }
     var scannedDuringDialog by remember { mutableStateOf(false) }
     var showPlansDialog by remember { mutableStateOf(false) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(widgetAction) {
         when (widgetAction) {
@@ -297,6 +304,38 @@ fun TasaVeScreen(
                     }
                 },
                 actions = {
+                    val hasUpcomingHoliday = remember { BcvCalendarHelper.hasUpcomingBankHolidaySoon() }
+                    // SUDEBAN Bank Calendar & Daily Historical Rate Lookup
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
+                            .clickable {
+                                showCalendarDialog = true
+                                AnalyticsTracker.logCalendarOpened(context)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Calendario bancario y tasas",
+                            tint = textPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        if (hasUpcomingHoliday) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(6.dp)
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF59E0B))
+                            )
+                        }
+                    }
+
                     // Camera Price Scanner Quick Trigger
                     Box(
                         modifier = Modifier
@@ -395,7 +434,7 @@ fun TasaVeScreen(
             val navItems = listOf(
                 Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, AppTab.CONVERTER.label),
                 Triple(AppTab.CART, Icons.Default.ShoppingCart, AppTab.CART.label),
-                Triple(AppTab.MARKET, Icons.Default.ShowChart, AppTab.MARKET.label),
+                Triple(AppTab.MARKET, Icons.Default.GridView, AppTab.MARKET.label),
                 Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, AppTab.CHECKOUT.label)
             )
             val dockContainerColor = if (isDark) Color(0xEB0D131D) else Color(0xFAFFFFFF)
@@ -458,6 +497,7 @@ fun TasaVeScreen(
                                     .clickable {
                                         if (currentTab != tab) {
                                             currentTab = tab
+                                            AnalyticsTracker.logTabOpened(context, tab.label)
                                             if (tab != AppTab.CONVERTER) {
                                                 interstitialAdManager.maybeShowAfterAction(
                                                     activity = activity,
@@ -568,6 +608,9 @@ fun TasaVeScreen(
                         snapshots = rateSnapshots,
                         isHistoryLoading = isHistoryLoading,
                         alertSettings = alertSettings,
+                        savedFeePercent = savedFeePercent,
+                        onSaveFavoriteFee = { pct -> viewModel.saveFavoriteFeePercent(pct) },
+                        onTrackUtilTool = { toolKey -> AnalyticsTracker.logUtilToolOpened(context, toolKey) },
                         onRefreshHistory = { viewModel.fetchHistoricalRates(forceRefresh = true) },
                         onUpdateAlerts = { viewModel.updateAlertSettings(it) },
                         onTestNotification = { viewModel.triggerTestAlertNotification() },
@@ -769,12 +812,17 @@ fun TasaVeScreen(
                 // BCV Hoy vs Mañana segmented selector when BCV has published tomorrow's rate
                 val nextUsd = uiState.nextUsdBcv
                 val nextDateIso = uiState.nextBcvDateIso
-                if (nextUsd != null && nextDateIso != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                val isCopSelected = viewModel.selectedRateKey == "COP"
+                val copRateInfo = viewModel.getEffectiveCopRate()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (nextUsd != null && nextDateIso != null) {
                         FilterChip(
                             selected = !viewModel.previewTomorrowBcv,
                             onClick = { viewModel.setTomorrowBcvPreview(false) },
@@ -803,7 +851,39 @@ fun TasaVeScreen(
                                 )
                             }
                         )
-                        Spacer(modifier = Modifier.weight(1f))
+                    } else {
+                        Text(
+                            text = "Tasas del día",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textSecondary
+                        )
+                    }
+
+                    FilterChip(
+                        selected = isCopSelected,
+                        onClick = {
+                            if (isCopSelected) {
+                                viewModel.selectRate("USD_BCV")
+                            } else {
+                                viewModel.selectRate("COP")
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x33F59E0B),
+                            selectedLabelColor = Color(0xFFF59E0B)
+                        ),
+                        label = {
+                            Text(
+                                text = "🇨🇴 COP",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    )
+
+                    if (nextUsd != null) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
@@ -843,6 +923,32 @@ fun TasaVeScreen(
                         )
                     }
                 }
+
+                if (isCopSelected && copRateInfo != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x1FF59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🇨🇴 Modo Frontera: 1 USD = ${String.format(Locale.US, "%,.0f", uiState.copPerUsd)} COP",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", copRateInfo.rate * 1000.0)}",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
+                        )
+                    }
+                }
             }
 
             val currentRateInfo = viewModel.getSelectedRateInfo()
@@ -876,7 +982,12 @@ fun TasaVeScreen(
                         )
 
                         currentRateInfo?.let {
-                            val decimals = if (it.key == "USDT") "%.2f" else "%.4f"
+                            val badgeText = if (it.key == "COP") {
+                                "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", it.rate * 1000.0)}"
+                            } else {
+                                val decimals = if (it.key == "USDT") "%.2f" else "%.4f"
+                                "Tasa actual: Bs. ${String.format(Locale.US, decimals, it.rate)}"
+                            }
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
@@ -886,7 +997,7 @@ fun TasaVeScreen(
                                     .padding(horizontal = 10.dp, vertical = 3.dp)
                             ) {
                                 Text(
-                                    text = "Tasa actual: Bs. ${String.format(Locale.US, decimals, it.rate)}",
+                                    text = badgeText,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
@@ -1459,6 +1570,33 @@ fun TasaVeScreen(
                                 }
                             }
 
+                            val copVesRate = viewModel.getEffectiveCopRate()?.rate ?: 0.0
+                            if (copVesRate > 0.0) {
+                                val copEquiv = parsedVes / copVesRate
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isDark) Color(0x14F59E0B) else Color(0x12F59E0B))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "🇨🇴 Frontera (TRM ${String.format(Locale.US, "%,.0f", uiState.copPerUsd)}):",
+                                        fontSize = 9.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = textSecondary
+                                    )
+                                    Text(
+                                        text = "${String.format(Locale.US, "%,.0f", copEquiv)} COP",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFF59E0B)
+                                    )
+                                }
+                            }
+
                             if (parsedForeign > 0.0) {
                                 Box(
                                     modifier = Modifier
@@ -1587,6 +1725,8 @@ fun TasaVeScreen(
             isUltraUser = isUltraUser,
             isAdFreePassActive = isAdFreePassActive,
             isRewardedAdLoading = isRewardedAdLoading,
+            analyticsEnabled = analyticsEnabled,
+            onToggleAnalytics = { enabled -> viewModel.setAnalyticsEnabled(enabled) },
             debugTier = debugTier,
             ultraMonthlyPrice = ultraMonthlyPrice,
             onDismiss = { showSettings = false },
@@ -1600,6 +1740,23 @@ fun TasaVeScreen(
             onRestorePurchases = {
                 viewModel.restorePurchases()
             }
+        )
+    }
+
+    if (showCalendarDialog) {
+        BcvCalendarDialog(
+            isDark = isDark,
+            snapshots = rateSnapshots,
+            currentUsd = viewModel.getEffectiveUsdBcv()?.rate ?: uiState.usdBcv?.rate ?: 0.0,
+            currentEur = viewModel.getEffectiveEurBcv()?.rate ?: uiState.eurBcv?.rate ?: 0.0,
+            currentUsdt = uiState.usdtParalelo?.rate ?: 0.0,
+            onApplyQuickAmount = { amountUsd ->
+                currentTab = AppTab.CONVERTER
+                viewModel.selectRate("USD_BCV")
+                viewModel.updateForeignAmount(amountUsd)
+                showCalendarDialog = false
+            },
+            onDismiss = { showCalendarDialog = false }
         )
     }
 
@@ -2005,6 +2162,8 @@ fun SleekSettingsDialog(
     isUltraUser: Boolean,
     isAdFreePassActive: Boolean = false,
     isRewardedAdLoading: Boolean = false,
+    analyticsEnabled: Boolean = true,
+    onToggleAnalytics: (Boolean) -> Unit = {},
     debugTier: UserTier,
     ultraMonthlyPrice: String,
     onDismiss: () -> Unit,
@@ -2468,6 +2627,38 @@ fun SleekSettingsDialog(
                         color = Color(0xFF10B981),
                         letterSpacing = 0.7.sp
                     )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (isDark) Color(0x14FFFFFF) else Color(0xFFF8FAFC))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                            Text(
+                                text = "Estadísticas anónimas de uso",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary
+                            )
+                            Text(
+                                text = "Solo qué funciones abres (sin montos ni datos personales).",
+                                fontSize = 10.sp,
+                                color = textSecondary
+                            )
+                        }
+                        Switch(
+                            checked = analyticsEnabled,
+                            onCheckedChange = onToggleAnalytics,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.Black,
+                                checkedTrackColor = Color(0xFF10B981)
+                            )
+                        )
+                    }
 
                     LegalMenuRow(
                         icon = Icons.Default.PrivacyTip,
@@ -2975,23 +3166,23 @@ private fun LegalCenterDialog(
     val privacySections = remember {
         listOf(
             "1. Origen y actualización de los datos" to
-                "Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo e históricos para gráficos) provienen de APIs públicas (ve.dolarapi.com y rates.dolarvzla.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
-            "2. Información que recopilamos" to
-                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay: alias, banco, cédula/RIF, teléfono, cuenta de 20 dígitos, titular y correo/ID digital) se guardan únicamente de forma local en tu dispositivo.",
+                "Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP de frontera e históricos diarios) provienen de APIs públicas (ve.dolarapi.com, co.dolarapi.com, open.er-api.com y rates.dolarvzla.com). Tasa VE es una herramienta independiente y NO está afiliada ni autorizada por el BCV, SENIAT, SUDEBAN ni entidad bancaria alguna. Las últimas tasas se almacenan en caché local para el Modo Offline y el Widget.",
+            "2. Información y estadísticas anónimas" to
+                "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF, comisión favorita y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay) se guardan únicamente en tu dispositivo. De forma adicional, usamos Google Firebase Analytics únicamente para registrar eventos anónimos de navegación (por ejemplo, qué pestaña o herramienta de Útiles se abre), SIN incluir jamás montos, tasas escritas, nombres, cédulas, teléfonos ni datos bancarios. Puedes desactivar estas estadísticas en cualquier momento desde Configuración > Legal y Privacidad.",
             "3. Uso de la información" to
-                "Los datos locales se usan exclusivamente para calcular conversiones, totales de carrito, estimaciones de IVA/IGTF, brecha cambiaria, vuelto en pagos mixtos, gráficos de tendencia, alertas locales, widgets de inicio (Tasas en Vivo gratis y Calculadora y Cobros Ultra), tarjetas visuales PNG generadas temporalmente en caché (shared_cards) con marca personalizada opcional y resúmenes de cobro que tú eliges copiar o compartir.",
+                "Los datos locales se usan exclusivamente para calcular conversiones (incluyendo COP de frontera), totales de carrito, IVA/IGTF, vuelto en pagos mixtos, herramientas de Útiles (¿Con qué pago?, Inicial y cuotas, Comisiones, Dividir cuenta), Calendario SUDEBAN, alertas locales, widgets de inicio y tarjetas visuales PNG temporales en caché (shared_cards).",
             "4. Enlaces externos y compartición" to
-                "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en el caché local compartido por FileProvider sin subirse a servidores externos. Las consultas a las APIs de tasas solo descargan cotizaciones públicas sin enviar identidad ni perfiles de cobro.",
+                "Al pulsar 'Enviar por WhatsApp', 'Tarjeta (IMG)' o abrir enlaces hacia Google Play o políticas web, Android abre la aplicación externa elegida bajo sus propias políticas. Las imágenes PNG temporales generadas para compartir residen solo en caché local compartido por FileProvider sin subirse a servidores externos.",
             "5. Seguridad de los datos" to
-                "Todas las consultas de red usan HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar todos los datos en cualquier momento desde la app o Ajustes de Android.",
+                "Todas las consultas de red y la telemetría anónima usan cifrado HTTPS (SSL/TLS). El escáner OCR y las alertas se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar o desactivar estadísticas en cualquier momento desde Configuración.",
             "6. Publicidad, anuncios bonificados y suscripción Ultra" to
-                "El Plan Gratuito incluye todas las funciones principales (calculadora multi-tasa exacta, BCV Mañana, Brecha y Tendencias, Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios con opción voluntaria de ver un anuncio bonificado de AdMob para obtener +5 escaneos extra o activar 12 h sin banners ni intersticiales). Muestra banners adaptativos e intersticiales ocasionales tras acciones clave (nunca al abrir la app). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, marca personalizada en tarjetas PNG, Alertas de tasa y Widget Calculadora y Cobros Ultra (Tasas, Calculadora rápida y Cobro Express).",
+                "El Plan Gratuito incluye el conversor multi-tasa (BCV, Euro, USDT y COP), BCV Mañana, Calendario SUDEBAN, todas las herramientas de Útiles, Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios (con anuncio bonificado opcional para +5 escaneos o 12 h sin banners). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, ruta favorita en Comisiones, marca personalizada en Tarjeta PNG, Alertas de tasa y Widget Calculadora y Cobros Ultra.",
             "7. Permisos del sistema" to
-                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo (no grabamos video ni guardamos o subimos fotos).\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, anuncios gratuitos/bonificados y suscripción Ultra en Google Play.",
+                "• Cámara (CAMERA): Opcional y solo en primer plano para leer precios por OCR en el dispositivo.\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para alertas locales de variación de tasa.\n• Internet y Facturación (INTERNET, BILLING): Para cotizaciones públicas, estadísticas anónimas opt-out, anuncios y suscripción Ultra en Google Play.",
             "8. Uso de tecnologías de terceros" to
-                "Integramos SDKs certificados: Google Mobile Ads (AdMob para banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales), Google Play Billing (suscripciones mediante tokens anónimos), Google ML Kit Text Recognition (OCR local en dispositivo con posibles métricas técnicas mínimas) y APIs públicas de tasas (DolarAPI y DolarVzla).",
+                "Integramos SDKs certificados: Google Firebase Analytics (métricas anónimas agregadas de uso de funciones, desactivable en Configuración), Google Mobile Ads (AdMob), Google Play Billing, Google ML Kit Text Recognition (OCR local) y APIs públicas de tasas (DolarAPI, DolarVzla y OpenER).",
             "9. Cambios en esta política" to
-                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La fecha de última actualización indica la versión vigente (20 de noviembre de 2026 • v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
+                "Podemos actualizar esta política para reflejar mejoras o requisitos legales y de Google Play. La versión vigente corresponde al 21 de noviembre de 2026 (v1.2.0). La app no está dirigida a menores de 13 años (o 16 en el EEE).",
             "10. Contacto" to
                 "Responsable: Tasa VE\nCorreo de privacidad y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
         )
@@ -3000,15 +3191,15 @@ private fun LegalCenterDialog(
     val termsSections = remember {
         listOf(
             "1. Naturaleza y No Afiliación Oficial" to
-                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad financiera alguna.",
-            "2. Catálogo de Bancos, Cobros, Escáner e Impuestos" to
-                "La lista de códigos bancarios (0134 Banesco, etc.) y los perfiles de Pago Móvil, Cuenta Bancaria, Zelle y Binance Pay son solo plantillas de texto/imagen para facilitar tus resúmenes de cobro; Tasa VE no valida cuentas ni procesa transferencias. El OCR por cámara y los cálculos de IVA (16%), IGTF (3%), brecha y vuelto son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
+                "Tasa VE es una calculadora matemática e informativa. NO es banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y NO está afiliada al BCV, SENIAT, SUDEBAN, Cashea, Krece, PayPal, Zinli, Zelle, Binance ni entidad financiera alguna.",
+            "2. Catálogo de Bancos, Útiles, Calendario e Impuestos" to
+                "Las plantillas de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance), el calendario referencial de feriados SUDEBAN y las herramientas de Útiles (¿Con qué pago?, Inicial y cuotas, Comisiones y Dividir cuenta) son estrictamente referenciales. Tasa VE no valida cuentas ni procesa transferencias.",
             "3. Fuentes de Datos y Descargo" to
-                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com y rates.dolarvzla.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales, errores de lectura óptica o decisiones tomadas con base en la app.",
+                "Las tasas se consultan de fuentes públicas (ve.dolarapi.com, co.dolarapi.com, open.er-api.com y rates.dolarvzla.com) y pueden presentar desfases frente a operaciones bancarias en vivo. El desarrollador no es responsable por pérdidas comerciales o decisiones tomadas con base en la app.",
             "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
-                "El Plan Gratuito ofrece las funciones principales con banners, intersticiales ocasionales tras acciones, Widget Tasas en Vivo gratis y límites en escáner (3 diarios, ampliables con +5 por anuncio bonificado, o pase de 12 h sin anuncios por 1 video), 5 productos en carrito y 1 perfil de cobro. Tasa VE Ultra es una suscripción mensual (\$0.99 USD) o anual (\$7.99 USD) renovable automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones; elimina todos los anuncios y habilita escáner, carrito + IVA/IGTF, perfiles de cobro ilimitados, logo propio en tarjetas, Alertas y Widget Calculadora y Cobros Ultra.",
-            "5. Reembolsos, Restauración y Contacto" to
-                "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Los reembolsos se rigen por las políticas de Google Play Store. Contacto legal y soporte: soporte@tasave.net."
+                "El Plan Gratuito ofrece el conversor (BCV, Euro, USDT, COP), Calendario SUDEBAN, las 4 herramientas de Útiles, Pago Mixto, Tarjeta PNG y Widget Tasas en Vivo con banners e intersticiales ocasionales. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año) se renueva automáticamente vía Google Play salvo cancelación al menos 24 h antes desde Google Play > Suscripciones.",
+            "5. Privacidad, Reembolsos y Contacto" to
+                "Las compras se vinculan a tu cuenta Google y pueden restaurarse desde Configuración. Puedes desactivar el registro anónimo de uso (Firebase Analytics) en Configuración > Legal y Privacidad. Contacto: soporte@tasave.net."
         )
     }
 
@@ -3045,7 +3236,7 @@ private fun LegalCenterDialog(
                             color = textPrimary
                         )
                         Text(
-                            text = "Actualizado: 19 nov 2026 • Versión 1.2.0",
+                            text = "Actualizado: 21 nov 2026 • Versión 1.2.0",
                             fontSize = 10.5.sp,
                             color = Color(0xFF10B981),
                             fontWeight = FontWeight.SemiBold
@@ -3265,5 +3456,354 @@ private fun copyToClipboard(context: Context, text: String) {
     val clip = ClipData.newPlainText("Tasa VE", text)
     clipboard.setPrimaryClip(clip)
 }
+
+@Composable
+private fun BcvCalendarDialog(
+    isDark: Boolean,
+    snapshots: List<RateSnapshot>,
+    currentUsd: Double,
+    currentEur: Double,
+    currentUsdt: Double,
+    onApplyQuickAmount: (amountUsd: String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val dialogBg = if (isDark) Color(0xFF0E0E12) else Color(0xFFF8FAFC)
+    val cardBg = if (isDark) Color(0xFF16161C) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val borderCol = if (isDark) Color(0x2694A3B8) else Color(0x1F475569)
+    val emerald = Color(0xFF10B981)
+    val emeraldLight = Color(0xFF34D399)
+    val amber = Color(0xFFF59E0B)
+
+    val todayCal = remember { BcvCalendarHelper.todayCaracasCalendar() }
+    val todayIso = remember { BcvCalendarHelper.formatIsoDate(todayCal) }
+    var visibleYear by remember { mutableIntStateOf(todayCal.get(Calendar.YEAR)) }
+    var visibleMonth by remember { mutableIntStateOf(todayCal.get(Calendar.MONTH)) }
+
+    val gridCells = remember(visibleYear, visibleMonth) {
+        BcvCalendarHelper.buildMonthGrid(visibleYear, visibleMonth)
+    }
+
+    var selectedDay by remember(visibleYear, visibleMonth) {
+        mutableStateOf(
+            gridCells.filterNotNull().firstOrNull { it.isoDate == todayIso }
+                ?: gridCells.filterNotNull().first()
+        )
+    }
+
+    var quickUsdText by remember { mutableStateOf("10") }
+    var quickUseUsdt by remember { mutableStateOf(false) }
+
+    val dayLookup = remember(selectedDay, snapshots, currentUsd, currentEur, currentUsdt) {
+        BcvCalendarHelper.lookupRateForDate(
+            isoDate = selectedDay.isoDate,
+            snapshots = snapshots,
+            fallbackUsd = currentUsd,
+            fallbackEur = currentEur,
+            fallbackUsdt = currentUsdt
+        )
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .border(1.dp, borderCol, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Calendario Bancario y Tasas",
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Toca cualquier día para ver feriados SUDEBAN y tasa",
+                            fontSize = 10.5.sp,
+                            color = textSecondary
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Selector de Mes
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(cardBg)
+                        .border(1.dp, borderCol, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = {
+                            if (visibleMonth == 0) {
+                                visibleMonth = 11
+                                visibleYear -= 1
+                            } else {
+                                visibleMonth -= 1
+                            }
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Mes anterior", tint = textPrimary)
+                    }
+                    Text(
+                        text = BcvCalendarHelper.formatMonthYearEs(visibleYear, visibleMonth),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    IconButton(
+                        onClick = {
+                            if (visibleMonth == 11) {
+                                visibleMonth = 0
+                                visibleYear += 1
+                            } else {
+                                visibleMonth += 1
+                            }
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(Icons.Default.ChevronRight, contentDescription = "Mes siguiente", tint = textPrimary)
+                    }
+                }
+
+                // Cabecera Lun-Dom
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom").forEach { d ->
+                        Text(
+                            text = d,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // Cuadrícula del mes
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    gridCells.chunked(7).forEach { week ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            for (i in 0 until 7) {
+                                val cell = week.getOrNull(i)
+                                if (cell == null) {
+                                    Spacer(modifier = Modifier.weight(1f).height(38.dp))
+                                } else {
+                                    val isSelected = selectedDay.isoDate == cell.isoDate
+                                    val isToday = cell.isoDate == todayIso
+                                    val cellBg = when {
+                                        isSelected -> emerald.copy(alpha = 0.24f)
+                                        cell.isBankHoliday -> amber.copy(alpha = 0.16f)
+                                        cell.isWeekend -> if (isDark) Color(0x0D94A3B8) else Color(0x0F475569)
+                                        else -> cardBg
+                                    }
+                                    val cellBorder = when {
+                                        isSelected -> emerald
+                                        cell.isBankHoliday -> amber.copy(alpha = 0.65f)
+                                        isToday -> emeraldLight.copy(alpha = 0.55f)
+                                        else -> borderCol
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(38.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(cellBg)
+                                            .border(if (isSelected) 1.5.dp else 1.dp, cellBorder, RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                selectedDay = cell
+                                                com.julcer26.tasave.analytics.AnalyticsTracker.logCalendarDaySelected(
+                                                    context,
+                                                    cell.isBankHoliday
+                                                )
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = "${cell.dayOfMonth}",
+                                                fontSize = 11.5.sp,
+                                                fontWeight = if (isSelected || isToday || cell.isBankHoliday) FontWeight.Bold else FontWeight.Medium,
+                                                color = when {
+                                                    cell.isBankHoliday -> amber
+                                                    isSelected -> emeraldLight
+                                                    else -> textPrimary
+                                                }
+                                            )
+                                            if (cell.isBankHoliday || isToday) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(4.dp)
+                                                        .clip(CircleShape)
+                                                        .background(if (cell.isBankHoliday) amber else emeraldLight)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Detalle del día seleccionado
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(cardBg)
+                        .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = selectedDay.isoDate,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = if (dayLookup.isExactSnapshot) "Histórico exacto" else "Ref. más cercana",
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedDay.isBankHoliday) amber else emeraldLight
+                        )
+                    }
+                    Text(
+                        text = selectedDay.statusSummary,
+                        fontSize = 11.sp,
+                        fontWeight = if (selectedDay.isBankHoliday) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selectedDay.isBankHoliday) amber else textSecondary
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            Triple("USD BCV", dayLookup.usdBcv, emeraldLight),
+                            Triple("EUR BCV", dayLookup.eurBcv, Color(0xFF60A5FA)),
+                            Triple("USDT Bin.", dayLookup.usdt, amber)
+                        ).forEach { (label, rateVal, accent) ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isDark) Color(0xFF1F2028) else Color(0xFFF1F5F9))
+                                    .padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(label, fontSize = 9.sp, color = textSecondary)
+                                Text(
+                                    text = "Bs. ${String.format(Locale.US, "%.2f", rateVal)}",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = accent
+                                )
+                            }
+                        }
+                    }
+
+                    // Cálculo rápido en el día elegido
+                    val quickAmt = quickUsdText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val chosenRate = if (quickUseUsdt) dayLookup.usdt else dayLookup.usdBcv
+                    val quickBs = quickAmt * chosenRate
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = quickUsdText,
+                            onValueChange = { if (it.length <= 8) quickUsdText = it },
+                            label = { Text("Cálculo rápido ($)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = if (quickUseUsdt) "A tasa USDT:" else "A tasa BCV:",
+                                fontSize = 10.sp,
+                                color = textSecondary,
+                                modifier = Modifier.clickable { quickUseUsdt = !quickUseUsdt }
+                            )
+                            Text(
+                                text = "Bs. ${String.format(Locale.US, "%,.2f", quickBs)}",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = emeraldLight
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { quickUseUsdt = !quickUseUsdt },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = if (quickUseUsdt) "Ver en BCV" else "Ver en USDT",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Button(
+                            onClick = { onApplyQuickAmount(quickUsdText) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = emerald, contentColor = Color.Black)
+                        ) {
+                            Text("Pasar al conversor", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 

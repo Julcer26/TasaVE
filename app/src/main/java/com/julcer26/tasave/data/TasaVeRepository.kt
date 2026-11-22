@@ -81,6 +81,14 @@ class TasaVeRepository(
     suspend fun fetchRates(forceRefresh: Boolean = false): TasaVeRatesResult = withContext(Dispatchers.IO) {
         if (!forceRefresh && !cacheHelper.isCacheExpired() && cacheHelper.hasCachedData()) {
             val cached = cacheHelper.getAllCachedRates()
+            val copRateInfo = RateInfo(
+                key = "COP",
+                label = "Peso Colombiano",
+                symbol = "COP",
+                rate = if (cached.copPerUsd > 0.0) cached.usdBcv.rate / cached.copPerUsd else 0.0,
+                dateUpdated = cached.copDate,
+                isLocalOffline = false
+            )
             return@withContext TasaVeRatesResult.Success(
                 usdBcv = cached.usdBcv,
                 eurBcv = cached.eurBcv,
@@ -88,6 +96,8 @@ class TasaVeRepository(
                 nextUsdBcv = cached.nextUsdBcv,
                 nextEurBcv = cached.nextEurBcv,
                 nextBcvDateIso = cached.nextBcvDateIso,
+                copPerUsd = cached.copPerUsd,
+                copRate = copRateInfo,
                 isFromCache = true
             )
         }
@@ -100,11 +110,33 @@ class TasaVeRepository(
                 val bcvDetailedDeferred = async {
                     runCatching { apiService.getBcvDetailed() }.getOrNull()
                 }
+                val copTrmDeferred = async {
+                    runCatching { apiService.getColombiaTrm() }.getOrNull()
+                }
 
                 val usdResponse = usdDeferred.await()
                 val eurResponse = eurDeferred.await()
                 val usdtResponse = usdtDeferred.await()
                 val bcvDetailed = bcvDetailedDeferred.await()
+                val copTrm = copTrmDeferred.await()
+
+                val cachedFallback = cacheHelper.getAllCachedRates()
+                val resolvedCopPerUsd: Double
+                val resolvedCopDate: String
+                val copTrmValor = copTrm?.valor
+                if (copTrmValor != null && copTrmValor > 0.0) {
+                    resolvedCopPerUsd = copTrmValor
+                    resolvedCopDate = formatDate(copTrm.fechaActualizacion) ?: getCurrentDateString()
+                } else {
+                    val openErCop = runCatching { apiService.getOpenErUsdRates() }.getOrNull()?.rates?.get("COP")
+                    if (openErCop != null && openErCop > 0.0) {
+                        resolvedCopPerUsd = openErCop
+                        resolvedCopDate = getCurrentDateString()
+                    } else {
+                        resolvedCopPerUsd = cachedFallback.copPerUsd
+                        resolvedCopDate = cachedFallback.copDate
+                    }
+                }
 
                 val todayCaracas = todayCaracasIsoDate()
                 val resolvedBcv = resolveBcvTodayAndNext(
@@ -131,7 +163,9 @@ class TasaVeRepository(
                     eurChangePct = resolvedBcv.eurChangePct,
                     nextUsd = resolvedBcv.nextUsd,
                     nextEur = resolvedBcv.nextEur,
-                    nextBcvDateIso = resolvedBcv.nextEffectiveIso
+                    nextBcvDateIso = resolvedBcv.nextEffectiveIso,
+                    copPerUsd = resolvedCopPerUsd,
+                    copDate = resolvedCopDate
                 )
 
                 val usdRate = RateInfo(
@@ -160,6 +194,14 @@ class TasaVeRepository(
                     symbol = "₮",
                     rate = usdtResponse.promedio,
                     dateUpdated = usdtDate,
+                    isLocalOffline = false
+                )
+                val copRate = RateInfo(
+                    key = "COP",
+                    label = "Peso Colombiano",
+                    symbol = "COP",
+                    rate = if (resolvedCopPerUsd > 0.0) resolvedBcv.todayUsd / resolvedCopPerUsd else 0.0,
+                    dateUpdated = resolvedCopDate,
                     isLocalOffline = false
                 )
 
@@ -196,12 +238,22 @@ class TasaVeRepository(
                     nextUsdBcv = nextUsdRate,
                     nextEurBcv = nextEurRate,
                     nextBcvDateIso = resolvedBcv.nextEffectiveIso,
+                    copPerUsd = resolvedCopPerUsd,
+                    copRate = copRate,
                     isFromCache = false
                 )
             }
         } catch (e: Exception) {
             Log.e("TasaVeRepository", "Error fetching from APIs, falling back to local storage", e)
             val cached = cacheHelper.getAllCachedRates()
+            val copRateOffline = RateInfo(
+                key = "COP",
+                label = "Peso Colombiano",
+                symbol = "COP",
+                rate = if (cached.copPerUsd > 0.0) cached.usdBcv.rate / cached.copPerUsd else 0.0,
+                dateUpdated = cached.copDate,
+                isLocalOffline = true
+            )
             TasaVeRatesResult.Success(
                 usdBcv = cached.usdBcv.copy(isLocalOffline = true),
                 eurBcv = cached.eurBcv.copy(isLocalOffline = true),
@@ -209,6 +261,8 @@ class TasaVeRepository(
                 nextUsdBcv = cached.nextUsdBcv?.copy(isLocalOffline = true),
                 nextEurBcv = cached.nextEurBcv?.copy(isLocalOffline = true),
                 nextBcvDateIso = cached.nextBcvDateIso,
+                copPerUsd = cached.copPerUsd,
+                copRate = copRateOffline,
                 isFromCache = true,
                 isOfflineError = true
             )
@@ -420,6 +474,8 @@ sealed class TasaVeRatesResult {
         val nextUsdBcv: RateInfo? = null,
         val nextEurBcv: RateInfo? = null,
         val nextBcvDateIso: String? = null,
+        val copPerUsd: Double = 4320.0,
+        val copRate: RateInfo? = null,
         val isFromCache: Boolean,
         val isOfflineError: Boolean = false
     ) : TasaVeRatesResult()

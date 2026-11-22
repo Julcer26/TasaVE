@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 enum class AppTab(val label: String) {
     CONVERTER("Conversor"),
     CART("Carrito"),
-    MARKET("Brecha"),
+    MARKET("Útiles"),
     CHECKOUT("Cobros")
 }
 
@@ -269,4 +269,183 @@ object UltraMath {
             else -> sorted
         }
     }
+
+    fun calculatePaymentComparison(
+        priceUsd: Double,
+        bcvRate: Double,
+        usdtRate: Double,
+        cashDiscountPercent: Double = 0.0
+    ): PaymentComparisonResult {
+        val safePrice = priceUsd.coerceAtLeast(0.0)
+        val safeBcv = if (bcvRate > 0.0) bcvRate else 1.0
+        val safeUsdt = if (usdtRate > 0.0) usdtRate else safeBcv
+        val safeDiscount = cashDiscountPercent.coerceIn(0.0, 90.0)
+
+        val bsAmount = safePrice * safeBcv
+        val usdtNeeded = bsAmount / safeUsdt
+        val cashEffective = safePrice * (1.0 - safeDiscount / 100.0)
+        val spreadPct = calculateSpreadPercent(safeUsdt, safeBcv)
+        val recommendUsdt = usdtNeeded <= cashEffective
+
+        return PaymentComparisonResult(
+            priceUsd = safePrice,
+            bcvRate = safeBcv,
+            usdtRate = safeUsdt,
+            cashDiscountPercent = safeDiscount,
+            bsAmount = bsAmount,
+            usdtNeededToCoverBs = usdtNeeded,
+            cashOrZelleEffectiveUsd = cashEffective,
+            spreadPercent = spreadPct,
+            cashSavingsVsUsdtUsd = (usdtNeeded - cashEffective).coerceAtLeast(0.0),
+            usdtSavingsVsCashUsd = (cashEffective - usdtNeeded).coerceAtLeast(0.0),
+            recommendUsdt = recommendUsdt
+        )
+    }
+
+    fun calculateInstallmentPlan(
+        totalUsd: Double,
+        initialPercent: Int,
+        installmentCount: Int,
+        bcvRate: Double,
+        usdtRate: Double
+    ): InstallmentPlanResult {
+        val safeTotal = totalUsd.coerceAtLeast(0.0)
+        val safeInitPct = initialPercent.coerceIn(0, 100)
+        val safeCount = installmentCount.coerceIn(1, 24)
+        val safeBcv = if (bcvRate > 0.0) bcvRate else 1.0
+        val safeUsdt = if (usdtRate > 0.0) usdtRate else safeBcv
+
+        val initialUsd = safeTotal * (safeInitPct / 100.0)
+        val remainingUsd = (safeTotal - initialUsd).coerceAtLeast(0.0)
+        val installmentUsd = remainingUsd / safeCount
+
+        return InstallmentPlanResult(
+            totalUsd = safeTotal,
+            initialPercent = safeInitPct,
+            installmentCount = safeCount,
+            initialUsd = initialUsd,
+            initialBs = initialUsd * safeBcv,
+            initialUsdt = (initialUsd * safeBcv) / safeUsdt,
+            remainingUsd = remainingUsd,
+            installmentUsd = installmentUsd,
+            installmentBs = installmentUsd * safeBcv,
+            totalBsAtCurrentRate = safeTotal * safeBcv
+        )
+    }
+
+    fun calculateNetOrGross(
+        amountUsd: Double,
+        percentFee: Double,
+        fixedFeeUsd: Double,
+        calculateGrossToReceive: Boolean,
+        usdtRate: Double
+    ): FeeCalculationResult {
+        val safeAmount = amountUsd.coerceAtLeast(0.0)
+        val safePct = percentFee.coerceIn(0.0, 95.0)
+        val safeFixed = fixedFeeUsd.coerceAtLeast(0.0)
+        val safeUsdt = if (usdtRate > 0.0) usdtRate else 1.0
+
+        return if (!calculateGrossToReceive) {
+            val rawFee = if (safeAmount > 0.0) (safeAmount * safePct / 100.0) + safeFixed else 0.0
+            val fee = rawFee.coerceAtMost(safeAmount)
+            val net = (safeAmount - fee).coerceAtLeast(0.0)
+            val effPct = if (safeAmount > 0.0) (fee / safeAmount) * 100.0 else 0.0
+            FeeCalculationResult(
+                inputUsd = safeAmount,
+                grossUsd = safeAmount,
+                netUsd = net,
+                feeUsd = fee,
+                effectiveFeePercent = effPct,
+                netVesAtUsdt = net * safeUsdt
+            )
+        } else {
+            val denom = 1.0 - (safePct / 100.0)
+            val gross = if (safeAmount > 0.0) (safeAmount + safeFixed) / denom else 0.0
+            val fee = (gross - safeAmount).coerceAtLeast(0.0)
+            val effPct = if (gross > 0.0) (fee / gross) * 100.0 else 0.0
+            FeeCalculationResult(
+                inputUsd = safeAmount,
+                grossUsd = gross,
+                netUsd = safeAmount,
+                feeUsd = fee,
+                effectiveFeePercent = effPct,
+                netVesAtUsdt = safeAmount * safeUsdt
+            )
+        }
+    }
+
+    fun calculateSplitBill(
+        totalUsd: Double,
+        peopleCount: Int,
+        rate: Double
+    ): SplitBillResult {
+        val safeTotal = totalUsd.coerceAtLeast(0.0)
+        val safePeople = peopleCount.coerceIn(1, 50)
+        val safeRate = if (rate > 0.0) rate else 1.0
+        val totalBs = safeTotal * safeRate
+        val perPersonUsd = safeTotal / safePeople
+        return SplitBillResult(
+            totalUsd = safeTotal,
+            peopleCount = safePeople,
+            perPersonUsd = perPersonUsd,
+            perPersonBs = totalBs / safePeople,
+            totalBs = totalBs
+        )
+    }
 }
+
+data class PaymentComparisonResult(
+    val priceUsd: Double,
+    val bcvRate: Double,
+    val usdtRate: Double,
+    val cashDiscountPercent: Double,
+    val bsAmount: Double,
+    val usdtNeededToCoverBs: Double,
+    val cashOrZelleEffectiveUsd: Double,
+    val spreadPercent: Double,
+    val cashSavingsVsUsdtUsd: Double,
+    val usdtSavingsVsCashUsd: Double,
+    val recommendUsdt: Boolean
+)
+
+data class InstallmentPlanResult(
+    val totalUsd: Double,
+    val initialPercent: Int,
+    val installmentCount: Int,
+    val initialUsd: Double,
+    val initialBs: Double,
+    val initialUsdt: Double,
+    val remainingUsd: Double,
+    val installmentUsd: Double,
+    val installmentBs: Double,
+    val totalBsAtCurrentRate: Double
+)
+
+enum class FeePlatform(
+    val label: String,
+    val shortName: String,
+    val defaultPercent: Double,
+    val fixedFeeUsd: Double
+) {
+    PAYPAL("PayPal (5.4% + \$0.30)", "PayPal", 5.4, 0.30),
+    ZINLI("Zinli a P2P (~2.5%)", "Zinli", 2.5, 0.0),
+    WALLY("Wally (~1.5%)", "Wally", 1.5, 0.0),
+    CUSTOM("Personalizada", "Otro %", 3.5, 0.0)
+}
+
+data class FeeCalculationResult(
+    val inputUsd: Double,
+    val grossUsd: Double,
+    val netUsd: Double,
+    val feeUsd: Double,
+    val effectiveFeePercent: Double,
+    val netVesAtUsdt: Double
+)
+
+data class SplitBillResult(
+    val totalUsd: Double,
+    val peopleCount: Int,
+    val perPersonUsd: Double,
+    val perPersonBs: Double,
+    val totalBs: Double
+)

@@ -1,6 +1,6 @@
 # Roadmap de Despliegue, Marketing y Tasa VE Business
 
-**Última actualización:** 19 de noviembre de 2026  
+**Última actualización:** 21 de noviembre de 2026  
 **Rama de desarrollo actual:** `feat/v1.2-ultra`  
 **Dominio oficial:** `https://tasave.net` • **Soporte:** `soporte@tasave.net`  
 **Redes oficiales:** Instagram [`@tasa.ve`](https://www.instagram.com/tasa.ve/) • TikTok [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)
@@ -13,8 +13,8 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, Brecha y Gráficos, Pago Mixto + Tarjeta PNG, **Widget Tasas en Vivo** en inicio, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
-| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y **Widget Calculadora y Cobro Express**. |
+| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario SUDEBAN**, pestaña **Útiles** (*¿Con qué pago?*, *Inicial y cuotas*, *Comisiones*, *Dividir cuenta*), Pago Mixto + Tarjeta PNG, **Widget Tasas en Vivo**, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
+| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **guardado de ruta favorita en Comisiones**, **logo propio en Tarjeta PNG de cobro**, Alertas locales de tasa y **Widget Calculadora y Cobro Express**. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
 > **Regla de oro:** *Business* nunca debe cobrarse como un "extra aparte sobre Ultra". En Google Play Billing se ofertan como planes independientes donde *Business* desbloquea automáticamente todos los beneficios de *Ultra*.
@@ -30,24 +30,28 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
    - `admob_interstitial_ad_unit_id`: `ca-app-pub-1192254236776922/2678817304` *(configurado)*.
    - `admob_rewarded_ad_unit_id`: `ca-app-pub-1192254236776922/4284589192` *(configurado)*.
    - Verificar que `https://tasave.net/app-ads.txt` esté publicado y accesible *(ya activo)*.
-2. **Suscripciones en Google Play Console:**
+2. **Firebase Analytics (Telemetría Anónima Opt-Out):**
+   - Descargar `google-services.json` de Firebase Console para el paquete `com.julcer26.tasave` y copiarlo en `app/google-services.json`.
+   - El plugin `com.google.gms.google-services` se activa automáticamente si el archivo existe y `AnalyticsTracker` respeta el interruptor *Estadísticas anónimas de uso* en *Configuración > Legal y Privacidad*.
+3. **Suscripciones en Google Play Console:**
    - Producto de suscripción **`tasave_ultra_monthly`** con plan base mensual de **\$0.99 USD** *(activo)*.
    - Producto de suscripción **`tasave_ultra_yearly`** con plan base anual de **\$7.99 USD** *(activo)*.
-3. **Firma y empaquetado Release:**
+4. **Firma y empaquetado Release:**
    - Generar keystore privado (`.jks`) y resguardar copia cifrada fuera del repositorio.
    - Compilar bundle firmado con `./gradlew bundleRelease` (`minifyEnabled = true` / ProGuard).
-4. **Ficha de tienda y cumplimiento Play Console:**
+5. **Ficha de tienda y cumplimiento Play Console:**
    - URL de Política de Privacidad: `https://tasave.net/privacy-policy.html`.
    - Correo de contacto en la ficha: `soporte@tasave.net`.
    - Sitio web oficial: `https://tasave.net`.
-   - Formulario **Seguridad de Datos (Data Safety):** declarar que la app no almacena cuentas en servidores propios, que el envío de reportes/sugerencias es opcional por Google Sheets, y que Google Mobile Ads + ML Kit + Play Billing procesan identificadores técnicos / diagnósticos mínimos en tránsito cifrado.
+   - Formulario **Seguridad de Datos (Data Safety):** declarar que la app no almacena cuentas en servidores propios, que el envío de reportes es opcional por Google Sheets, y que **Firebase Analytics** (solo eventos anónimos de navegación con opt-out integrado) + Google Mobile Ads + ML Kit + Play Billing procesan identificadores / diagnósticos técnicos en tránsito cifrado HTTPS.
    - Permiso `CAMERA`: justificar uso exclusivo local en primer plano para OCR de precios (sin captura/almacenamiento ni subida de fotos).
    - Si la cuenta de Play Console es personal nueva: ejecutar prueba cerrada (mínimo 12 testers durante 14 días continuos) usando el APK/Track interno antes de pasar a Producción.
 
 ### 2.2 Métricas a validar tras lanzar v1.2 (antes de publicar v1.3)
 - **Estabilidad:** Crash-free users > 99.5 % en Play Console / Vitals.
+- **Uso real por función (Firebase Analytics):** Eventos `tasave_tab_opened` (`Conversor`, `Carrito`, `Útiles`, `Cobros`), `tasave_util_opened` (`compare_payment`, `installments`, `commissions`, `split_bill`), `tasave_rate_selected` (incluyendo `COP`) y `tasave_calendar_opened`.
 - **Monetización AdMob:** eCPM promedio del banner adaptativo, intersticial post-acción y rewarded (ratio de activación del pase 12h sin anuncios vs. +5 escaneos).
-- **Retención y Conversión:** % de usuarios activos al día 7 (`D7`), pestañas más usadas (`Carrito`, `Cobros`, `Brecha`) y tasa de conversión a `Ultra` (`$0.99` vs `$7.99`).
+- **Retención y Conversión:** % de usuarios activos al día 7 (`D7`), pestañas/útiles más frecuentes y tasa de conversión a `Ultra` (`$0.99` vs `$7.99`).
 
 ---
 
@@ -55,19 +59,19 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 ### 3.1 ASO (Posicionamiento en Google Play Store)
 - **Título (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
-- **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, escáner OCR, carrito IVA/IGTF y cobros Pago Móvil.`
-- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `usdt paralelo`, `pago movil`, `vuelto mixto`, `igtf`, `escaner de precios`.
+- **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros.`
+- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `peso colombiano bolivar`, `feriados bancarios sudeban`, `cashea cuotas`, `paypal comision venezuela`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
 - **Activos visuales recomendados (6 capturas en orden de impacto):**
-  1. Calculadora en vivo (BCV Hoy / Mañana + Euro BCV + USDT en vivo).
-  2. Escáner de cámara OCR leyendo una etiqueta real de supermercado.
-  3. Carrito inteligente con IVA (16 %) y equivalencias.
-  4. Cobros / Pago Mixto con vuelto automático y Tarjeta PNG lista para WhatsApp.
-  5. Brecha cambiaria + gráficos históricos (`1D` a `Todo`).
+  1. Conversor en vivo (BCV Hoy / Mañana + Euro BCV + USDT + chip `🇨🇴 COP` + botón Calendario).
+  2. Calendario SUDEBAN marcando lunes bancarios, tasa del día y cálculo rápido.
+  3. Pestaña **Útiles** (`¿Con qué pago?`, `Inicial y cuotas`, `Comisiones`, `Dividir cuenta`).
+  4. Escáner de cámara OCR + Carrito inteligente con IVA (16 %) y equivalencias.
+  5. Cobros / Pago Mixto con vuelto automático y Tarjeta PNG lista para WhatsApp.
   6. Widget gratis Tasas en Vivo + Widget Ultra Calculadora y Cobro Express.
 
 ### 3.2 Motor Viral Integrado (Loop de Adquisición por WhatsApp)
-Cada vez que un usuario comparte una **Tarjeta PNG** o un resumen de **Cobro / Pago Móvil** por WhatsApp, incluye un formato limpio con ambos enlaces oficiales (`https://tasave.net` y `https://play.google.com/store/apps/details?id=com.julcer26.tasave`), mientras el pie de la tarjeta visual conserva `Generado con Tasa VE • https://tasave.net` incluso cuando un usuario Ultra personaliza la cabecera con su propio logo.
-- **Efecto multiplicador:** quien recibe una tarjeta clara con el cálculo y los datos de pago tiende a preguntar *"¿qué app usas?"* o hacer clic directo para instalarla.
+Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pago Móvil** o un resultado de **Útiles** (`¿Con qué pago?`, `Inicial y cuotas`, `Dividir cuenta`) por WhatsApp, incluye formato limpio con enlaces oficiales (`https://tasave.net` y Google Play), mientras el pie de la tarjeta visual conserva `Generado con Tasa VE • https://tasave.net` incluso cuando un usuario Ultra personaliza la cabecera con su propio logo.
+- **Efecto multiplicador:** quien recibe una tarjeta o desglose de cuotas/cuenta dividida pregunta *"¿qué app usas?"* o instala directo.
 - **Landing (`tasave.net`):** ya publicada en `docs/`; en cuanto Google Play apruebe la ficha pública, reemplazar el CTA de descarga de APK/lista de espera por el botón oficial de Google Play Store.
 
 ### 3.3 Estrategia de Contenido Corto en `@tasa.ve` (Instagram Reels y TikTok)
@@ -75,12 +79,12 @@ Cada vez que un usuario comparte una **Tarjeta PNG** o un resumen de **Cobro / P
   - **Instagram:** [`@tasa.ve`](https://www.instagram.com/tasa.ve/)
   - **TikTok:** [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)
 - **Guiones de videos verticales (15 a 25 segundos)** resolviendo problemas cotidianos reales en Venezuela (sin sobreproducción, grabando la pantalla real del teléfono):
-  1. **"No pierdas dinero con el vuelto en Pago Móvil":** muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. en 5 segundos.
-  2. **"Escanea el precio en el súper sin sacar la cuenta a mano":** apunta la cámara a un producto en \$ y ve el total instantáneo en Bs. BCV.
-  3. **"Mira la tasa BCV de mañana antes que los demás":** muestra el selector *BCV Hoy vs Mañana* y las alertas automáticas.
-  4. **"Cobra por WhatsApp con el logo de tu negocio":** genera la *Tarjeta PNG personalizada* (Ultra) con tus datos de Pago Móvil/Zelle/Binance en 1 toque.
-  5. **"Calcula y copia tu Pago Móvil sin abrir la app":** muestra el **Widget Gratis de Tasas** y el **Widget Ultra (Calculadora + Cobro Express)** directo en el escritorio del teléfono.
-  6. **Canales y alianzas micro:** grupos de emprendedores, tiendas de Instagram, repartidores/delivery y bodegas locales regalando códigos/pases promocionales en lanzamientos.
+  1. **"¿Cambio USDT o pago en efectivo/Zelle?"**: abre *Útiles > ¿Con qué pago?* y demuestra en 5 segundos cuánto ahorras en dólares reales.
+  2. **"Calcula tu inicial y cuotas de Cashea/Krece en bolívares al instante"**: abre *Útiles > Inicial y cuotas* con tasa BCV y compártelo por WhatsApp.
+  3. **"¿Mañana es lunes bancario o a cuánto amanece el BCV?"**: abre el **Calendario SUDEBAN** desde la barra superior + *BCV Hoy vs Mañana*.
+  4. **"Cobra o convierte pesos en la frontera sin perderte"**: activa el chip **`🇨🇴 COP`** y convierte directo pesos ⇄ bolívares.
+  5. **"No pierdas dinero con el vuelto en Pago Móvil"**: muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. + *Tarjeta PNG* con logo propio (Ultra).
+  6. **"Escanea precios en el súper y calcula comisiones PayPal/Zinli"**: demuestra el escáner OCR local y la calculadora *Comisiones* + *Dividir cuenta* con amigos.
 
 ---
 
