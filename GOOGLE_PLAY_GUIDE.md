@@ -17,7 +17,7 @@ Esta guía contiene todos los pasos, configuraciones técnicas, requerimientos l
    - Dependencia: `com.android.billingclient:billing-ktx:7.1.1`.
    - Productos configurados: `tasave_ultra_monthly` (`$0.99 USD/mes`) y `tasave_ultra_yearly` (`$7.99 USD/año`).
    - Funciones: Compra oficial, reconocimiento de suscripción (`acknowledge`), persistencia y botón de **Restaurar suscripción**.
-   - Al activar **Tasa VE Ultra**, desaparece toda la publicidad y se desbloquean Conversor por Voz ilimitado, Notificación fija, Conversor Flotante multi-tasa + Pago Móvil, OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles ilimitados, logo propio en Tarjeta PNG y Widget Ultra.
+   - Al activar **Tasa VE Ultra**, desaparece toda la publicidad y se desbloquean Notificación fija, Conversor Flotante multi-tasa + Pago Móvil, OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles ilimitados, logo propio en Tarjeta PNG y Widget Ultra.
 4. **Historial de Conversiones Completo:**
    - Integrado en la pantalla principal con base de datos SQLite Room local, botón "Guardar cálculo" y diálogo "Historial de Conversiones".
 5. **Corrección de Errores de Fondo:**
@@ -94,13 +94,12 @@ Para comenzar a generar ingresos con la barra publicitaria superior:
 ### B. Firebase Analytics (Seguimiento Anónimo de Uso — ACTIVO)
 El proyecto Firebase **`tasa-ve-julcer26`** ya está configurado con ambas apps (`com.julcer26.tasave` para Play Store y `com.julcer26.tasave.ultra` para APK de pruebas) y el Secret encriptado `GOOGLE_SERVICES_JSON` inyectado automáticamente en GitHub Actions:
 1. `AnalyticsTracker` respeta el interruptor opt-out en *Configuración > Legal y Privacidad*.
-2. Eventos anónimos configurados (sin montos, frases dictadas ni datos personales):
+2. Eventos anónimos configurados (sin montos ni datos personales):
    - `tasave_tab_opened` (`tab_name`: Conversor / Carrito / Útiles / Cobros)
    - `tasave_util_opened` (`tool_name`: `compare_payment`, `split_bill`, `add_quick_tile`)
    - `tasave_rate_selected` (`rate_key`: `USD_BCV`, `EUR_BCV`, `USDT`, `COP`)
    - `tasave_calendar_opened` y `tasave_calendar_day_selected` (`is_bank_holiday`)
    - `tasave_scanner_opened` (`source`: `topbar` / `cart`)
-   - `tasave_voice_used` (`tier`: `free` / `ultra`, `rate_key`, `source`: `main_topbar` / `quick_calc`)
    - `tasave_action` (`persistent_notif_enabled`, `quick_calc_opened`, `quick_tile_ultra`, `quick_copy_with_pm`)
 
 ---
@@ -159,7 +158,6 @@ Google Play exige rellenar un cuestionario sobre cómo se manejan los datos. Rel
      - Sí (derivada por IP a nivel de país/región por AdMob y Firebase Analytics; sin GPS).
    - **Permisos sensibles declarados (sin almacenamiento en servidores):**
      - `CAMERA`: Uso opcional en primer plano para OCR local de etiquetas de precios (no guarda ni sube fotos).
-     - `RECORD_AUDIO`: Uso opcional bajo toque directo del usuario para el **Conversor por Voz Manos Libres** (dictado en español venezolano vía servicio nativo de Android; no graba en segundo plano ni almacena archivos de audio).
 
 ---
 
@@ -187,16 +185,16 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
    - Tamaño: `1024 x 500 px` (Formato JPG o PNG de 24 bits, sin transparencia).
 3. **Capturas de pantalla (Screenshots) y Videos Cortos (Reels / TikTok / Google Omni / Vids):**
    - Mínimo 6 capturas en resolución de teléfono (`1080 x 2400 px`):
-     - Captura 1: Conversor BCV Hoy/Mañana, Euro, USDT, chip 🇨🇴 COP + botones Calendario, Voz y Cámara OCR.
-     - Captura 2: **Conversor por Voz Manos Libres** + **Conversor Flotante** sobre WhatsApp desde Barra Rápida / Notificación fija.
+     - Captura 1: Conversor BCV Hoy/Mañana, Euro, USDT, chip 🇨🇴 COP + botones Calendario y Cámara OCR.
+     - Captura 2: **Conversor Flotante** sobre WhatsApp desde Barra Rápida / Notificación fija con Pago Móvil en 1 toque.
      - Captura 3: Pestaña **Útiles** (`¿Con qué pago?` con descuento libre y `Dividir cuenta` en 5 monedas).
      - Captura 4: Escáner de cámara OCR + Carrito Inteligente con IVA/IGTF y Tarjeta PNG.
      - Captura 5: Cobros (Pago Mixto, Tarjeta PNG con logo propio Ultra y WhatsApp).
      - Captura 6: Widget Tasas en Vivo (Gratis) + Widget Calculadora y Cobros (Ultra).
-   - *Estrategia de difusión:* El flujo del **Conversor por Voz** y el **Conversor Flotante** se muestra en videos verticales cortos para Reels, TikTok (`@tasa.ve`) y piezas con **Google Omni / Google Vids**, manteniendo la app limpia y sin tarjetas largas de instrucciones.
+   - *Estrategia de difusión:* El flujo del **Conversor Flotante** y los trucos de **Útiles** se muestran en videos verticales cortos para Reels, TikTok (`@tasa.ve`) y piezas con **Google Omni / Google Vids**, manteniendo la app limpia y sin tarjetas largas de instrucciones.
 4. **Textos para la Ficha:**
    - **Título de la app (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
-   - **Descripción breve (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP, voz manos libres, calendario SUDEBAN y cobros.`
+   - **Descripción breve (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros.`
    - **Descripción completa:**
      ```
      Tasa VE es la calculadora financiera todo-en-uno para tu día a día en Venezuela.
@@ -205,7 +203,6 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
 
      Características principales:
      • Conversor bidireccional exacto (BCV Hoy/Mañana, Euro, USDT y COP frontera).
-     • Conversor por Voz Manos Libres: dicta "38 con 50 dólares a BCV" o "15 mil bolívares a USDT" con lectura en voz alta (2 pruebas gratis/día, ilimitado en Ultra).
      • Calendario Bancario SUDEBAN: identifica lunes bancarios, feriados y tasas históricas por día.
      • Accesos Rápidos: botón en Barra Rápida, notificación fija silenciosa de tasas y Conversor Flotante con Pago Móvil en 1 toque (Ultra).
      • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/$ con descuento libre) y Dividir cuenta en 5 monedas.

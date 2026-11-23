@@ -13,8 +13,8 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario SUDEBAN**, pestaña **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto + Tarjeta PNG (Cobros y Carrito), **Widget Tasas en Vivo**, **botón en Barra Rápida**, hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado) y **2 conversiones por voz gratis/día**. |
-| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, **Conversor por Voz Manos Libres ilimitado**, **Notificación fija silenciosa de tasas** (con copiar tasas, calc. rápida y Pago Móvil), **Conversor flotante desde Barra Rápida/Notificación con multi-tasa + Pago Móvil**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG**, y **Widget Calculadora y Cobro Express**. |
+| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario SUDEBAN**, pestaña **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto + Tarjeta PNG (Cobros y Carrito), **Widget Tasas en Vivo**, **botón en Barra Rápida**, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
+| **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, **Notificación fija silenciosa de tasas** (con copiar tasas, calc. rápida y Pago Móvil), **Conversor flotante desde Barra Rápida/Notificación con multi-tasa + Pago Móvil**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG**, y **Widget Calculadora y Cobro Express**. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
 > **Regla de oro:** *Business* nunca debe cobrarse como un "extra aparte sobre Ultra". En Google Play Billing se ofertan como planes independientes donde *Business* desbloquea automáticamente todos los beneficios de *Ultra*.
@@ -46,12 +46,11 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
    - Sitio web oficial: `https://tasave.net`.
    - Formulario **Seguridad de Datos (Data Safety):** declarar que la app no almacena cuentas en servidores propios, que el envío de reportes es opcional por Google Sheets, y que **Firebase Analytics** (solo eventos anónimos de navegación con opt-out integrado) + Google Mobile Ads + ML Kit + Play Billing procesan identificadores / diagnósticos técnicos en tránsito cifrado HTTPS.
    - Permiso `CAMERA`: justificar uso exclusivo local en primer plano para OCR de precios (sin captura/almacenamiento ni subida de fotos).
-   - Permiso `RECORD_AUDIO` *(al activar Conversor por Voz)*: justificar uso exclusivo bajo pulsación directa del usuario para dictar montos y monedas (sin grabación en segundo plano ni almacenamiento de audio).
    - Si la cuenta de Play Console es personal nueva: ejecutar prueba cerrada (mínimo 12 testers durante 14 días continuos) usando el APK/Track interno antes de pasar a Producción.
 
 ### 2.2 Métricas a validar tras lanzar v1.2 (antes de publicar v1.3)
 - **Estabilidad:** Crash-free users > 99.5 % en Play Console / Vitals.
-- **Uso real por función (Firebase Analytics):** Propiedades `user_tier` y `app_theme`, y eventos `tasave_tab_opened`, `tasave_util_opened`, `tasave_rate_selected`, `tasave_calendar_opened`, `tasave_scanner_opened`, `tasave_plans_opened`, `tasave_ultra_cta_clicked` (`monthly`/`yearly`), `tasave_share_card` y `tasave_action` (incluyendo uso de voz y conversor flotante).
+- **Uso real por función (Firebase Analytics):** Propiedades `user_tier` y `app_theme`, y eventos `tasave_tab_opened`, `tasave_util_opened`, `tasave_rate_selected`, `tasave_calendar_opened`, `tasave_scanner_opened`, `tasave_plans_opened`, `tasave_ultra_cta_clicked` (`monthly`/`yearly`), `tasave_share_card` y `tasave_action` (incluyendo uso de conversor flotante).
 - **Monetización AdMob:** eCPM promedio del banner adaptativo, intersticial post-acción y rewarded (ratio de activación del pase 12h sin anuncios vs. +5 escaneos).
 - **Retención y Conversión:** % de usuarios activos al día 7 (`D7`), pestañas/útiles más frecuentes y tasa de conversión a `Ultra` (`$0.99` vs `$7.99`).
 
@@ -61,11 +60,11 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 ### 3.1 ASO (Posicionamiento en Google Play Store)
 - **Título (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
-- **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP, voz manos libres, calendario SUDEBAN y cobros.`
-- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `calculadora por voz dolar`, `peso colombiano bolivar`, `feriados bancarios sudeban`, `dividir cuenta bolivar`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
+- **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros.`
+- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `peso colombiano bolivar`, `feriados bancarios sudeban`, `dividir cuenta bolivar`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
 - **Activos visuales recomendados (6 capturas en orden de impacto):**
-  1. Conversor en vivo (BCV Hoy / Mañana + Euro BCV + USDT + chip `🇨🇴 COP` + Calendario + Micrófono por Voz).
-  2. **Conversor por Voz Manos Libres** + **Conversor Flotante** sobre WhatsApp desde Barra Rápida / Notificación fija.
+  1. Conversor en vivo (BCV Hoy / Mañana + Euro BCV + USDT + chip `🇨🇴 COP` + Calendario + Cámara OCR).
+  2. **Conversor Flotante** sobre WhatsApp desde Barra Rápida / Notificación fija con Pago Móvil en 1 toque.
   3. Pestaña **Útiles** (`¿Con qué pago?` con descuento libre y `Dividir cuenta` en 5 monedas).
   4. Escáner de cámara OCR + Carrito inteligente con IVA (16 %) y Tarjeta PNG de presupuesto.
   5. Cobros / Pago Mixto con vuelto automático y Tarjeta PNG con logo propio (Ultra).
@@ -80,10 +79,9 @@ Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pa
 - **Cuentas oficiales activas:**
   - **Instagram:** [`@tasa.ve`](https://www.instagram.com/tasa.ve/)
   - **TikTok:** [`@tasa.ve`](https://www.tiktok.com/@tasa.ve)
-- **Nota de producto y marketing:** No saturar la app con textos largos explicando trucos; el descubrimiento del **Conversor Flotante** y el **Conversor por Voz** se impulsa mediante **videos cortos visuales** (grabación real + piezas generadas con IA en **Google Omni / Google Vids**).
+- **Nota de producto y marketing:** No saturar la app con textos largos explicando trucos; el descubrimiento del **Conversor Flotante** y de **Útiles** se impulsa mediante **videos cortos visuales** (grabación real + piezas generadas con IA en **Google Omni / Google Vids**).
 - **Guiones de videos verticales (15 a 25 segundos):**
-  1. **"¡Háblale a tu calculadora en el súper o manejando!" (Conversor por Voz):** tocas el micrófono, dices *"38 con 50 dólares a BCV"* con las manos ocupadas → resultado en pantalla y por voz en 1 segundo (2 pruebas gratis/día, ilimitado en Ultra).
-  2. **"Calcula montos de WhatsApp sin salir del chat" (Conversor Flotante Ultra):** copias el precio en WhatsApp, bajas la Barra Rápida o tocas *"Calc. rápida"* en la notificación fija → ventana flotante compacta detecta el monto y te deja copiar el resultado + tu Pago Móvil en 1 toque.
+  1. **"Calcula montos de WhatsApp sin salir del chat" (Conversor Flotante Ultra):** copias el precio en WhatsApp, bajas la Barra Rápida o tocas *"Calc. rápida"* en la notificación fija → ventana flotante compacta detecta el monto y te deja copiar el resultado + tu Pago Móvil en 1 toque.
   3. **"¿Cambio USDT o pago en efectivo con descuento?"**: abre *Útiles > ¿Con qué pago?*, mete un descuento libre en % o \$ y demuestra en 5 segundos cuánto ahorras en dólares reales.
   4. **"Divide la cuenta con tus amigos en USD, EUR, Bs., USDT o COP"**: abre *Útiles > Dividir cuenta* y manda el monto por persona al grupo de WhatsApp.
   5. **"¿Mañana es lunes bancario o a cuánto amanece el BCV?"**: abre el **Calendario SUDEBAN** desde la barra superior + *BCV Hoy vs Mañana*.

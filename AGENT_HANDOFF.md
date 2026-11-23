@@ -19,6 +19,7 @@
    - Correo soporte/privacidad: `soporte@tasave.net`.
    - Redes: Instagram `@tasa.ve` y TikTok `@tasa.ve`.
    - Hoja de feedback Google Sheets: ID `1TALv6ZVhZAmgLjN3CHny4HaOkRqlQn8Zpat-djiKQGo` (Apps Script webhook ya configurado en `app/src/main/res/values/strings.xml`).
+   - Hoja de Bitácora y Resumen Mensual Google Sheets: ID `1TnINAzpxewiSUaZUJzSBp39rxiKoO_EOffluxSk8BrA` (`Tasa VE — Registro de Actividades y Resumen Mensual`, donde se registra cada avance y resumen mensual de uso).
 
 ---
 
@@ -74,6 +75,7 @@ Estas funciones fueron probadas o evaluadas y **descartadas explícitamente por 
 3. **❌ Ícono de reloj (Historial) en la barra superior (`TopBar`):** Eliminado en `f1ac7a6` para liberar espacio arriba (el botón `Ver historial` ya existe dentro de la Calculadora).
 4. **❌ Alertas automáticas de cambio de precio (`RateAlertWorker`, `AlertSettings`, tarjeta en `Útiles`):** Eliminadas por completo en `f1ac7a6` porque el dólar BCV suele mantenerse igual todo el día y no aporta valor real. *(Solo se mantiene `RateSyncWorker.kt` silencioso para refrescar la Notificación fija y Widgets; además borra el canal/tarea legado de alertas).*
 5. **❌ Herramientas descartadas previamente de `Útiles`:** Se eliminaron calculadoras de cuotas/comisiones viejas (`84cd18d`). Las 2 herramientas fijas de `Útiles` son `¿Con qué pago?` y `Dividir cuenta`.
+6. **❌ Conversor por Voz / Micrófono (`RECORD_AUDIO`, `SpeechRecognizer`):** Evaluado y descartado por el dueño (23/11/2026) por preferencia de interfaz limpia sin micrófono. **NO volver a agregar botón de micrófono ni permiso `RECORD_AUDIO`.**
 
 ---
 
@@ -88,35 +90,12 @@ Para no proponer cosas repetidas ni mezclar tiers:
   4. Cuentas por Cobrar ("Fiados" indexados) + Calculadora de Reposición por brecha.
   *(Ver detalles completos en `ROADMAP_DESPLIEGUE_MARKETING.md` sección 4).*
 - **Ideas anteriores ya evaluadas para Tab 3 / Ultra que NO entusiasmaron al dueño:**
-  - Cashea/Krece cuotas, tasa personalizada/promedio, tasa por fecha pasada, contador de billetes, comparador por kilo/litro, pagos fijos del mes, bóveda OCR de comprobantes, calculadora de comisiones PayPal/Zinli/Wally, presupuesto personal doble moneda, modo discreto. **La ÚNICA función nueva que aprobó y eligió para implementar ahora es el Conversor por Voz Manos Libres.**
+  - Cashea/Krece cuotas, tasa personalizada/promedio, tasa por fecha pasada, contador de billetes, comparador por kilo/litro, pagos fijos del mes, bóveda OCR de comprobantes, calculadora de comisiones PayPal/Zinli/Wally, presupuesto personal doble moneda, modo discreto, conversor por voz / micrófono.
 
 ---
 
-## 6. PRÓXIMA TAREA APROBADA (Lista para Arrancar Ya)
-
-### 🎯 Prioridad 1 — Implementar **🎙️ Conversor por Voz Manos Libres**
-- **Modelo de acceso aprobado:** **2 pruebas gratis por día → Ilimitado en Tasa VE Ultra** (control diario local en `LocalStorageHelper`, igual que el límite diario del escáner OCR).
-- **Tecnología:** 100% nativo de Android (`android.speech.SpeechRecognizer` + `RecognizerIntent` en `es-VE` / `es-419`, con respuesta hablada opcional vía `android.speech.tts.TextToSpeech` en español — `$0` de costo de API).
-- **Permiso:** `android.permission.RECORD_AUDIO` solicitado únicamente en primer plano al tocar el micrófono, con fallback limpio si el dispositivo no tiene servicio de voz o se deniega el permiso.
-- **Ubicación recomendada:**
-  - Botón circular de micrófono (🎙️) en el **TopBar** (donde antes estaba el ícono de reloj, junto a la cámara OCR) y acceso compacto dentro del **Conversor Flotante** (`QuickCalcActivity`).
-- **Parser de voz venezolano (con pruebas unitarias completas):**
-  - Debe entender frases naturales como:
-    - `"38 con 50 dólares a BCV"` / `"47 dólares con 50"` / `"cien dólares"` / `"25 dólares"`
-    - `"20 dólares a euro"` / `"50 euros"`
-    - `"15 mil bolívares a dólares"` / `"12 mil 500 bolívares a USDT"`
-    - `"50 dólares mañana"` (activa BCV Mañana si está disponible)
-    - `"cien mil pesos"` / `"50 mil COP"`
-  - Al reconocer la frase: selecciona automáticamente la tasa, dirección (`USD/EUR/USDT/COP ⇄ Bs.`), carga el monto en la calculadora, muestra tarjeta/diálogo limpio con el resultado, ofrece **switch para respuesta hablada en voz alta (TTS)** y botón rápido de copiar.
-- **Telemetría Firebase (`AnalyticsTracker`):** registrar evento anónimo `tasave_voice_used` (ej. `tier`: `free`/`ultra`, `rate_key`, sin jamás enviar el texto dictado ni el monto).
-
-### 🎯 Prioridad 2 — Sincronizar Marketing, Publicidad, Web y Legal con TODO lo actual
-Actualizar los archivos restantes para reflejar:
-1. Eliminación definitiva de **Alertas de cambio de tasa** y **Menú de 3 puntos (`PROCESS_TEXT`)**.
-2. Inclusión del nuevo **Conversor por Voz Manos Libres (2 pruebas gratis/día → ilimitado en Ultra)** + permiso opcional `RECORD_AUDIO` en primer plano.
-3. Enfoque de marketing y publicidad (especialmente videos cortos para **Reels / TikTok `@tasa.ve` / Google Omni / Google Vids**):
-   - Actualizar `docs/index.html` (landing pública `tasave.net` — añadir highlight del Conversor por Voz y Conversor Flotante, quitar alertas y 3 puntos).
-   - Actualizar `docs/privacy-policy.html`, `PRIVACY_POLICY.md`, `TERMS_OF_SERVICE.md` y el diálogo legal dentro de `TasaVeScreen.kt`.
-   - Actualizar `GOOGLE_PLAY_GUIDE.md` (ficha de tienda, descripción corta/larga, Data Safety con `RECORD_AUDIO` y `Firebase Analytics`, y guion de capturas).
-   - Actualizar `README.md` y `UltraScreens.kt` (tabla comparativa Gratis vs Ultra en `PlansComparisonDialog`).
-   - Revisar `ROADMAP_DESPLIEGUE_MARKETING.md` (ya pre-actualizado el 23/11/2026 con la estructura base del Conversor por Voz y scripts para Omni/Vids).
+## 6. Estado Actual y Siguientes Pasos (v1.2 Listo para Pruebas y Play Store)
+- **Producto v1.2:** Completo, limpio y sincronizado (sin alertas, sin `PROCESS_TEXT`, sin micrófono).
+- **Marketing, Web y Legal:** `docs/index.html`, `docs/privacy-policy.html`, `PRIVACY_POLICY.md`, `TERMS_OF_SERVICE.md`, `GOOGLE_PLAY_GUIDE.md`, `README.md`, `UltraScreens.kt` y `TasaVeScreen.kt` 100% alineados.
+- **Redes (`@tasa.ve`):** Playbooks de Instagram y TikTok en Google Drive actualizados con los guiones v1.2 y prompts para Google Omni / Vids.
+- **Próximo hito:** Pruebas cerradas en Google Play Console (12 testers / 14 días) y luego Fase 2 (`Tasa VE Business v1.3`).

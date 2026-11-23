@@ -14,7 +14,6 @@ import com.julcer26.tasave.data.*
 import com.julcer26.tasave.quick.PersistentRateNotificationManager
 import com.julcer26.tasave.share.ShareCardGenerator
 import com.julcer26.tasave.ultra.*
-import com.julcer26.tasave.voice.ParsedVoiceConversion
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -69,12 +68,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _remainingFreeScans = MutableStateFlow(localStorageHelper.getRemainingFreeScans())
     val remainingFreeScans: StateFlow<Int> = _remainingFreeScans.asStateFlow()
-
-    private val _remainingFreeVoiceUses = MutableStateFlow(localStorageHelper.getRemainingFreeVoiceUses())
-    val remainingFreeVoiceUses: StateFlow<Int> = _remainingFreeVoiceUses.asStateFlow()
-
-    private val _voiceTtsEnabled = MutableStateFlow(localStorageHelper.isVoiceTtsEnabled())
-    val voiceTtsEnabled: StateFlow<Boolean> = _voiceTtsEnabled.asStateFlow()
 
     val appLaunchCount: Int = localStorageHelper.incrementAndGetAppLaunchCount()
 
@@ -381,42 +374,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
     fun refreshRemainingFreeScans() {
         _remainingFreeScans.value = localStorageHelper.getRemainingFreeScans()
-    }
-
-    fun refreshRemainingFreeVoiceUses() {
-        _remainingFreeVoiceUses.value = localStorageHelper.getRemainingFreeVoiceUses()
-    }
-
-    fun setVoiceTtsEnabled(enabled: Boolean) {
-        _voiceTtsEnabled.value = enabled
-        localStorageHelper.setVoiceTtsEnabled(enabled)
-    }
-
-    fun applyVoiceConversion(parsed: ParsedVoiceConversion) {
-        selectedRateKey = parsed.rateKey
-        previewTomorrowBcv = parsed.useTomorrowBcv &&
-            _uiState.value.nextUsdBcv != null &&
-            parsed.rateKey != "USDT"
-        isVesAsInput = parsed.inputIsVes
-        val formattedInput = if (parsed.amount % 1.0 == 0.0 && parsed.amount < 1_000_000_000.0) {
-            parsed.amount.toLong().toString()
-        } else {
-            String.format(Locale.US, "%.2f", parsed.amount)
-        }
-        if (parsed.inputIsVes) {
-            updateVesAmount(formattedInput)
-        } else {
-            updateForeignAmount(formattedInput)
-        }
-        if (!isUltraUser.value) {
-            _remainingFreeVoiceUses.value = localStorageHelper.recordFreeVoiceUsed()
-        }
-        AnalyticsTracker.logVoiceUsed(
-            context = getApplication(),
-            isUltra = isUltraUser.value,
-            rateKey = parsed.rateKey,
-            source = "main_topbar"
-        )
     }
 
     fun grantRewardedScans(extra: Int = UltraMath.REWARDED_SCAN_BONUS): Int {

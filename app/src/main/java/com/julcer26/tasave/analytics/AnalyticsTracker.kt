@@ -68,18 +68,6 @@ object AnalyticsTracker {
         logEvent(context, "tasave_scanner_opened", mapOf("source" to source))
     }
 
-    fun logVoiceUsed(context: Context, isUltra: Boolean, rateKey: String, source: String = "main_topbar") {
-        logEvent(
-            context,
-            "tasave_voice_used",
-            mapOf(
-                "tier" to if (isUltra) "ultra" else "free",
-                "rate_key" to rateKey,
-                "source" to source
-            )
-        )
-    }
-
     fun logPlansOpened(context: Context, isUltra: Boolean) {
         logEvent(
             context,

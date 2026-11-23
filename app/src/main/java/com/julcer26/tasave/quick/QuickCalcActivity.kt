@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -51,8 +50,6 @@ import com.julcer26.tasave.data.CachedRatesBundle
 import com.julcer26.tasave.data.LocalStorageHelper
 import com.julcer26.tasave.ui.theme.TasaVeTheme
 import com.julcer26.tasave.ultra.PaymentMethodProfile
-import com.julcer26.tasave.voice.ParsedVoiceConversion
-import com.julcer26.tasave.voice.VoiceConverterDialog
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import com.julcer26.tasave.widget.TasaVeUltraWidgetProvider
 import com.julcer26.tasave.widget.WidgetCalcMath
@@ -271,12 +268,6 @@ class QuickCalcActivity : ComponentActivity() {
             }
 
             TasaVeTheme(darkTheme = isDark, dynamicColor = false) {
-                var remainingFreeVoiceUses by remember {
-                    mutableStateOf(storage.getRemainingFreeVoiceUses())
-                }
-                var voiceTtsEnabled by remember {
-                    mutableStateOf(storage.isVoiceTtsEnabled())
-                }
                 QuickCalcOverlayContent(
                     isDark = isDark,
                     rates = rates,
@@ -289,26 +280,6 @@ class QuickCalcActivity : ComponentActivity() {
                     initialInputIsVes = parsed?.inputIsVes ?: false,
                     profiles = profiles,
                     initialProfileIndex = initialProfileIndex,
-                    remainingFreeVoiceUses = remainingFreeVoiceUses,
-                    voiceTtsEnabled = voiceTtsEnabled,
-                    onRefreshVoiceQuota = {
-                        remainingFreeVoiceUses = storage.getRemainingFreeVoiceUses()
-                    },
-                    onToggleVoiceTts = { enabled ->
-                        voiceTtsEnabled = enabled
-                        storage.setVoiceTtsEnabled(enabled)
-                    },
-                    onVoiceConversionApplied = { voiceParsed ->
-                        if (!isUltra) {
-                            remainingFreeVoiceUses = storage.recordFreeVoiceUsed()
-                        }
-                        AnalyticsTracker.logVoiceUsed(
-                            context = this,
-                            isUltra = isUltra,
-                            rateKey = voiceParsed.rateKey,
-                            source = "quick_calc"
-                        )
-                    },
                     onPasteClipboard = {
                         tryReadClipboardAmount(showToastOnFail = true)
                     },
@@ -415,11 +386,6 @@ private fun QuickCalcOverlayContent(
     initialInputIsVes: Boolean,
     profiles: List<PaymentMethodProfile>,
     initialProfileIndex: Int,
-    remainingFreeVoiceUses: Int,
-    voiceTtsEnabled: Boolean,
-    onRefreshVoiceQuota: () -> Unit,
-    onToggleVoiceTts: (Boolean) -> Unit,
-    onVoiceConversionApplied: (ParsedVoiceConversion) -> Unit,
     onPasteClipboard: () -> Unit,
     onSelectProfileIndex: (Int) -> Unit,
     onCopyResult: (String) -> Unit,
@@ -437,7 +403,6 @@ private fun QuickCalcOverlayContent(
         mutableStateOf(initialProfileIndex.coerceIn(0, (profiles.size - 1).coerceAtLeast(0)))
     }
     var upgradeHint by remember { mutableStateOf<String?>(null) }
-    var showVoiceDialog by remember { mutableStateOf(false) }
 
     val cardBg = if (isDark) Color(0xFF0F172A) else Color(0xFFFFFFFF)
     val surfaceElevated = if (isDark) Color(0xFF1E293B) else Color(0xFFF1F5F9)
@@ -626,27 +591,6 @@ private fun QuickCalcOverlayContent(
                                 color = emeraldText,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        // Compact Voice Mic Trigger
-                        Box(
-                            modifier = Modifier
-                                .size(22.dp)
-                                .clip(CircleShape)
-                                .background(emerald.copy(alpha = 0.16f))
-                                .border(1.dp, emerald.copy(alpha = 0.4f), CircleShape)
-                                .clickable {
-                                    onRefreshVoiceQuota()
-                                    showVoiceDialog = true
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = "Dictar por voz",
-                                tint = emeraldText,
-                                modifier = Modifier.size(12.dp)
                             )
                         }
                     }
@@ -1012,44 +956,5 @@ private fun QuickCalcOverlayContent(
                 }
             }
         }
-    }
-
-    if (showVoiceDialog) {
-        VoiceConverterDialog(
-            isDark = isDark,
-            isUltraUser = isUltra,
-            remainingFreeVoiceUses = remainingFreeVoiceUses,
-            ttsEnabled = voiceTtsEnabled,
-            usdBcv = rates.usdBcv,
-            eurBcv = rates.eurBcv,
-            usdtParalelo = rates.usdtParalelo,
-            nextUsdBcv = rates.nextUsdBcv,
-            nextEurBcv = rates.nextEurBcv,
-            copPerUsd = copPerUsd,
-            onToggleTts = onToggleVoiceTts,
-            onApplyVoiceConversion = { voiceParsed ->
-                val effectiveRateKey = if (!isUltra && voiceParsed.rateKey != "USD_BCV") {
-                    upgradeHint = "Cambia a otras tasas en el conversor flotante con Ultra."
-                    "USD_BCV"
-                } else {
-                    upgradeHint = null
-                    voiceParsed.rateKey
-                }
-                selectedRateKey = effectiveRateKey
-                useTomorrowBcv = voiceParsed.useTomorrowBcv && hasTomorrowBcv && effectiveRateKey != "USDT"
-                inputIsVes = voiceParsed.inputIsVes
-                amountText = if (voiceParsed.amount % 1.0 == 0.0 && voiceParsed.amount < 1_000_000_000.0) {
-                    voiceParsed.amount.toLong().toString()
-                } else {
-                    String.format(Locale.US, "%.2f", voiceParsed.amount)
-                }
-                onVoiceConversionApplied(voiceParsed.copy(rateKey = effectiveRateKey))
-            },
-            onUpgradeUltra = {
-                showVoiceDialog = false
-                onOpenPlans()
-            },
-            onDismiss = { showVoiceDialog = false }
-        )
     }
 }

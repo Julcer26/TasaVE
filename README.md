@@ -19,9 +19,8 @@
 ## Características Principales
 
 - **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV exactos, vista anticipada de **BCV Mañana**, USDT paralelo, **Peso Colombiano (COP) de frontera** con TRM en vivo y Modo Offline con caché local.
-- **Conversor por Voz Manos Libres:** Dicta montos naturales en español venezolano (p. ej. *"38 con 50 dólares a BCV"*, *"15 mil bolívares a USDT"*, *"50 dólares mañana"*) con respuesta opcional en voz alta (**2 pruebas gratis/día → ilimitado en Ultra**).
 - **Calendario Bancario SUDEBAN y Tasas Históricas:** Botón rápido en barra superior con feriados bancarios 2025–2027, consulta de tasa por día y cálculo rápido integrado.
-- **Accesos Rápidos (Sin abrir la app):** Botón nativo en la **Barra Rápida** de Android (`TileService`), **notificación fija opcional** en Ultra con copiado rápido y **Conversor Flotante** con detección del portapapeles, voz y Pago Móvil en 1 toque.
+- **Accesos Rápidos (Sin abrir la app):** Botón nativo en la **Barra Rápida** de Android (`TileService`), **notificación fija opcional** en Ultra con copiado rápido y **Conversor Flotante** con detección del portapapeles y Pago Móvil en 1 toque.
 - **Widgets en Pantalla de Inicio:** Widget gratuito **Tasas en Vivo** (BCV Hoy/Mañana y Brecha) y widget **Ultra Calculadora y Cobros** (tasas + accesos directos, calculadora rápida en pantalla y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).
 - **Carrito de Mercado Inteligente:** Controla tu presupuesto en USD y Bolívares con cálculo opcional de **IVA (16%)** e **IGTF (3%)**.
@@ -33,7 +32,7 @@
 
 ## Identidad Visual y Assets de Marca
 
-La identidad oficial de **Tasa VE** utiliza un isotipo **3D esculpido** en **Ámbar Profundo** (`#EA8C00 → #6B2B00`) y **Esmeralda Profundo** (`#022C22 → #10B981`) con símbolo **`$`** flotante sobre **Deep Obsidian** (`#060A12 → #111B2D`).
+La identidad oficial de **Tasa VE** utiliza un isotipo **3D esculpido** en **Ámbar Profundo** (`#EA8C00 → #6B2B00`) y **Esmeralda Profundo** (`#022C22 → #10B981`) con símbolo **`$`** flotante sobre fondo oscuro (`#060A12 → #111B2D`).
 
 - Guía completa: [`brand/BRAND_GUIDELINES.md`](brand/BRAND_GUIDELINES.md)
 - Landing page & Marketing: [`docs/`](docs/index.html) ([tasave.net](https://tasave.net))

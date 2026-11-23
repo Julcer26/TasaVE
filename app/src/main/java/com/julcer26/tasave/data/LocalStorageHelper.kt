@@ -60,9 +60,6 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_SCAN_DATE = "scanner_last_date"
         private const val KEY_SCAN_COUNT_TODAY = "scanner_count_today"
         private const val KEY_SCAN_BONUS_TODAY = "scanner_bonus_today"
-        private const val KEY_VOICE_DATE = "voice_last_date"
-        private const val KEY_VOICE_COUNT_TODAY = "voice_count_today"
-        private const val KEY_VOICE_TTS_ENABLED = "voice_tts_enabled"
 
         // Ultra local persistence keys
         private const val KEY_CART_ITEMS_JSON = "ultra_cart_items_json"
@@ -92,7 +89,6 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_PERSISTENT_RATE_NOTIF_ENABLED = "persistent_rate_notif_enabled"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
-        const val MAX_FREE_VOICE_PER_DAY = 2
 
         private const val CACHE_EXPIRATION_MS = 4 * 60 * 60 * 1000L // 4 Hours
         private const val HISTORY_CACHE_EXPIRATION_MS = 6 * 60 * 60 * 1000L // 6 Hours
@@ -303,34 +299,6 @@ class LocalStorageHelper(context: Context) {
             .putInt(KEY_SCAN_BONUS_TODAY, nextBonus)
             .apply()
         return ((MAX_FREE_SCANS_PER_DAY + nextBonus) - currentUsed).coerceAtLeast(0)
-    }
-
-    fun getRemainingFreeVoiceUses(): Int {
-        val today = todayDateKey()
-        val savedDate = prefs.getString(KEY_VOICE_DATE, null)
-        if (savedDate != today) {
-            return MAX_FREE_VOICE_PER_DAY
-        }
-        val used = prefs.getInt(KEY_VOICE_COUNT_TODAY, 0)
-        return (MAX_FREE_VOICE_PER_DAY - used).coerceAtLeast(0)
-    }
-
-    fun recordFreeVoiceUsed(): Int {
-        val today = todayDateKey()
-        val savedDate = prefs.getString(KEY_VOICE_DATE, null)
-        val currentUsed = if (savedDate == today) prefs.getInt(KEY_VOICE_COUNT_TODAY, 0) else 0
-        val nextUsed = (currentUsed + 1).coerceAtMost(MAX_FREE_VOICE_PER_DAY)
-        prefs.edit()
-            .putString(KEY_VOICE_DATE, today)
-            .putInt(KEY_VOICE_COUNT_TODAY, nextUsed)
-            .apply()
-        return (MAX_FREE_VOICE_PER_DAY - nextUsed).coerceAtLeast(0)
-    }
-
-    fun isVoiceTtsEnabled(): Boolean = prefs.getBoolean(KEY_VOICE_TTS_ENABLED, true)
-
-    fun setVoiceTtsEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_VOICE_TTS_ENABLED, enabled).apply()
     }
 
     // --- Cart Persistence ---
