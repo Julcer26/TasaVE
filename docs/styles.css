@@ -1360,6 +1360,97 @@ button, input, select {
   color: var(--text-muted);
 }
 
+/* ---------- Real App Phone Frames (Hero & Gallery) ---------- */
+.hero-real-showcase {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 460px;
+  padding: 12px 0;
+}
+
+.real-phone-frame {
+  margin: 0;
+  background: #0B0D12;
+  border-radius: 30px;
+  padding: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-float);
+  overflow: hidden;
+}
+
+.real-phone-frame img {
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  display: block;
+}
+
+.hero-phone-main {
+  width: min(265px, 68vw);
+  position: relative;
+  z-index: 2;
+  border-color: rgba(52, 211, 153, 0.42);
+}
+
+.hero-phone-side {
+  width: min(215px, 52vw);
+  margin-left: -46px;
+  margin-top: 44px;
+  opacity: 0.94;
+  transform: rotate(3deg);
+  z-index: 1;
+}
+
+.real-gallery-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  margin-bottom: 36px;
+}
+
+.real-gallery-item {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.real-gallery-item .real-phone-frame {
+  width: 100%;
+  max-width: 220px;
+  border-radius: 24px;
+  padding: 6px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.real-gallery-item .real-phone-frame:hover {
+  transform: translateY(-4px);
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.real-gallery-item .real-phone-frame img {
+  border-radius: 18px;
+}
+
+.real-gallery-item figcaption {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@media (max-width: 540px) {
+  .hero-phone-side {
+    display: none;
+  }
+  .hero-phone-main {
+    width: min(270px, 78vw);
+  }
+}
+
 @media (min-width: 860px) {
   .download-grid {
     grid-template-columns: 1.35fr 0.85fr;
