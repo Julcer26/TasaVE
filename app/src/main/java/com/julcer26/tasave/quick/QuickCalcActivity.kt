@@ -88,28 +88,38 @@ open class QuickCalcActivity : ComponentActivity() {
         }
 
         /**
-         * Explicitly forces Android's PackageManager and Samsung One UI's SemFloatingToolbar
-         * ("Administrar aplicaciones") to refresh ProcessTextActivity registration after an APK update.
+         * Samsung One UI 6/7 gates ACTION_PROCESS_TEXT behind Settings.Global["process_text_manager_apps"].
+         * Stock Android shows PROCESS_TEXT automatically; Samsung requires the activity name to be in
+         * "process_text_manager_apps", which is managed by com.samsung.android.settings.display.SecProcessTextManageAppsFragment.
          */
-        fun refreshProcessTextMenuRegistration(context: Context, forceToggle: Boolean = false): Boolean {
-            return runCatching {
-                val pm = context.packageManager
-                val cn = android.content.ComponentName(context, ProcessTextActivity::class.java)
-                if (forceToggle) {
-                    pm.setComponentEnabledSetting(
-                        cn,
-                        android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
-                        android.content.pm.PackageManager.DONT_KILL_APP
-                    )
-                }
-                pm.setComponentEnabledSetting(
-                    cn,
-                    android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    android.content.pm.PackageManager.DONT_KILL_APP
+        fun isSamsungProcessTextEnabled(context: Context): Boolean {
+            if (!android.os.Build.MANUFACTURER.equals("samsung", ignoreCase = true)) return true
+            val enabledList = runCatching {
+                android.provider.Settings.Global.getString(
+                    context.contentResolver,
+                    "process_text_manager_apps"
                 )
-                val probe = Intent(Intent.ACTION_PROCESS_TEXT).apply { type = "text/plain" }
-                val matches = pm.queryIntentActivities(probe, 0)
-                matches.any { it.activityInfo?.packageName == context.packageName }
+            }.getOrNull() ?: return false
+            return enabledList.contains(ProcessTextActivity::class.java.name)
+        }
+
+        fun promptSamsungProcessTextEnableIfNeeded(activity: Activity): Boolean {
+            if (!android.os.Build.MANUFACTURER.equals("samsung", ignoreCase = true)) return false
+            if (isSamsungProcessTextEnabled(activity)) return false
+            return runCatching {
+                val manageAppsComponent = android.content.ComponentName(
+                    "com.android.settings",
+                    "com.samsung.android.settings.display.SecProcessTextManageAppsFragment"
+                )
+                val info = activity.packageManager.getActivityInfo(manageAppsComponent, 0)
+                if (!info.enabled || !info.exported) return false
+                Toast.makeText(
+                    activity,
+                    "Activa el interruptor de Tasa VE para mostrarlo en los 3 puntos",
+                    Toast.LENGTH_LONG
+                ).show()
+                activity.startActivity(Intent().setComponent(manageAppsComponent))
+                true
             }.getOrDefault(false)
         }
     }

@@ -11,6 +11,7 @@
     <uses-permission android:name="com.android.vending.BILLING" />
 
     <queries>
+        <package android:name="com.android.settings" />
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
@@ -62,24 +63,7 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/process_text_label"
             android:icon="@mipmap/ic_launcher"
-            android:theme="@style/Theme.TasaVE.QuickOverlay" />
-
-        <!-- Dedicated real activity (without excludeFromRecents/noHistory) with @string/process_text_label
-             and http + https + text/plain VIEW & SEND filters so Android 11-16 Package Visibility
-             and Samsung One UI ("Administrar aplicaciones") expose "Tasa VE" in WhatsApp's 3-dot menu -->
-        <activity
-            android:name=".quick.ProcessTextActivity"
-            android:enabled="true"
-            android:exported="true"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:label="@string/process_text_label"
-            android:icon="@mipmap/ic_launcher"
             android:theme="@style/Theme.TasaVE.QuickOverlay">
-            <intent-filter android:label="@string/process_text_label">
-                <action android:name="android.intent.action.PROCESS_TEXT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
             <intent-filter android:label="@string/process_text_label">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -88,9 +72,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" />
-                <data android:scheme="https" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -98,13 +80,23 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data android:mimeType="text/html" />
-                <data android:mimeType="text/plain" />
-                <data android:mimeType="application/xhtml+xml" />
             </intent-filter>
+        </activity>
+
+        <!-- Dedicated real activity (without excludeFromRecents/noHistory) with ONLY the
+             PROCESS_TEXT intent-filter so Samsung One UI and Android 11-16 expose "Tasa VE"
+             in WhatsApp's 3-dot text selection menu -->
+        <activity
+            android:name=".quick.ProcessTextActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:label="@string/process_text_label"
+            android:theme="@style/Theme.TasaVE.QuickOverlay">
             <intent-filter>
-                <action android:name="android.intent.action.WEB_SEARCH" />
+                <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

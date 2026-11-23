@@ -1889,82 +1889,38 @@ fun MarketTab(
                     }
                 }
                 Text(
-                    text = "• Si te enviaron una burbuja (ej. \"\$35\"): cópiala en WhatsApp y toca \"Calc. rápida\" en la notificación fija o el botón \"Tasa VE\" en tu Barra Rápida.\n• Si estás escribiendo en \"Mensaje\": escribe 35 → selecciónalo (doble toque) → toca ⋮ → \"Tasa VE\" (en Samsung: desliza hacia arriba en el menú ⋮ o entra en \"Administrar aplicaciones\" y activa Tasa VE).",
+                    text = "• Si te enviaron una burbuja (ej. \"\$35\"): cópiala en WhatsApp y toca \"Calc. rápida\" en la notificación fija o el botón \"Tasa VE\" en tu Barra Rápida.\n• Si estás escribiendo en \"Mensaje\": escribe 35 → selecciónalo → toca ⋮ → \"Tasa VE\" y reemplázalo en el chat en 1 toque.",
                     fontSize = 11.sp,
                     color = textSecondary,
                     lineHeight = 15.sp
                 )
-                Row(
+                OutlinedButton(
+                    onClick = {
+                        onTrackUtilTool("test_floating_calc")
+                        context.startActivity(
+                            com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
+                                context,
+                                com.julcer26.tasave.quick.QuickCalcActivity.MODE_CALC
+                            )
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, borderCol)
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            onTrackUtilTool("test_floating_calc")
-                            context.startActivity(
-                                com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
-                                    context,
-                                    com.julcer26.tasave.quick.QuickCalcActivity.MODE_CALC
-                                )
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, borderCol),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bolt,
-                            contentDescription = null,
-                            modifier = Modifier.size(15.dp),
-                            tint = EmeraldLight
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Abrir flotante",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary,
-                            maxLines = 1
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            onTrackUtilTool("refresh_process_text_menu")
-                            val registered = com.julcer26.tasave.quick.QuickCalcActivity.refreshProcessTextMenuRegistration(
-                                context,
-                                forceToggle = true
-                            )
-                            Toast.makeText(
-                                context,
-                                if (registered) {
-                                    "Menú ⋮ actualizado. En WhatsApp: selecciona el número → ⋮ → Administrar aplicaciones → activa Tasa VE"
-                                } else {
-                                    "Registro actualizado. Cierra y vuelve a abrir WhatsApp para ver Tasa VE en ⋮"
-                                },
-                                Toast.LENGTH_LONG
-                            ).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, Emerald.copy(alpha = 0.45f)),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = null,
-                            modifier = Modifier.size(15.dp),
-                            tint = EmeraldLight
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Activar menú ⋮",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldLight,
-                            maxLines = 1
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Bolt,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = EmeraldLight
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Abrir conversor flotante ahora",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
                 }
             }
 
