@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.julcer26.tasave.MainActivity
+import com.julcer26.tasave.R
 import com.julcer26.tasave.analytics.AnalyticsTracker
 import com.julcer26.tasave.data.CachedRatesBundle
 import com.julcer26.tasave.data.LocalStorageHelper
@@ -521,8 +523,27 @@ private fun QuickCalcOverlayContent(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.weight(1f)
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(Color(0xFF070C16))
+                                .border(
+                                    width = 1.dp,
+                                    color = Color(0x5910B981),
+                                    shape = RoundedCornerShape(7.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_brand_mark),
+                                contentDescription = "Tasa VE Logo",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                         Text(
-                            text = "⚡ Tasa VE",
+                            text = "Tasa VE",
                             color = textPrimary,
                             fontSize = 14.5.sp,
                             fontWeight = FontWeight.Bold
