@@ -15,8 +15,6 @@ import com.julcer26.tasave.data.LocalStorageHelper
 object AnalyticsTracker {
 
     private fun getAnalyticsIfReady(context: Context): FirebaseAnalytics? {
-        val storage = LocalStorageHelper(context)
-        if (!storage.isAnalyticsEnabled()) return null
         return runCatching {
             if (FirebaseApp.getApps(context).isEmpty()) return null
             FirebaseAnalytics.getInstance(context)

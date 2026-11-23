@@ -28,8 +28,8 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 - Incluye la calculadora conversora multi-tasa exacta (**BCV, Euro, USDT**), **BCV Mañana**, **Peso Colombiano (COP)** de frontera, **Calendario SUDEBAN**, **botón en Barra Rápida** para abrir la app, historial local, las herramientas de **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), **Pago Mixto**, **Tarjeta visual PNG**, Widget **Tasas en Vivo**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** o **12 h sin anuncios**).
 - Muestra banners, intersticiales ocasionales tras acciones y anuncios bonificados opcionales gestionados a través de **Google Mobile Ads (AdMob)**.
 
-### B. Estadísticas Anónimas de Uso (Opt-Out)
-- Tasa VE registra únicamente eventos anónimos de navegación (pestañas o herramientas abiertas) mediante **Google Firebase Analytics**, sin montos ni datos personales, para mejorar la app. Puede desactivar este registro en cualquier momento desde *Configuración > Legal y Privacidad > Estadísticas anónimas de uso*.
+### B. Estadísticas Anónimas de Uso
+- Tasa VE registra únicamente eventos anónimos y agregados de navegación (pestañas o herramientas abiertas) mediante **Google Firebase Analytics**, sin montos ni datos personales, para mejorar el funcionamiento de la app.
 
 ### C. Tasa VE Ultra (Suscripción Mensual $0.99 USD / Anual $7.99 USD)
 - **Beneficios completos:** Mientras la suscripción **Tasa VE Ultra** esté activa, elimina por completo la publicidad y desbloquea todas las funciones ilimitadas:

@@ -3,7 +3,7 @@
 **Última actualización:** 23 de noviembre de 2026 (Versión 1.2.0)  
 **Aplicación:** Tasa VE • **Sitio oficial:** https://tasave.net • **Contacto:** soporte@tasave.net
 
-La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuarios. Esta Política de Privacidad describe de forma transparente cómo se obtienen los datos de referencia, qué información se procesa localmente en su dispositivo, qué métricas anónimas opcionales usamos con Google Firebase Analytics para mejorar la app y cuáles son sus derechos conforme a las políticas de Google Play.
+La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuarios. Esta Política de Privacidad describe de forma transparente cómo se obtienen los datos de referencia, qué información se procesa localmente en su dispositivo, qué métricas anónimas de uso empleamos con Google Firebase Analytics para mejorar la app y cuáles son sus derechos conforme a las políticas de Google Play.
 
 ---
 
@@ -19,11 +19,10 @@ La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuario
 ### A. Ausencia de cuentas y recopilación en servidores propios
 **Tasa VE NO recopila, no solicita ni almacena en servidores propios** cuentas de usuario, contraseñas, correos electrónicos, ubicaciones GPS ni datos personales de identidad. No se requiere registro para utilizar la aplicación.
 
-### B. Estadísticas anónimas de uso (Google Firebase Analytics — con opción de desactivación)
+### B. Estadísticas anónimas de uso (Google Firebase Analytics)
 Para conocer de forma agregada qué herramientas se usan más (por ejemplo, si los usuarios abren más el Conversor, COP de frontera, el Calendario SUDEBAN o las calculadoras de **Útiles**) y priorizar mejoras reales, la aplicación integra **Google Firebase Analytics** bajo un esquema estrictamente anónimo:
 - **Qué registramos:** Únicamente nombres genéricos de eventos de navegación (`tasave_tab_opened`, `tasave_util_opened`, `tasave_rate_selected`, `tasave_calendar_opened`, `tasave_calendar_day_selected`, `tasave_scanner_opened`, `tasave_action`).
 - **Qué NUNCA registramos ni enviamos:** Nunca enviamos montos convertidos, totales de carrito, tasas personalizadas, nombres de clientes, cédulas/RIF, teléfonos, correos, cuentas bancarias, fotografías ni perfiles de Pago Móvil/Zelle/Binance.
-- **Control total del usuario (Opt-Out):** Puede desactivar o reactivar las estadísticas anónimas en cualquier momento desde dentro de la app en **Configuración > Legal y Privacidad > Estadísticas anónimas de uso**.
 
 ### C. Datos almacenados exclusivamente de forma local en su dispositivo
 Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guarda en la memoria interna protegida (*sandbox*) de su teléfono Android (SQLite/Room y `SharedPreferences`):
@@ -33,7 +32,7 @@ Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guar
    - Estos datos **permanecen únicamente en su dispositivo** y **nunca se transmiten a servidores del desarrollador ni a Firebase Analytics**.
    - Se excluyen explícitamente del respaldo automático en la nube de Android (`android:fullBackupContent` / `dataExtractionRules`) para mayor resguardo.
 4. **Caché temporal de tarjetas visuales (PNG):** Cuando el usuario genera una imagen para compartir un cálculo o resumen de cobro, el archivo PNG temporal se crea únicamente en el caché privado local (`shared_cards/`) expuesto de forma segura mediante `FileProvider`.
-5. **Preferencias de interfaz y cuotas diarias:** Tema visual (Oscuro/Claro), saldo diario de escaneos OCR, preferencia de estadísticas anónimas, notificación fija de tasas y estado de la suscripción Ultra.
+5. **Preferencias de interfaz y cuotas diarias:** Tema visual (Oscuro/Claro), saldo diario de escaneos OCR, notificación fija de tasas y estado de la suscripción Ultra.
 
 ---
 
@@ -42,7 +41,7 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario SUDEBAN, calcular herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
 2. Formatear resúmenes y tarjetas visuales PNG de cobro o cálculo que el usuario **elige explícitamente** copiar al portapapeles o compartir mediante otras aplicaciones (como WhatsApp).
 3. Actualizar el Widget de pantalla de inicio, mantener la **notificación fija opcional de tasas (Ultra)** y abrir el **Conversor Flotante** desde la **Barra Rápida** o la notificación fija.
-4. Medir de manera agregada y anónima qué pantallas se usan más (si las estadísticas están activadas), mostrar publicidad no invasiva en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
+4. Medir de manera agregada y anónima qué pantallas se usan más, mostrar publicidad no invasiva en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
 
 ---
 
@@ -56,7 +55,7 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 - **Cifrado en tránsito:** Todas las consultas de red hacia APIs de tasas, Firebase Analytics y servicios de Google se realizan exclusivamente mediante protocolo cifrado **HTTPS (SSL/TLS)**.
 - **Procesamiento en el dispositivo:** El reconocimiento de precios por cámara (OCR), el conversor flotante, la generación de tarjetas PNG y la barra fija se ejecutan localmente en el dispositivo sin leer chats ni pantallas automáticamente.
 - **Aislamiento y exclusión de backup en la nube:** Los datos locales residen en el almacenamiento privado de la app en Android y los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos de la copia de seguridad automática en la nube.
-- **Control y borrado:** Puede desactivar Firebase Analytics desde Configuración o eliminar todo su historial, carrito o métodos de cobro dentro de la app / *Ajustes de Android > Aplicaciones > Tasa VE > Almacenamiento*.
+- **Control y borrado:** Puede eliminar todo su historial, carrito o métodos de cobro en cualquier momento dentro de la app o desde *Ajustes de Android > Aplicaciones > Tasa VE > Almacenamiento*.
 
 ---
 
@@ -73,14 +72,14 @@ Tasa VE solicita únicamente los permisos estrictamente necesarios:
 1. **Cámara (`CAMERA`):** Opcional y solo en primer plano cuando el usuario abre el escáner de precios. El OCR se ejecuta localmente en el dispositivo; **no grabamos video ni almacenamos ni subimos fotografías a servidores**.
 2. **Notificaciones (`POST_NOTIFICATIONS`):** Opcional en Android 13+ para usuarios que activen la barra fija opcional de tasas (sin servicio continuo ni sonido).
 3. **Barra Rápida (`BIND_QUICK_SETTINGS_TILE`):** Integración estándar de Android que solo opera cuando el usuario pulsa el botón en su panel rápido.
-4. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, enviar métricas anónimas agregadas (opt-out disponible), mostrar anuncios en la versión gratuita y validar suscripciones en Google Play.
+4. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, enviar métricas anónimas agregadas, mostrar anuncios en la versión gratuita y validar suscripciones en Google Play.
 5. **Facturación de Google Play (`com.android.vending.BILLING`):** Necesario para gestionar la suscripción Tasa VE Ultra y la restauración de compras.
 
 ---
 
 ## 8. Uso de tecnologías de terceros
 La aplicación integra los siguientes SDKs y servicios oficiales certificados:
-- **Google Firebase Analytics:** Telemetría anónima y agregada de interacciones de navegación (sin datos personales ni montos financieros), desactivable en Configuración. ([Política de Privacidad de Google / Firebase](https://firebase.google.com/support/privacy))
+- **Google Firebase Analytics:** Telemetría anónima y agregada de interacciones de navegación (sin datos personales ni montos financieros). ([Política de Privacidad de Google / Firebase](https://firebase.google.com/support/privacy))
 - **Google Mobile Ads (AdMob):** Entrega de banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales en la versión gratuita y prevención de fraude publicitario; puede procesar el ID de publicidad de Android (GAID), dirección IP anonimizada y diagnósticos técnicos. ([Política de Google Ads](https://policies.google.com/technologies/ads))
 - **Google Play Billing Library:** Procesamiento seguro de compras dentro de la app y suscripciones mediante tokens anónimos de confirmación. ([Términos de Google Play](https://play.google.com/intl/es_es/about/play-terms/))
 - **Google ML Kit (Text Recognition):** Reconocimiento óptico de caracteres (OCR) ejecutado **100 % en el dispositivo** para leer precios con la cámara. El SDK puede intercambiar métricas técnicas mínimas de diagnóstico o descarga de modelos con Google.
