@@ -3393,6 +3393,7 @@ fun PlansComparisonDialog(
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
+                        listOf("Conversor por Voz manos libres", "2/día", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Widget Tasas en Vivo", "✓", "✓"),
                         listOf("Widget Calculadora y Cobros", "—", "✓"),
@@ -3432,7 +3433,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, barra fija de tasas, conversor flotante en Barra Rápida con Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, logo propio y Widgets Ultra. Cancela cuando quieras.",
+                        text = "Cero anuncios, conversor por voz manos libres ∞, barra fija de tasas, conversor flotante en Barra Rápida con Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, logo propio y Widgets Ultra. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

@@ -13,11 +13,11 @@ Esta guía contiene todos los pasos, configuraciones técnicas, requerimientos l
    - Dependencia: `com.google.android.gms:play-services-ads:23.6.0`.
    - Componente: `TopBannerAd` con etiqueta obligatoria de divulgación publicitaria `"PUBLICIDAD"` para evitar infracciones de clics involuntarios de Google Play.
    - Activada configuración de pruebas (`ca-app-pub-3940256099942544...`) para evitar suspensiones de cuenta AdMob durante el desarrollo.
-3. **Integración de Google Play Billing (IAP $2.99 USD):**
+3. **Integración de Google Play Billing (Suscripción Tasa VE Ultra):**
    - Dependencia: `com.android.billingclient:billing-ktx:7.1.1`.
-   - Producto configurado: `tasave_pro_remove_ads` (Compra única / In-App Product).
-   - Funciones: Compra oficial, reconocimiento de compra (`acknowledge`), persistencia y botón de **Restaurar Compras**.
-   - Al comprar la versión Pro, el banner de publicidad superior desaparece automáticamente y se muestra la insignia dorada **PRO**.
+   - Productos configurados: `tasave_ultra_monthly` (`$0.99 USD/mes`) y `tasave_ultra_yearly` (`$7.99 USD/año`).
+   - Funciones: Compra oficial, reconocimiento de suscripción (`acknowledge`), persistencia y botón de **Restaurar suscripción**.
+   - Al activar **Tasa VE Ultra**, desaparece toda la publicidad y se desbloquean Conversor por Voz ilimitado, Notificación fija, Conversor Flotante multi-tasa + Pago Móvil, OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles ilimitados, logo propio en Tarjeta PNG y Widget Ultra.
 4. **Historial de Conversiones Completo:**
    - Integrado en la pantalla principal con base de datos SQLite Room local, botón "Guardar cálculo" y diálogo "Historial de Conversiones".
 5. **Corrección de Errores de Fondo:**
@@ -91,17 +91,17 @@ Para comenzar a generar ingresos con la barra publicitaria superior:
    - **Anual (`ultra-yearly`):** `$7.99 USD`.
 3. Mantén el ID de producto `tasave_ultra` activo y verifica la prueba cerrada con cuentas de licencia de prueba.
 
-### B. Activar Firebase Analytics (Seguimiento Anónimo de Uso)
-El código ya integra `AnalyticsTracker` (con interruptor opt-out en *Configuración > Legal y Privacidad*) y aplica automáticamente el plugin `com.google.gms.google-services` si detecta el archivo de Firebase:
-1. Crea o abre tu proyecto en [Firebase Console](https://console.firebase.google.com/) y agrega la app Android con paquete **`com.julcer26.tasave`**.
-2. Descarga **`google-services.json`** y colócalo exactamente en:
-   `app/google-services.json`
-3. Eventos anónimos configurados (sin montos ni datos personales):
+### B. Firebase Analytics (Seguimiento Anónimo de Uso — ACTIVO)
+El proyecto Firebase **`tasa-ve-julcer26`** ya está configurado con ambas apps (`com.julcer26.tasave` para Play Store y `com.julcer26.tasave.ultra` para APK de pruebas) y el Secret encriptado `GOOGLE_SERVICES_JSON` inyectado automáticamente en GitHub Actions:
+1. `AnalyticsTracker` respeta el interruptor opt-out en *Configuración > Legal y Privacidad*.
+2. Eventos anónimos configurados (sin montos, frases dictadas ni datos personales):
    - `tasave_tab_opened` (`tab_name`: Conversor / Carrito / Útiles / Cobros)
    - `tasave_util_opened` (`tool_name`: `compare_payment`, `split_bill`, `add_quick_tile`)
    - `tasave_rate_selected` (`rate_key`: `USD_BCV`, `EUR_BCV`, `USDT`, `COP`)
    - `tasave_calendar_opened` y `tasave_calendar_day_selected` (`is_bank_holiday`)
-   - `tasave_action` (`persistent_notif_enabled`, `quick_process_text_opened`, `quick_tile_ultra`, `quick_copy_with_pm`)
+   - `tasave_scanner_opened` (`source`: `topbar` / `cart`)
+   - `tasave_voice_used` (`tier`: `free` / `ultra`, `rate_key`, `source`: `main_topbar` / `quick_calc`)
+   - `tasave_action` (`persistent_notif_enabled`, `quick_calc_opened`, `quick_tile_ultra`, `quick_copy_with_pm`)
 
 ---
 
@@ -157,6 +157,9 @@ Google Play exige rellenar un cuestionario sobre cómo se manejan los datos. Rel
      - Finalidad: **Gestión de suscripciones** y **Servicios de la aplicación**.
    - **Ubicación aproximada:**
      - Sí (derivada por IP a nivel de país/región por AdMob y Firebase Analytics; sin GPS).
+   - **Permisos sensibles declarados (sin almacenamiento en servidores):**
+     - `CAMERA`: Uso opcional en primer plano para OCR local de etiquetas de precios (no guarda ni sube fotos).
+     - `RECORD_AUDIO`: Uso opcional bajo toque directo del usuario para el **Conversor por Voz Manos Libres** (dictado en español venezolano vía servicio nativo de Android; no graba en segundo plano ni almacena archivos de audio).
 
 ---
 
@@ -182,16 +185,18 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
    - Tamaño: `512 x 512 px` (Formato PNG de 32 bits con fondo transparente o sólido, máx. 1 MB).
 2. **Gráfico de funciones (Feature Graphic):**
    - Tamaño: `1024 x 500 px` (Formato JPG o PNG de 24 bits, sin transparencia).
-3. **Capturas de pantalla (Screenshots):**
-   - Mínimo 5 capturas en resolución de teléfono (`1080 x 2400 px`):
-     - Captura 1: Conversor BCV Hoy/Mañana, Euro, USDT y chip 🇨🇴 COP + botón Calendario.
-     - Captura 2: Calendario SUDEBAN con feriados marcados y cálculo rápido por fecha.
-     - Captura 3: Pestaña **Útiles** (`¿Con qué pago?` y `Dividir cuenta`).
-     - Captura 4: Carrito Inteligente con Escáner OCR + IVA/IGTF.
-     - Captura 5: Cobros (Pago Mixto, Tarjeta PNG con tu logo y WhatsApp).
+3. **Capturas de pantalla (Screenshots) y Videos Cortos (Reels / TikTok / Google Omni / Vids):**
+   - Mínimo 6 capturas en resolución de teléfono (`1080 x 2400 px`):
+     - Captura 1: Conversor BCV Hoy/Mañana, Euro, USDT, chip 🇨🇴 COP + botones Calendario, Voz y Cámara OCR.
+     - Captura 2: **Conversor por Voz Manos Libres** + **Conversor Flotante** sobre WhatsApp desde Barra Rápida / Notificación fija.
+     - Captura 3: Pestaña **Útiles** (`¿Con qué pago?` con descuento libre y `Dividir cuenta` en 5 monedas).
+     - Captura 4: Escáner de cámara OCR + Carrito Inteligente con IVA/IGTF y Tarjeta PNG.
+     - Captura 5: Cobros (Pago Mixto, Tarjeta PNG con logo propio Ultra y WhatsApp).
+     - Captura 6: Widget Tasas en Vivo (Gratis) + Widget Calculadora y Cobros (Ultra).
+   - *Estrategia de difusión:* El flujo del **Conversor por Voz** y el **Conversor Flotante** se muestra en videos verticales cortos para Reels, TikTok (`@tasa.ve`) y piezas con **Google Omni / Google Vids**, manteniendo la app limpia y sin tarjetas largas de instrucciones.
 4. **Textos para la Ficha:**
-   - **Título de la app (máx. 30 caracteres):** `Tasa VE: Dólar BCV y USDT`
-   - **Descripción breve (máx. 80 caracteres):** `BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros VE.`
+   - **Título de la app (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
+   - **Descripción breve (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP, voz manos libres, calendario SUDEBAN y cobros.`
    - **Descripción completa:**
      ```
      Tasa VE es la calculadora financiera todo-en-uno para tu día a día en Venezuela.
@@ -200,11 +205,12 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
 
      Características principales:
      • Conversor bidireccional exacto (BCV Hoy/Mañana, Euro, USDT y COP frontera).
+     • Conversor por Voz Manos Libres: dicta "38 con 50 dólares a BCV" o "15 mil bolívares a USDT" con lectura en voz alta (2 pruebas gratis/día, ilimitado en Ultra).
      • Calendario Bancario SUDEBAN: identifica lunes bancarios, feriados y tasas históricas por día.
-     • Accesos Rápidos: selecciona montos en WhatsApp ("Tasa VE"), botón en Barra Rápida y notificación fija opcional (Ultra).
-     • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/Zelle) y Dividir cuenta con amigos.
+     • Accesos Rápidos: botón en Barra Rápida, notificación fija silenciosa de tasas y Conversor Flotante con Pago Móvil en 1 toque (Ultra).
+     • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/$ con descuento libre) y Dividir cuenta en 5 monedas.
      • Carrito inteligente con escáner de cámara OCR local e IVA/IGTF referencial.
-     • Módulo Cobros: Pago Mixto, perfiles locales de Pago Móvil/Zelle/Binance y Tarjeta PNG lista para WhatsApp.
+     • Módulo Cobros: Pago Mixto, perfiles locales de Pago Móvil/Zelle/Binance y Tarjeta PNG con logo propio (Ultra) lista para WhatsApp.
      • Widgets en pantalla de inicio y Plan Ultra opcional sin anuncios ($0.99/mes o $7.99/año).
 
      Nota: Esta herramienta tiene carácter estrictamente informativo y de cálculo matemático referencial.

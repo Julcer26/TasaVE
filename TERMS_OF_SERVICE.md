@@ -1,6 +1,6 @@
 # Términos de Servicio y Descargo de Responsabilidad — Tasa VE
 
-**Última actualización:** 22 de noviembre de 2026 (Versión 1.2.0)
+**Última actualización:** 23 de noviembre de 2026 (Versión 1.2.0)
 
 Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de ellos, por favor no utilice la aplicación.
 
@@ -25,19 +25,20 @@ Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación mó
 ## 3. Modelo de Monetización, Compras In-App, Analítica y Suscripciones
 
 ### A. Versión Gratuita con Publicidad
-- Incluye la calculadora conversora multi-tasa exacta (**BCV, Euro, USDT**), **BCV Mañana**, **Peso Colombiano (COP)** de frontera, **Calendario SUDEBAN**, **menú "Tasa VE" al seleccionar texto en USD BCV**, **botón en Barra Rápida** para abrir la app, historial local, las herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), **Pago Mixto**, **Tarjeta visual PNG**, Widget **Tasas en Vivo**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** o **12 h sin anuncios**).
+- Incluye la calculadora conversora multi-tasa exacta (**BCV, Euro, USDT**), **BCV Mañana**, **Peso Colombiano (COP)** de frontera, **Calendario SUDEBAN**, **botón en Barra Rápida** para abrir la app, historial local, las herramientas de **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), **Pago Mixto**, **Tarjeta visual PNG**, Widget **Tasas en Vivo**, hasta **5 productos en el carrito**, **1 perfil de cobro**, **2 pruebas gratis/día del Conversor por Voz Manos Libres** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** o **12 h sin anuncios**).
 - Muestra banners, intersticiales ocasionales tras acciones y anuncios bonificados opcionales gestionados a través de **Google Mobile Ads (AdMob)**.
 
 ### B. Estadísticas Anónimas de Uso (Opt-Out)
-- Tasa VE registra únicamente eventos anónimos de navegación (pestañas o herramientas abiertas) mediante **Google Firebase Analytics**, sin montos ni datos personales, para mejorar la app. Puede desactivar este registro en cualquier momento desde *Configuración > Legal y Privacidad > Estadísticas anónimas de uso*.
+- Tasa VE registra únicamente eventos anónimos de navegación (pestañas o herramientas abiertas) mediante **Google Firebase Analytics**, sin montos, frases dictadas ni datos personales, para mejorar la app. Puede desactivar este registro en cualquier momento desde *Configuración > Legal y Privacidad > Estadísticas anónimas de uso*.
 
 ### C. Tasa VE Ultra (Suscripción Mensual $0.99 USD / Anual $7.99 USD)
 - **Beneficios completos:** Mientras la suscripción **Tasa VE Ultra** esté activa, elimina por completo la publicidad y desbloquea todas las funciones ilimitadas:
+  - **Conversor por Voz Manos Libres ilimitado** (dictado en español venezolano con lectura opcional en voz alta).
   - **Notificación fija opcional de tasas** con botones de copiado rápido, calculadora y Pago Móvil.
-  - **Conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil en 1 toque** desde WhatsApp (`PROCESS_TEXT`) o desde la **Barra Rápida** de Android.
+  - **Conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil en 1 toque** desde la **Barra Rápida** o la notificación fija.
   - **Escáner de precios OCR ilimitado** por cámara.
   - **Carrito Inteligente ilimitado** con escaneo directo, edición de productos y cálculos referenciales de **IVA (16 %)** e **IGTF (3 %)**.
-  - **Alertas locales de cambio de tasa** y **Widget Calculadora y Cobros Ultra**.
+  - **Widget Calculadora y Cobros Ultra**.
   - **Módulo Cobros avanzado:** Guardado local opcional de **múltiples perfiles ilimitados** (Pago Móvil, Cuentas Bancarias, Zelle y Binance Pay) y **logo propio en Tarjetas PNG**.
 - **Renovación Automática y Cancelación:** La suscripción se renueva automáticamente a través de **Google Play Billing** por el período seleccionado salvo cancelación con al menos **24 horas de antelación** al vencimiento desde *Google Play Store > Suscripciones*. La desinstalación de la app no cancela la suscripción.
 

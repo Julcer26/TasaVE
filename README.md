@@ -19,14 +19,15 @@
 ## Características Principales
 
 - **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV exactos, vista anticipada de **BCV Mañana**, USDT paralelo, **Peso Colombiano (COP) de frontera** con TRM en vivo y Modo Offline con caché local.
+- **Conversor por Voz Manos Libres:** Dicta montos naturales en español venezolano (p. ej. *"38 con 50 dólares a BCV"*, *"15 mil bolívares a USDT"*, *"50 dólares mañana"*) con respuesta opcional en voz alta (**2 pruebas gratis/día → ilimitado en Ultra**).
 - **Calendario Bancario SUDEBAN y Tasas Históricas:** Botón rápido en barra superior con feriados bancarios 2025–2027, consulta de tasa por día y cálculo rápido integrado.
-- **Accesos Rápidos (Sin abrir la app):** Menú **"Tasa VE"** al seleccionar cifras en WhatsApp u otras apps (`PROCESS_TEXT`, USD BCV gratis; multi-tasa + Pago Móvil en **Ultra**), botón nativo en la **Barra Rápida** de Android (`TileService`) y **notificación fija opcional** en Ultra con copiado rápido.
+- **Accesos Rápidos (Sin abrir la app):** Botón nativo en la **Barra Rápida** de Android (`TileService`), **notificación fija opcional** en Ultra con copiado rápido y **Conversor Flotante** con detección del portapapeles, voz y Pago Móvil en 1 toque.
 - **Widgets en Pantalla de Inicio:** Widget gratuito **Tasas en Vivo** (BCV Hoy/Mañana y Brecha) y widget **Ultra Calculadora y Cobros** (tasas + accesos directos, calculadora rápida en pantalla y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).
 - **Carrito de Mercado Inteligente:** Controla tu presupuesto en USD y Bolívares con cálculo opcional de **IVA (16%)** e **IGTF (3%)**.
-- **Pestaña Útiles del Día a Día:** 2 herramientas prácticas (**¿Con qué pago?** USDT vs Efectivo/Zelle y **Dividir cuenta** entre amigos), además de **Accesos Rápidos**, **Alertas** y **Widgets**.
+- **Pestaña Útiles del Día a Día:** 2 herramientas prácticas (**¿Con qué pago?** USDT vs Efectivo/$ con descuento libre y **Dividir cuenta** en 5 monedas), además de **Accesos Rápidos** y **Widgets**.
 - **Cobros, Pago Mixto y Tarjeta PNG:** Calcula el vuelto en pagos mixtos y comparte tarjetas visuales en PNG con tus datos de Pago Móvil, Zelle o Binance Pay (y logo propio en **Ultra**).
-- **Privacidad Local, Analítica Opcional y Feedback Directo:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo, con métricas anónimas de uso desactivables en Configuración y centro de reportes integrado.
+- **Privacidad Local, Analítica Opcional y Feedback Directo:** Sin cuentas ni registro; tus perfiles de cobro permanecen exclusivamente en tu dispositivo, con métricas anónimas de uso (Firebase Analytics) desactivables en Configuración y centro de reportes integrado.
 
 ---
 
