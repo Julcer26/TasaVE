@@ -132,15 +132,6 @@ data class RateSnapshot(
 )
 
 @Immutable
-data class AlertSettings(
-    val enabled: Boolean = false,
-    val watchUsdBcv: Boolean = true,
-    val watchEurBcv: Boolean = true,
-    val watchUsdt: Boolean = true,
-    val thresholdPercent: Double = 1.0
-)
-
-@Immutable
 data class PagoMovilInfo(
     val bank: String = "",
     val documentId: String = "",

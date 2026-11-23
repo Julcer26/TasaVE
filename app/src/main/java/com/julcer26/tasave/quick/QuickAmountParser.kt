@@ -10,8 +10,7 @@ data class ParsedQuickAmount(
 
 /**
  * Extracts a clean monetary amount, currency direction, and suggested rate key
- * from text selected by the user inside another app (e.g., WhatsApp via PROCESS_TEXT)
- * or copied to the clipboard.
+ * from text copied to the clipboard or shared into Tasa VE.
  *
  * Ignores copied Pago Móvil / bank detail blocks, leading-zero bank/phone codes (e.g. "0134", "0414"),
  * and already-formatted Tasa VE conversion lines.

@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.stateIn
  *
  * Ultra removes all ads and unlocks every feature:
  * unlimited camera OCR, unlimited smart cart + IVA/IGTF, unlimited payment profiles,
- * rate alerts, and home screen widget.
+ * persistent live-rate notification bar, and home screen widgets.
  */
 class BillingManager(
     private val context: Context,

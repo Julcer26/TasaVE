@@ -898,7 +898,7 @@ private fun CartItemEditorDialog(
 
 // =========================================================================
 // =========================================================================
-// TAB 3: ÚTILES (HERRAMIENTAS DEL DÍA A DÍA, ALERTAS Y WIDGETS)
+// TAB 3: ÚTILES (HERRAMIENTAS DEL DÍA A DÍA, ACCESOS RÁPIDOS Y WIDGETS)
 // =========================================================================
 private enum class UtilTool(val title: String, val subtitle: String, val analyticsKey: String) {
     COMPARE("¿Con qué pago?", "USDT vs Efectivo/$", "compare_payment"),
@@ -938,13 +938,10 @@ fun MarketTab(
     uiState: TasaVeUiState,
     snapshots: List<RateSnapshot>,
     isHistoryLoading: Boolean,
-    alertSettings: AlertSettings,
     persistentNotifEnabled: Boolean = false,
     onTrackUtilTool: (String) -> Unit = {},
     onRefreshHistory: () -> Unit,
-    onUpdateAlerts: (AlertSettings) -> Unit,
     onTogglePersistentNotif: (Boolean) -> Boolean = { false },
-    onTestNotification: () -> Boolean,
     onOpenPlans: () -> Unit
 ) {
     val context = LocalContext.current
@@ -961,17 +958,6 @@ fun MarketTab(
     val spreadUsdtVsBcv = UltraMath.calculateSpreadPercent(usdtRate, usdRate)
 
     var selectedTool by remember { mutableStateOf<UtilTool?>(null) }
-
-    val notifPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            onUpdateAlerts(alertSettings.copy(enabled = true))
-            Toast.makeText(context, "Alertas de tasa activadas", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     val persistentNotifPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -1581,175 +1567,7 @@ fun MarketTab(
                 }
             }
 
-        // 3. Rate Alerts Card (Exclusivo Ultra)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(cardBg)
-                .border(
-                    1.dp,
-                    if (isUltraUser) borderCol else Color(0x4DF59E0B),
-                    RoundedCornerShape(20.dp)
-                )
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "Alertas de Cambio de Tasa",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary
-                        )
-                        if (!isUltraUser) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0x26F59E0B))
-                                    .padding(horizontal = 7.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "EXCLUSIVO ULTRA",
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = AmberUltra
-                                )
-                            }
-                        }
-                    }
-                    Text(
-                        text = "Avisa localmente cuando el precio varíe en segundo plano.",
-                        fontSize = 11.sp,
-                        color = textSecondary
-                    )
-                }
-                Switch(
-                    checked = isUltraUser && alertSettings.enabled,
-                    onCheckedChange = { enable ->
-                        if (!isUltraUser) {
-                            Toast.makeText(
-                                context,
-                                "Las alertas automáticas son exclusivas de Tasa VE Ultra.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            onOpenPlans()
-                        } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                            PackageManager.PERMISSION_GRANTED
-                        ) {
-                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            onUpdateAlerts(alertSettings.copy(enabled = enable))
-                        }
-                    },
-                    colors = SwitchDefaults.colors(checkedThumbColor = Emerald, checkedTrackColor = Color(0x4D10B981))
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = alertSettings.watchUsdBcv,
-                    onClick = {
-                        if (!isUltraUser) onOpenPlans()
-                        else onUpdateAlerts(alertSettings.copy(watchUsdBcv = !alertSettings.watchUsdBcv))
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    label = { Text("USD BCV", fontSize = 11.sp) }
-                )
-                FilterChip(
-                    selected = alertSettings.watchEurBcv,
-                    onClick = {
-                        if (!isUltraUser) onOpenPlans()
-                        else onUpdateAlerts(alertSettings.copy(watchEurBcv = !alertSettings.watchEurBcv))
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    label = { Text("EUR BCV", fontSize = 11.sp) }
-                )
-                FilterChip(
-                    selected = alertSettings.watchUsdt,
-                    onClick = {
-                        if (!isUltraUser) onOpenPlans()
-                        else onUpdateAlerts(alertSettings.copy(watchUsdt = !alertSettings.watchUsdt))
-                    },
-                    shape = RoundedCornerShape(14.dp),
-                    label = { Text("USDT", fontSize = 11.sp) }
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Sensibilidad:", fontSize = 11.sp, color = textSecondary)
-                listOf(0.5, 1.0, 2.0).forEach { pct ->
-                    FilterChip(
-                        selected = alertSettings.thresholdPercent == pct,
-                        onClick = {
-                            if (!isUltraUser) onOpenPlans()
-                            else onUpdateAlerts(alertSettings.copy(thresholdPercent = pct))
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        label = { Text("${pct}%", fontSize = 11.sp) }
-                    )
-                }
-            }
-
-            if (isUltraUser) {
-                OutlinedButton(
-                    onClick = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                            PackageManager.PERMISSION_GRANTED
-                        ) {
-                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            val sent = onTestNotification()
-                            Toast.makeText(
-                                context,
-                                if (sent) "Notificación de prueba enviada" else "Activa las notificaciones primero",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, borderCol)
-                ) {
-                    Icon(Icons.Default.NotificationsActive, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Probar notificación ahora", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-                }
-            } else {
-                Button(
-                    onClick = onOpenPlans,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 46.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black)
-                ) {
-                    Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Desbloquear con Ultra ($ultraPrice)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // Accesos Rápidos (Notificación Fija + Menú WhatsApp + Barra Rápida)
+        // Accesos Rápidos (Notificación Fija + Barra Rápida)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1772,7 +1590,7 @@ fun MarketTab(
                         color = textPrimary
                     )
                     Text(
-                        text = "Calcula directo desde WhatsApp, notificaciones o la barra superior.",
+                        text = "Consulta tasas y calcula directo desde tus notificaciones o la barra superior.",
                         fontSize = 11.sp,
                         color = textSecondary
                     )
@@ -1855,76 +1673,7 @@ fun MarketTab(
                 )
             }
 
-            // 2) Conversor flotante en WhatsApp (burbujas copiadas o texto seleccionado)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(surfaceMuted)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "Conversor flotante en WhatsApp",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0x2610B981))
-                            .padding(horizontal = 6.dp, vertical = 1.dp)
-                    ) {
-                        Text(
-                            text = if (isUltraUser) "MULTI-TASA + PM" else "BCV GRATIS",
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Black,
-                            color = EmeraldLight
-                        )
-                    }
-                }
-                Text(
-                    text = "• Si te enviaron una burbuja (ej. \"\$35\"): cópiala en WhatsApp y toca \"Calc. rápida\" en la notificación fija o el botón \"Tasa VE\" en tu Barra Rápida.\n• Si estás escribiendo en \"Mensaje\": escribe 35 → selecciónalo → toca ⋮ → \"Tasa VE\" y reemplázalo en el chat en 1 toque.",
-                    fontSize = 11.sp,
-                    color = textSecondary,
-                    lineHeight = 15.sp
-                )
-                OutlinedButton(
-                    onClick = {
-                        onTrackUtilTool("test_floating_calc")
-                        context.startActivity(
-                            com.julcer26.tasave.quick.QuickCalcActivity.createIntent(
-                                context,
-                                com.julcer26.tasave.quick.QuickCalcActivity.MODE_CALC
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, borderCol)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Bolt,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = EmeraldLight
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Abrir conversor flotante ahora",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
-                }
-            }
-
-            // 3) Botón en Barra Rápida de Android (Quick Settings Tile)
+            // 2) Botón en Barra Rápida de Android (Quick Settings Tile)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -3647,9 +3396,7 @@ fun PlansComparisonDialog(
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Widget Tasas en Vivo", "✓", "✓"),
                         listOf("Widget Calculadora y Cobros", "—", "✓"),
-                        listOf("Alertas de tasa", "—", "✓"),
-                        listOf("Menú rápido WhatsApp", "BCV USD", "Todos + PM"),
-                        listOf("Barra fija y Barra Rápida", "—", "✓"),
+                        listOf("Barra fija y Conversor flotante", "—", "✓"),
                         listOf("Logo propio en Tarjeta PNG", "—", "✓")
                     )
                     rows.forEach { cols ->
@@ -3685,7 +3432,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, notificación fija de tasas, conversor flotante en WhatsApp/Barra Rápida con Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, logo propio, Alertas y Widgets. Cancela cuando quieras.",
+                        text = "Cero anuncios, barra fija de tasas, conversor flotante en Barra Rápida con Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, logo propio y Widgets Ultra. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

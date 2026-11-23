@@ -1,6 +1,5 @@
 package com.julcer26.tasave.quick
 
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -57,16 +56,9 @@ import com.julcer26.tasave.widget.WidgetCalcMath
 import java.util.Locale
 
 /**
- * Dedicated subclass registered without excludeFromRecents / noHistory
- * so Android 11-16 Package Visibility and Samsung One UI ("Administrar aplicaciones")
- * always list "Tasa VE" inside the 3-dot text selection menu.
- */
-class ProcessTextActivity : QuickCalcActivity()
-
-/**
  * Compact floating translucent quick-converter and clipboard helper.
  */
-open class QuickCalcActivity : ComponentActivity() {
+class QuickCalcActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_MODE = "extra_open_mode"
@@ -86,42 +78,6 @@ open class QuickCalcActivity : ComponentActivity() {
                 )
             }
         }
-
-        /**
-         * Samsung One UI 6/7 gates ACTION_PROCESS_TEXT behind Settings.Global["process_text_manager_apps"].
-         * Stock Android shows PROCESS_TEXT automatically; Samsung requires the activity name to be in
-         * "process_text_manager_apps", which is managed by com.samsung.android.settings.display.SecProcessTextManageAppsFragment.
-         */
-        fun isSamsungProcessTextEnabled(context: Context): Boolean {
-            if (!android.os.Build.MANUFACTURER.equals("samsung", ignoreCase = true)) return true
-            val enabledList = runCatching {
-                android.provider.Settings.Global.getString(
-                    context.contentResolver,
-                    "process_text_manager_apps"
-                )
-            }.getOrNull() ?: return false
-            return enabledList.contains(ProcessTextActivity::class.java.name)
-        }
-
-        fun promptSamsungProcessTextEnableIfNeeded(activity: Activity): Boolean {
-            if (!android.os.Build.MANUFACTURER.equals("samsung", ignoreCase = true)) return false
-            if (isSamsungProcessTextEnabled(activity)) return false
-            return runCatching {
-                val manageAppsComponent = android.content.ComponentName(
-                    "com.android.settings",
-                    "com.samsung.android.settings.display.SecProcessTextManageAppsFragment"
-                )
-                val info = activity.packageManager.getActivityInfo(manageAppsComponent, 0)
-                if (!info.enabled || !info.exported) return false
-                Toast.makeText(
-                    activity,
-                    "Activa el interruptor de Tasa VE para mostrarlo en los 3 puntos",
-                    Toast.LENGTH_LONG
-                ).show()
-                activity.startActivity(Intent().setComponent(manageAppsComponent))
-                true
-            }.getOrDefault(false)
-        }
     }
 
     private var clipboardSnippetState by mutableStateOf<String?>(null)
@@ -129,9 +85,7 @@ open class QuickCalcActivity : ComponentActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private fun isCallerContextualAction(action: String?): Boolean {
-        return action == Intent.ACTION_PROCESS_TEXT ||
-            action == Intent.ACTION_SEND ||
-            action == Intent.ACTION_WEB_SEARCH
+        return action == Intent.ACTION_SEND
     }
 
     private fun closeOverlay(preserveCallerTask: Boolean = isCallerContextualAction(intent?.action)) {
@@ -153,12 +107,6 @@ open class QuickCalcActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
-        if (intent?.action == Intent.ACTION_VIEW) {
-            // If a user ever opens an http/https link via ProcessTextActivity, redirect to MainActivity
-            openMainApp(openPlans = false)
-            closeOverlay(preserveCallerTask = true)
-            return
-        }
         if (handleDirectActionIfNeeded(intent)) {
             return
         }
@@ -233,12 +181,8 @@ open class QuickCalcActivity : ComponentActivity() {
 
     private fun extractIncomingText(intent: Intent?): String? {
         return when (intent?.action) {
-            Intent.ACTION_PROCESS_TEXT ->
-                intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
             Intent.ACTION_SEND ->
                 intent.getStringExtra(Intent.EXTRA_TEXT)
-            Intent.ACTION_WEB_SEARCH ->
-                intent.getStringExtra(android.app.SearchManager.QUERY)
             else -> null
         }
     }
@@ -306,12 +250,10 @@ open class QuickCalcActivity : ComponentActivity() {
         val initialProfileIndex = storage.resolveActivePaymentProfileIndex(profiles)
 
         val explicitText = extractIncomingText(intent)
-        val isEditableProcessText = intent?.action == Intent.ACTION_PROCESS_TEXT &&
-            !intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
 
         AnalyticsTracker.logAction(
             this,
-            if (explicitText != null) "quick_process_text_opened" else "quick_calc_opened"
+            if (explicitText != null) "quick_share_text_opened" else "quick_calc_opened"
         )
 
         setContent {
@@ -333,7 +275,6 @@ open class QuickCalcActivity : ComponentActivity() {
                     rawSnippet = activeSnippet,
                     snippetVersion = clipboardDetectionSeq,
                     isFromClipboard = explicitText == null && clipboardSnippetState != null,
-                    isEditableTextTarget = isEditableProcessText,
                     initialRateKey = initialRateKey,
                     initialAmount = parsed?.amount?.let { formatCleanInput(it) } ?: "1",
                     initialInputIsVes = parsed?.inputIsVes ?: false,
@@ -351,15 +292,7 @@ open class QuickCalcActivity : ComponentActivity() {
                     },
                     onCopyResult = { text ->
                         copyToClipboard("Conversión Tasa VE", text)
-                        if (isEditableProcessText) {
-                            setResult(
-                                Activity.RESULT_OK,
-                                Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, text)
-                            )
-                            Toast.makeText(this, "Insertado en el chat y copiado", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(this, "Conversión copiada", Toast.LENGTH_SHORT).show()
-                        }
+                        Toast.makeText(this, "Conversión copiada", Toast.LENGTH_SHORT).show()
                         AnalyticsTracker.logAction(this, "quick_copy_result")
                         closeOverlay()
                     },
@@ -392,23 +325,11 @@ open class QuickCalcActivity : ComponentActivity() {
                             )
                             val combined = "$conversionLine\n\n${display.copyText}"
                             copyToClipboard("Cobro Tasa VE", combined)
-                            if (isEditableProcessText) {
-                                setResult(
-                                    Activity.RESULT_OK,
-                                    Intent().putExtra(Intent.EXTRA_PROCESS_TEXT, combined)
-                                )
-                                Toast.makeText(
-                                    this,
-                                    "Insertado y copiado con ${display.title}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                Toast.makeText(
-                                    this,
-                                    "Monto + ${display.title} copiado",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                            Toast.makeText(
+                                this,
+                                "Monto + ${display.title} copiado",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             AnalyticsTracker.logAction(this, "quick_copy_with_pm")
                             closeOverlay()
                         }
@@ -460,7 +381,6 @@ private fun QuickCalcOverlayContent(
     rawSnippet: String?,
     snippetVersion: Int,
     isFromClipboard: Boolean,
-    isEditableTextTarget: Boolean,
     initialRateKey: String,
     initialAmount: String,
     initialInputIsVes: Boolean,
@@ -973,7 +893,7 @@ private fun QuickCalcOverlayContent(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isEditableTextTarget) "Insertar" else "Copiar",
+                            text = "Copiar",
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
                             maxLines = 1

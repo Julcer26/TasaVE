@@ -24,11 +24,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         pendingWidgetAction = intent?.getStringExtra(TasaVeUltraWidgetProvider.EXTRA_WIDGET_ACTION)
-        if (savedInstanceState == null) {
-            window.decorView.post {
-                com.julcer26.tasave.quick.QuickCalcActivity.promptSamsungProcessTextEnableIfNeeded(this)
-            }
-        }
 
         // Initialize Google Mobile Ads (AdMob) in the background
         MobileAds.initialize(this) {}

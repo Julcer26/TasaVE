@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.julcer26.tasave.BuildConfig
 import com.julcer26.tasave.billing.BillingManager
-import com.julcer26.tasave.ultra.AlertSettings
 import com.julcer26.tasave.ultra.CartItem
 import com.julcer26.tasave.ultra.PagoMovilInfo
 import com.julcer26.tasave.ultra.PaymentMethodProfile
@@ -67,14 +66,6 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_CART_IVA = "ultra_cart_iva"
         private const val KEY_CART_IGTF = "ultra_cart_igtf"
         private const val KEY_RATE_SNAPSHOTS_JSON = "ultra_rate_snapshots_json"
-        private const val KEY_ALERT_ENABLED = "ultra_alert_enabled"
-        private const val KEY_ALERT_USD = "ultra_alert_usd"
-        private const val KEY_ALERT_EUR = "ultra_alert_eur"
-        private const val KEY_ALERT_USDT = "ultra_alert_usdt"
-        private const val KEY_ALERT_THRESHOLD = "ultra_alert_threshold"
-        private const val KEY_ALERT_LAST_USD = "ultra_alert_last_usd"
-        private const val KEY_ALERT_LAST_EUR = "ultra_alert_last_eur"
-        private const val KEY_ALERT_LAST_USDT = "ultra_alert_last_usdt"
         private const val KEY_PM_BANK = "ultra_pm_bank"
         private const val KEY_PM_DOC = "ultra_pm_doc"
         private const val KEY_PM_PHONE = "ultra_pm_phone"
@@ -433,41 +424,6 @@ class LocalStorageHelper(context: Context) {
         prefs.edit()
             .putString(KEY_REMOTE_HISTORY_JSON, encodeSnapshotsJson(items))
             .putLong(KEY_REMOTE_HISTORY_TS, System.currentTimeMillis())
-            .apply()
-    }
-
-    // --- Rate Alert Preferences ---
-    fun getAlertSettings(): AlertSettings = AlertSettings(
-        enabled = prefs.getBoolean(KEY_ALERT_ENABLED, false),
-        watchUsdBcv = prefs.getBoolean(KEY_ALERT_USD, true),
-        watchEurBcv = prefs.getBoolean(KEY_ALERT_EUR, true),
-        watchUsdt = prefs.getBoolean(KEY_ALERT_USDT, true),
-        thresholdPercent = prefs.getFloat(KEY_ALERT_THRESHOLD, 1.0f).toDouble()
-    )
-
-    fun saveAlertSettings(settings: AlertSettings) {
-        prefs.edit()
-            .putBoolean(KEY_ALERT_ENABLED, settings.enabled)
-            .putBoolean(KEY_ALERT_USD, settings.watchUsdBcv)
-            .putBoolean(KEY_ALERT_EUR, settings.watchEurBcv)
-            .putBoolean(KEY_ALERT_USDT, settings.watchUsdt)
-            .putFloat(KEY_ALERT_THRESHOLD, settings.thresholdPercent.toFloat())
-            .apply()
-    }
-
-    fun getLastNotifiedRates(): Triple<Double, Double, Double> {
-        return Triple(
-            prefs.getFloat(KEY_ALERT_LAST_USD, 0f).toDouble(),
-            prefs.getFloat(KEY_ALERT_LAST_EUR, 0f).toDouble(),
-            prefs.getFloat(KEY_ALERT_LAST_USDT, 0f).toDouble()
-        )
-    }
-
-    fun saveLastNotifiedRates(usd: Double, eur: Double, usdt: Double) {
-        prefs.edit()
-            .putFloat(KEY_ALERT_LAST_USD, usd.toFloat())
-            .putFloat(KEY_ALERT_LAST_EUR, eur.toFloat())
-            .putFloat(KEY_ALERT_LAST_USDT, usdt.toFloat())
             .apply()
     }
 

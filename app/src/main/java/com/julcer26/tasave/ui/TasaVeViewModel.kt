@@ -90,15 +90,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     private val _cartIgtfEnabled = MutableStateFlow(localStorageHelper.isCartIgtfEnabled())
     val cartIgtfEnabled: StateFlow<Boolean> = _cartIgtfEnabled.asStateFlow()
 
-    // Market / Brecha Snapshots & Alerts
+    // Market / Brecha Snapshots
     private val _rateSnapshots = MutableStateFlow(localStorageHelper.getRateSnapshots())
     val rateSnapshots: StateFlow<List<RateSnapshot>> = _rateSnapshots.asStateFlow()
 
     private val _isHistoryLoading = MutableStateFlow(false)
     val isHistoryLoading: StateFlow<Boolean> = _isHistoryLoading.asStateFlow()
-
-    private val _alertSettings = MutableStateFlow(localStorageHelper.getAlertSettings())
-    val alertSettings: StateFlow<AlertSettings> = _alertSettings.asStateFlow()
 
     // Checkout / Mixed Payment & Payment Profiles (Pago Móvil, Cuentas, Zelle, Binance Pay)
     private val _pagoMovilInfo = MutableStateFlow(localStorageHelper.getPagoMovilInfo())
@@ -138,7 +135,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         _persistentNotifEnabled.value = enabled
         localStorageHelper.setPersistentRateNotifEnabled(enabled)
         PersistentRateNotificationManager.sync(getApplication())
-        RateAlertWorker.scheduleOrCancel(getApplication(), _alertSettings.value.enabled || enabled)
+        RateSyncWorker.scheduleOrCancel(getApplication(), enabled)
         AnalyticsTracker.logAction(
             getApplication(),
             if (enabled) "persistent_notif_enabled" else "persistent_notif_disabled"
@@ -188,10 +185,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         )
         recalculateVES()
         PersistentRateNotificationManager.sync(application)
-        RateAlertWorker.scheduleOrCancel(
-            application,
-            _alertSettings.value.enabled || _persistentNotifEnabled.value
-        )
+        RateSyncWorker.scheduleOrCancel(application, _persistentNotifEnabled.value)
         fetchRates()
         fetchHistoricalRates()
     }
@@ -512,36 +506,6 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         _cartIgtfEnabled.value = next
         localStorageHelper.setCartIgtfEnabled(next)
         return true
-    }
-
-    // --- Ultra: Alerts & Widget ---
-    fun updateAlertSettings(updated: AlertSettings) {
-        _alertSettings.value = updated
-        localStorageHelper.saveAlertSettings(updated)
-        if (updated.enabled) {
-            val state = _uiState.value
-            localStorageHelper.saveLastNotifiedRates(
-                state.usdBcv?.rate ?: 0.0,
-                state.eurBcv?.rate ?: 0.0,
-                state.usdtParalelo?.rate ?: 0.0
-            )
-        }
-        RateAlertWorker.scheduleOrCancel(
-            getApplication(),
-            updated.enabled || _persistentNotifEnabled.value
-        )
-    }
-
-    fun triggerTestAlertNotification(): Boolean {
-        val state = _uiState.value
-        val usd = state.usdBcv?.rate ?: 0.0
-        val eur = state.eurBcv?.rate ?: 0.0
-        val usdt = state.usdtParalelo?.rate ?: 0.0
-        return RateAlertWorker.sendAlertNotification(
-            context = getApplication(),
-            title = "Alerta Tasa VE Ultra",
-            body = "USD BCV: Bs. ${String.format(Locale.US, "%.4f", usd)} • EUR: Bs. ${String.format(Locale.US, "%.4f", eur)} • USDT: Bs. ${String.format(Locale.US, "%.2f", usdt)}"
-        )
     }
 
     // --- Payment Profiles (Free: 1 profile; Ultra: unlimited) ---
