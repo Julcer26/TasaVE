@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tasa VE — Calculadora BCV, Escáner OCR, Carrito IVA/IGTF y Cobros en Venezuela</title>
-  <meta name="description" content="Calcula el dólar y euro BCV exactos, BCV de mañana, USDT paralelo, escanea etiquetas OCR, arma tu carrito con IVA/IGTF y comparte cobros por Pago Móvil con Tasa VE.">
+  <title>Tasa VE — Calculadora BCV, USDT, Escáner OCR, Carrito y Cobros en Venezuela</title>
+  <meta name="description" content="Calcula Dólar y Euro BCV exactos, BCV Mañana, USDT, Peso Colombiano COP, Calendario SUDEBAN, escáner OCR, carrito con IVA/IGTF y tarjetas de cobro por WhatsApp.">
   <link rel="canonical" href="https://tasave.net/">
   <meta name="theme-color" content="#0A0A0B">
 
@@ -12,11 +12,11 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://tasave.net/">
   <meta property="og:title" content="Tasa VE — La calculadora financiera más completa de Venezuela">
-  <meta property="og:description" content="Dólar y Euro BCV exactos, BCV Mañana, USDT, Escáner de precios OCR, Carrito con IVA/IGTF, Brecha y Tarjetas de Cobro listas para WhatsApp.">
+  <meta property="og:description" content="Dólar y Euro BCV exactos, BCV Mañana, USDT, COP de frontera, Calendario SUDEBAN, Escáner OCR, Carrito con IVA/IGTF, Útiles y Tarjetas de Cobro.">
   <meta property="og:image" content="https://tasave.net/assets/feature_graphic_1024x500.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Tasa VE — Calculadora BCV, Escáner OCR y Cobros">
-  <meta name="twitter:description" content="Conversor multi-tasa en tiempo real con modo offline, carrito inteligente y resúmenes de cobro sin cuentas ni registros.">
+  <meta name="twitter:description" content="Conversor multi-tasa en tiempo real con modo offline, carrito inteligente, herramientas de Útiles y tarjetas de cobro listas para WhatsApp.">
   <meta name="twitter:image" content="https://tasave.net/assets/feature_graphic_1024x500.png">
 
   <link rel="icon" type="image/png" href="assets/app_icon_512x512.png">
@@ -94,7 +94,7 @@
             "name": "¿Mis datos de Pago Móvil, Zelle o Binance salen de mi teléfono?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Tasa VE no solicita registro ni cuentas en servidores propios. Todos tus perfiles de Pago Móvil, cuentas bancarias, Zelle, Binance Pay y carrito se almacenan exclusivamente en el almacenamiento privado de tu Android y se excluyen del respaldo en la nube. Las estadísticas anónimas de navegación son opcionales y desactivables desde Configuración."
+              "text": "No. Tasa VE no solicita registro ni cuentas en servidores propios. Todos tus perfiles de Pago Móvil, cuentas bancarias, Zelle, Binance Pay y carrito se almacenan exclusivamente en el almacenamiento privado de tu Android y se excluyen del respaldo en la nube."
             }
           },
           {
@@ -102,7 +102,7 @@
             "name": "¿Qué desbloquea la suscripción Tasa VE Ultra?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Tasa VE Ultra ($0.99 USD/mes o $7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea la notificación fija opcional con tasas y Pago Móvil, conversor flotante multi-tasa desde Barra Rápida o notificación fija, escáner OCR y carrito con IVA/IGTF sin límites, múltiples perfiles de cobro, logo propio en tarjetas PNG y Widget Calculadora y Cobro Express."
+              "text": "Tasa VE Ultra ($0.99 USD/mes o $7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea la notificación fija opcional con tasas y Pago Móvil, conversor flotante multi-tasa desde Barra Rápida o notificación fija, escáner OCR y carrito con IVA/IGTF sin límites, múltiples perfiles de cobro, logo propio en tarjetas PNG y Widget Calculadora y Cobros."
             }
           }
         ]
@@ -120,11 +120,12 @@
       </a>
 
       <nav class="nav-links" aria-label="Navegación principal">
-        <a href="#demo">Demo en vivo</a>
+        <a href="#demo">Demo</a>
         <a href="#funciones">Funciones</a>
+        <a href="#descargar">Descargar</a>
         <a href="#planes">Planes</a>
-        <a href="#faq">Preguntas</a>
-        <a href="privacy-policy.html">Privacidad</a>
+        <a href="#comunidad">Redes</a>
+        <a href="#legal">Legal</a>
       </nav>
 
       <div class="header-actions">
@@ -134,8 +135,8 @@
             <path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
           </svg>
         </button>
-        <a href="https://github.com/Julcer26/TasaVE/releases/download/v1.2.0-ultra-test/TasaVE-v1.2-ultra-test.apk" class="btn btn-primary btn-sm">
-          Descargar APK Beta
+        <a href="#descargar" class="btn btn-primary btn-sm">
+          Descargar app
         </a>
         <button type="button" id="mobile-menu-btn" class="icon-btn mobile-menu-btn" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="mobile-menu-panel">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -147,9 +148,10 @@
     <nav id="mobile-menu-panel" class="mobile-menu-panel" aria-label="Menú móvil">
       <a href="#demo">Demo en vivo</a>
       <a href="#funciones">Funciones clave</a>
+      <a href="#descargar">Descargar Tasa VE</a>
       <a href="#planes">Planes Gratis y Ultra</a>
-      <a href="#faq">Preguntas frecuentes</a>
-      <a href="privacy-policy.html">Política de privacidad</a>
+      <a href="#comunidad">Redes oficiales (@tasa.ve)</a>
+      <a href="#legal">Centro Legal y Privacidad</a>
     </nav>
   </header>
 
@@ -159,30 +161,27 @@
       <div class="container hero-grid">
         <div>
           <span class="hero-kicker">Calculadora financiera para Venezuela • Android</span>
-          <h1>Convierte BCV y USDT al instante, escanea precios y cobra por WhatsApp sin rodeos.</h1>
+          <h1>Convierte BCV, USDT y COP al instante, escanea precios y cobra por WhatsApp sin rodeos.</h1>
           <p class="hero-lead">
-            Tasa VE reúne Dólar y Euro BCV exactos, BCV de mañana, USDT paralelo, escáner de cámara OCR, carrito de compras con IVA e IGTF y tarjetas visuales de Pago Móvil en una interfaz limpia y rápida.
+            Tasa VE reúne Dólar y Euro BCV exactos, BCV de mañana, USDT, Peso Colombiano de frontera, Calendario SUDEBAN, escáner OCR por cámara, carrito con IVA/IGTF, herramientas de Útiles y tarjetas visuales de Pago Móvil en una sola app rápida y privada.
           </p>
 
           <div class="hero-cta-row">
-            <a href="https://github.com/Julcer26/TasaVE/releases/download/v1.2.0-ultra-test/TasaVE-v1.2-ultra-test.apk" class="btn btn-primary">
+            <a href="#descargar" class="btn btn-primary">
               <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
               </svg>
-              Descargar APK Beta (v1.2)
+              Descargar para Android
             </a>
-            <span class="play-soon-pill" aria-label="Disponibilidad próxima en Google Play">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polygon points="6 3 20 12 6 21 6 3"></polygon>
-              </svg>
-              Próximamente en Google Play
-            </span>
+            <a href="#demo" class="btn btn-secondary">
+              Probar demo en vivo
+            </a>
           </div>
 
           <div class="trust-strip">
             <span class="trust-item">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              BCV Hoy y Mañana en vivo
+              BCV Hoy, Mañana y COP en vivo
             </span>
             <span class="trust-item">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -190,7 +189,7 @@
             </span>
             <span class="trust-item">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              Sin cuentas ni datos en servidores
+              Sin cuentas ni datos bancarios en la nube
             </span>
           </div>
         </div>
@@ -199,7 +198,7 @@
           <img src="assets/hero_showcase.jpg" alt="Vista previa de Tasa VE mostrando el conversor BCV, USDT y equivalencias en tiempo real" width="1200" height="900">
           <figcaption class="hero-floating-ticker" aria-label="Referencia visual de formato multi-tasa">
             <div class="ticker-pair">
-              <span class="ticker-label">USD BCV</span>
+              <span class="ticker-label">USD / EUR BCV</span>
               <span class="ticker-val">Tasa Exacta</span>
             </div>
             <div class="ticker-pair">
@@ -220,8 +219,8 @@
       <div class="container">
         <header class="section-header">
           <span class="section-eyebrow">Simulador interactivo en vivo</span>
-          <h2>Explora cada herramienta de Tasa VE en movimiento antes de instalarla</h2>
-          <p>Observa el recorrido automático por las cinco pantallas clave o toca cualquier pestaña para probar montos reales, escanear precios, activar IVA/IGTF y copiar el resumen de cobro.</p>
+          <h2>Explora cada herramienta de Tasa VE antes de instalarla</h2>
+          <p>Observa el recorrido automático por las cinco pantallas clave o toca cualquier pestaña para probar montos reales, escanear precios, activar IVA/IGTF, usar Útiles y copiar el resumen de cobro.</p>
         </header>
 
         <div class="demo-layout">
@@ -241,7 +240,7 @@
                 </span>
                 <span class="demo-tab-copy">
                   <strong>1. Conversor Multi-Tasa + BCV Mañana + COP</strong>
-                  <span>USD/EUR exactos, USDT paralelo, chip 🇨🇴 COP de frontera y Calendario SUDEBAN con cálculo por fecha.</span>
+                  <span>USD/EUR exactos, USDT, chip 🇨🇴 COP de frontera y Calendario SUDEBAN con cálculo por fecha.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
@@ -263,7 +262,7 @@
                 </span>
                 <span class="demo-tab-copy">
                   <strong>3. Carrito de Mercado con IVA y IGTF</strong>
-                  <span>Controla tu presupuesto en el supermercado antes de llegar a caja, sumando impuestos reales.</span>
+                  <span>Controla tu presupuesto antes de llegar a caja, suma impuestos y comparte Tarjeta PNG de pedido.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
@@ -274,7 +273,7 @@
                 </span>
                 <span class="demo-tab-copy">
                   <strong>4. Pestaña Útiles del Día a Día</strong>
-                  <span>¿Con qué pago? (USDT vs Efectivo/$) y Dividir cuenta con amigos a tasa BCV o USDT.</span>
+                  <span>¿Con qué pago? (USDT vs Efectivo/$ con descuento libre) y Dividir cuenta en 5 monedas.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
@@ -285,7 +284,7 @@
                 </span>
                 <span class="demo-tab-copy">
                   <strong>5. Pago Mixto, Tarjeta PNG y WhatsApp</strong>
-                  <span>Calcula el vuelto en pagos mixtos y envía tu tarjeta con logo Tasa VE y datos de Pago Móvil, Zelle o Binance.</span>
+                  <span>Calcula el vuelto en pagos mixtos y envía tu tarjeta con Pago Móvil, Banco, Zelle o Binance Pay.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
@@ -303,9 +302,9 @@
     <section id="funciones" class="section">
       <div class="container">
         <header class="section-header">
-          <span class="section-eyebrow">Diseñada para el día a día real</span>
+          <span class="section-eyebrow">Todo lo que incluye Tasa VE</span>
           <h2>Más precisión que una calculadora común, menos ruido que otras apps</h2>
-          <p>Cada pantalla está pensada para ahorrar tiempo en la calle, en tu comercio o administrando pagos en Venezuela.</p>
+          <p>Cada módulo está diseñado para resolver pagos reales en la calle, el supermercado o tu comercio en Venezuela.</p>
         </header>
 
         <figure class="showcase-banner">
@@ -317,16 +316,16 @@
             <div class="feature-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             </div>
-            <h3>BCV Mañana + 🇨🇴 COP + Calendario</h3>
-            <p>Anticipa la próxima tasa oficial BCV, convierte pesos colombianos de frontera en el mismo conversor y revisa feriados bancarios SUDEBAN por fecha.</p>
+            <h3>BCV Hoy, Mañana, USDT y 🇨🇴 COP</h3>
+            <p>Cotizaciones oficiales exactas, vista anticipada de la tasa BCV del próximo día hábil, USDT y modo frontera en Pesos Colombianos.</p>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon amber" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="19" cy="20" r="1"></circle><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.5L22 7H6"></path></svg>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             </div>
-            <h3>Carrito de Mercado + IVA e IGTF</h3>
-            <p>Arma tu lista de compras en el teléfono, suma automáticamente IVA (16%) e IGTF (3%) y revisa las equivalencias entre BCV y USDT antes de llegar a caja.</p>
+            <h3>Calendario Bancario SUDEBAN</h3>
+            <p>Consulta feriados bancarios, lunes bancarios y la tasa histórica de cualquier día con cálculo rápido directo al conversor.</p>
           </article>
 
           <article class="feature-card">
@@ -334,15 +333,31 @@
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h2m10 0h2a1 1 0 0 1 1 1v2m0 10v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"></path><rect x="8" y="9" width="8" height="6" rx="1"></rect></svg>
             </div>
             <h3>Escáner OCR de Precios</h3>
-            <p>Lee montos directamente con la cámara usando reconocimiento local en tu teléfono: 3 escaneos gratis diarios +5 extra opcionales.</p>
+            <p>Enfoca etiquetas en anaqueles y convierte al instante en tu dispositivo sin subir fotos: 3 escaneos gratis diarios (+5 opcionales) o ilimitados en Ultra.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon amber" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"></circle><circle cx="19" cy="20" r="1"></circle><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.5L22 7H6"></path></svg>
+            </div>
+            <h3>Carrito Inteligente + IVA e IGTF</h3>
+            <p>Suma productos escaneados o manuales, calcula IVA (16%) e IGTF (3%) en Ultra y comparte el presupuesto en Tarjeta PNG o WhatsApp.</p>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10M7 13h6M7 17h4"></path></svg>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
             </div>
-            <h3>Útiles + Tarjetas PNG de Cobro</h3>
-            <p>Decide si pagar cambiando USDT o en efectivo, divide cuentas entre amigos en segundos y envía tu Pago Móvil en Tarjeta PNG.</p>
+            <h3>Útiles: ¿Con qué pago? y Dividir</h3>
+            <p>Compara al segundo si conviene cambiar USDT o pagar en efectivo/Zelle con descuento libre, y divide cuentas entre amigos en 5 monedas.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <h3>Cobros, Pago Mixto y Tarjeta PNG</h3>
+            <p>Calcula vuelto entre dólares y bolívares, guarda perfiles de Pago Móvil, Bancos, Zelle o Binance y envía tarjetas visuales con tu marca en Ultra.</p>
           </article>
 
           <article class="feature-card">
@@ -350,27 +365,148 @@
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
             </div>
             <h3>Conversor Flotante + Barra Fija</h3>
-            <p>Copia un monto en WhatsApp, abre el Conversor Flotante desde Barra Rápida o la notificación fija silenciosa y responde con tu Pago Móvil en 1 toque.</p>
+            <p>Desde la Barra Rápida o la notificación fija silenciosa (Ultra), pega un monto de WhatsApp, convierte y copia tu Pago Móvil sin cambiar de app.</p>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             </div>
-            <h3>Privacidad Local Garantizada</h3>
-            <p>Sin cuentas ni contraseñas. Tus perfiles de cobro quedan solo en tu teléfono y las métricas anónimas de uso son 100% desactivables en Configuración.</p>
+            <h3>Widgets de Pantalla de Inicio</h3>
+            <p>Consulta USD, EUR, USDT y brecha desde tu inicio con el Widget Tasas en Vivo gratis, o calcula y copia cobros con el Widget Ultra.</p>
           </article>
         </div>
       </div>
     </section>
 
+    <!-- DOWNLOAD HUB WITH TABS -->
+    <section id="descargar" class="section section-muted">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-eyebrow">Centro de descargas oficial</span>
+          <h2>Elige cómo instalar o probar Tasa VE</h2>
+          <p>Selecciona tu canal preferido. Actualmente en fase de pruebas cerradas rumbo a publicación pública en Google Play Store.</p>
+        </header>
+
+        <div class="hub-shell">
+          <div class="hub-tabs" role="tablist" aria-label="Opciones de descarga de Tasa VE">
+            <button type="button" class="hub-tab-btn is-active" role="tab" aria-selected="true" data-dl-tab="play">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+              Google Play Store
+            </button>
+            <button type="button" class="hub-tab-btn" role="tab" aria-selected="false" data-dl-tab="apk">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+              APK Directo Android
+            </button>
+            <button type="button" class="hub-tab-btn" role="tab" aria-selected="false" data-dl-tab="web">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              Web / iOS
+            </button>
+          </div>
+
+          <div class="hub-panels">
+            <!-- Panel 1: Google Play -->
+            <div class="hub-panel is-active" data-dl-panel="play">
+              <div class="download-grid">
+                <div>
+                  <span class="status-pill amber">Fase de Pruebas Cerradas • Próximamente Producción</span>
+                  <h3>Instalación verificada por Google Play</h3>
+                  <p>Tasa VE está completando la fase de pruebas cerradas exigida por Google Play Console antes de abrir la descarga pública a todo el mundo. Si ya formas parte del grupo tester, puedes instalar y recibir actualizaciones automáticas desde la tienda oficial.</p>
+                  <ul class="check-list">
+                    <li>Actualizaciones automáticas y firma verificada por Google Play.</li>
+                    <li>Suscripción Tasa VE Ultra gestionada de forma segura con Google Play Billing.</li>
+                    <li>¿Quieres unirte como tester? Escríbenos por <a href="https://www.instagram.com/tasa.ve/" target="_blank" rel="noopener noreferrer" class="inline-link">@tasa.ve</a> o a <a href="mailto:soporte@tasave.net" class="inline-link">soporte@tasave.net</a>.</li>
+                  </ul>
+                  <div class="panel-cta-row">
+                    <a href="https://play.google.com/store/apps/details?id=com.julcer26.tasave" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                      Abrir ficha en Google Play
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-switch-dl="apk">
+                      Usar APK directo mientras tanto
+                    </button>
+                  </div>
+                </div>
+                <div class="download-meta-card">
+                  <h4>Requisitos y ficha técnica</h4>
+                  <dl class="meta-dl">
+                    <div><dt>Plataforma</dt><dd>Android 7.0 o superior</dd></div>
+                    <div><dt>Paquete oficial</dt><dd><code>com.julcer26.tasave</code></dd></div>
+                    <div><dt>Modelo</dt><dd>Gratis + Ultra opcional</dd></div>
+                    <div><dt>Registro</dt><dd>No requiere cuenta</dd></div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel 2: APK Directo -->
+            <div class="hub-panel" data-dl-panel="apk">
+              <div class="download-grid">
+                <div>
+                  <span class="status-pill emerald">Disponible hoy • Compilación oficial de pruebas</span>
+                  <h3>Descarga directa del APK oficial para Android</h3>
+                  <p>Instala la compilación de pruebas directamente en tu teléfono Android desde nuestro repositorio oficial en GitHub Releases y prueba todas las herramientas hoy mismo.</p>
+                  <ol class="step-list">
+                    <li><strong>Descarga el archivo:</strong> Pulsa el botón inferior para bajar el instalador <code>.apk</code> oficial.</li>
+                    <li><strong>Autoriza la instalación:</strong> Si Android lo solicita, habilita «Instalar aplicaciones desconocidas» solo para tu navegador.</li>
+                    <li><strong>Abre Tasa VE:</strong> Las tasas BCV, Euro, USDT y COP se sincronizan automáticamente al instante.</li>
+                  </ol>
+                  <div class="panel-cta-row">
+                    <a href="https://github.com/Julcer26/TasaVE/releases/download/v1.2.0-ultra-test/TasaVE-v1.2-ultra-test.apk" class="btn btn-primary">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+                      Descargar APK Oficial
+                    </a>
+                  </div>
+                </div>
+                <div class="download-meta-card">
+                  <h4>Verificación de origen</h4>
+                  <dl class="meta-dl">
+                    <div><dt>Fuente</dt><dd>GitHub Releases oficial</dd></div>
+                    <div><dt>Compatibilidad</dt><dd>Android 7.0+ (ARM / x86)</dd></div>
+                    <div><dt>Privacidad</dt><dd>OCR y datos 100% locales</dd></div>
+                    <div><dt>Soporte</dt><dd><a href="mailto:soporte@tasave.net" class="inline-link">soporte@tasave.net</a></dd></div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel 3: Web / iOS -->
+            <div class="hub-panel" data-dl-panel="web">
+              <div class="download-grid">
+                <div>
+                  <span class="status-pill">Acceso inmediato desde navegador</span>
+                  <h3>¿Usas iPhone (iOS) o computadora?</h3>
+                  <p>Actualmente Tasa VE está desarrollada de forma nativa para Android para ofrecer widgets de inicio, Barra Rápida, escáner OCR local y conversor flotante sobre WhatsApp.</p>
+                  <ul class="check-list">
+                    <li>Puedes probar ahora mismo el <strong>Simulador Interactivo</strong> directamente desde esta página sin instalar nada.</li>
+                    <li>Síguenos en <strong>@tasa.ve</strong> (Instagram y TikTok) para enterarte primero de nuevas versiones y disponibilidad en otras plataformas.</li>
+                  </ul>
+                  <div class="panel-cta-row">
+                    <a href="#demo" class="btn btn-primary">Ir al simulador interactivo</a>
+                    <a href="#comunidad" class="btn btn-secondary">Seguir a @tasa.ve</a>
+                  </div>
+                </div>
+                <div class="download-meta-card">
+                  <h4>Estado de plataformas</h4>
+                  <dl class="meta-dl">
+                    <div><dt>Android</dt><dd>Disponible (APK y Play Tester)</dd></div>
+                    <div><dt>Web</dt><dd>Simulador interactivo activo</dd></div>
+                    <div><dt>iOS</dt><dd>En evaluación futura</dd></div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- PLANS -->
-    <section id="planes" class="section section-muted">
+    <section id="planes" class="section">
       <div class="container">
         <header class="section-header">
           <span class="section-eyebrow">Modelo claro y transparente</span>
-          <h2>Usa todas las funciones principales gratis o pasa a Tasa VE Ultra</h2>
-          <p>Decidimos simplificar los planes en dos opciones reales: una versión gratuita completa sin pantallas invasivas y una suscripción Ultra accesible para uso intensivo y comercios.</p>
+          <h2>Usa las herramientas esenciales gratis o activa Tasa VE Ultra</h2>
+          <p>Dos opciones claras: una versión gratuita completa sin pantallas invasivas al abrir, y una suscripción Ultra accesible para uso intensivo y comercios.</p>
         </header>
 
         <div class="plans-grid">
@@ -391,7 +527,7 @@
               </li>
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Barra Rápida, Widget Tasas en Vivo y 3 escaneos OCR/día (+5 o 12h sin ads)
+                Barra Rápida, Widget Tasas en Vivo y 3 escaneos OCR/día (+5 o 12 h sin anuncios viendo 1 video)
               </li>
               <li>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -429,8 +565,156 @@
       </div>
     </section>
 
-    <!-- FAQ (AEO BLUF) -->
-    <section id="faq" class="section">
+    <!-- SOCIAL & COMMUNITY -->
+    <section id="comunidad" class="section section-muted">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-eyebrow">Comunidad oficial</span>
+          <h2>Síguenos en redes y mantente al día con @tasa.ve</h2>
+          <p>Publicamos guías rápidas con la app real, trucos para ahorrar entre BCV y USDT, recordatorios de feriados bancarios SUDEBAN y novedades de cada mejora.</p>
+        </header>
+
+        <div class="social-grid">
+          <a href="https://www.instagram.com/tasa.ve/" target="_blank" rel="noopener noreferrer" class="social-card social-ig">
+            <div class="social-card-head">
+              <span class="social-icon-box" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+              </span>
+              <span class="social-handle">@tasa.ve</span>
+            </div>
+            <h3>Instagram Oficial</h3>
+            <p>Carruseles claros, Reels demostrando funciones reales, avisos de lunes bancarios SUDEBAN y atención directa por mensaje.</p>
+            <span class="social-link-cta">Seguir en Instagram</span>
+          </a>
+
+          <a href="https://www.tiktok.com/@tasa.ve" target="_blank" rel="noopener noreferrer" class="social-card social-tt">
+            <div class="social-card-head">
+              <span class="social-icon-box" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
+              </span>
+              <span class="social-handle">@tasa.ve</span>
+            </div>
+            <h3>TikTok Oficial</h3>
+            <p>Videos cortos al grano sobre cómo escanear precios, calcular ¿Con qué pago?, dividir cuentas y cobrar con Tarjeta PNG.</p>
+            <span class="social-link-cta">Seguir en TikTok</span>
+          </a>
+
+          <a href="mailto:soporte@tasave.net" class="social-card social-support">
+            <div class="social-card-head">
+              <span class="social-icon-box" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              </span>
+              <span class="social-handle">soporte@tasave.net</span>
+            </div>
+            <h3>Soporte y Sugerencias</h3>
+            <p>¿Tienes una idea para mejorar Tasa VE, quieres unirte a las pruebas cerradas o necesitas ayuda? Escríbenos directo.</p>
+            <span class="social-link-cta">Enviar correo</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEDICATED LEGAL & TRANSPARENCY ZONE -->
+    <section id="legal" class="section">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-eyebrow">Zona legal y transparencia</span>
+          <h2>Privacidad clara, descargo financiero y permisos verificables</h2>
+          <p>Todo lo que necesitas saber sobre cómo funciona Tasa VE, cómo protegemos tus datos locales y nuestras políticas conformes a Google Play.</p>
+        </header>
+
+        <div class="hub-shell legal-shell">
+          <div class="hub-tabs" role="tablist" aria-label="Apartados legales de Tasa VE">
+            <button type="button" class="hub-tab-btn is-active" role="tab" aria-selected="true" data-legal-tab="privacy">
+              Política de Privacidad
+            </button>
+            <button type="button" class="hub-tab-btn" role="tab" aria-selected="false" data-legal-tab="terms">
+              Términos y Descargo
+            </button>
+            <button type="button" class="hub-tab-btn" role="tab" aria-selected="false" data-legal-tab="permissions">
+              Permisos y Terceros
+            </button>
+          </div>
+
+          <div class="hub-panels">
+            <!-- Legal Tab 1: Privacy -->
+            <div class="hub-panel is-active" data-legal-panel="privacy">
+              <div class="legal-grid">
+                <article class="legal-card">
+                  <h4>Sin cuentas ni servidores propios</h4>
+                  <p>Tasa VE no solicita registro, contraseñas ni ubicación GPS. Tu historial, carrito y perfiles de cobro (Pago Móvil, Cuentas Bancarias, Zelle y Binance Pay) viven únicamente en el almacenamiento privado de tu teléfono Android y se excluyen del respaldo en la nube.</p>
+                </article>
+                <article class="legal-card">
+                  <h4>Estadísticas anónimas agregadas</h4>
+                  <p>Utilizamos Google Firebase Analytics únicamente para medir de forma anónima qué pantallas o herramientas se abren más y mejorar la app. <strong>Nunca</strong> se envían montos, tasas escritas, nombres, cédulas, teléfonos ni datos bancarios.</p>
+                </article>
+                <article class="legal-card">
+                  <h4>OCR y Tarjetas PNG 100% locales</h4>
+                  <p>El escáner de cámara analiza los números directamente en tu dispositivo con Google ML Kit sin guardar ni subir fotografías. Las tarjetas PNG se generan en caché temporal privado (<code>shared_cards/</code>).</p>
+                </article>
+              </div>
+              <div class="legal-footer-bar">
+                <span>Última actualización legal: 23 de noviembre de 2026</span>
+                <a href="privacy-policy.html" class="btn btn-secondary btn-sm">Leer Política de Privacidad completa</a>
+              </div>
+            </div>
+
+            <!-- Legal Tab 2: Terms & Disclaimer -->
+            <div class="hub-panel" data-legal-panel="terms">
+              <div class="legal-grid">
+                <article class="legal-card">
+                  <h4>Herramienta independiente (No afiliada)</h4>
+                  <p>Tasa VE es una calculadora matemática e informativa. <strong>No</strong> es banco, casa de cambio, billetera ni autoridad tributaria, y no está afiliada al BCV, SENIAT, SUDEBAN, Zelle ni Binance.</p>
+                </article>
+                <article class="legal-card">
+                  <h4>Fuentes públicas y uso referencial</h4>
+                  <p>Las cotizaciones se consultan de APIs públicas (<code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code>). Los cálculos de IVA/IGTF, calendario SUDEBAN y plantillas de cobro son estrictamente referenciales.</p>
+                </article>
+                <article class="legal-card">
+                  <h4>Suscripción Tasa VE Ultra</h4>
+                  <p>Las suscripciones ($0.99/mes o $7.99/año) se procesan exclusivamente mediante Google Play Billing y se renuevan automáticamente salvo cancelación al menos 24 h antes desde Google Play Store &gt; Suscripciones.</p>
+                </article>
+              </div>
+              <div class="legal-footer-bar">
+                <span>Contacto legal y soporte: <a href="mailto:soporte@tasave.net" class="inline-link">soporte@tasave.net</a></span>
+                <a href="privacy-policy.html" class="btn btn-secondary btn-sm">Ver documento web completo</a>
+              </div>
+            </div>
+
+            <!-- Legal Tab 3: Permissions & SDKs -->
+            <div class="hub-panel" data-legal-panel="permissions">
+              <div class="legal-grid">
+                <article class="legal-card">
+                  <h4>Permisos solicitados en Android</h4>
+                  <ul class="compact-list">
+                    <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner OCR.</li>
+                    <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para la barra fija de tasas (Ultra).</li>
+                    <li><strong>Barra Rápida:</strong> Integración estándar del sistema activada solo al tocar el botón.</li>
+                    <li><strong>Internet y Facturación:</strong> Cotizaciones públicas, métricas anónimas, anuncios y Google Play Billing.</li>
+                  </ul>
+                </article>
+                <article class="legal-card">
+                  <h4>SDKs certificados de terceros</h4>
+                  <ul class="compact-list">
+                    <li><strong>Google Firebase Analytics:</strong> Métricas anónimas agregadas de navegación.</li>
+                    <li><strong>Google Mobile Ads (AdMob):</strong> Publicidad en el plan gratuito (<a href="app-ads.txt" class="inline-link">app-ads.txt verificado</a>).</li>
+                    <li><strong>Google Play Billing:</strong> Gestión segura de suscripciones Ultra.</li>
+                    <li><strong>Google ML Kit:</strong> Reconocimiento de texto local en el dispositivo.</li>
+                  </ul>
+                </article>
+              </div>
+              <div class="legal-footer-bar">
+                <span>Cumplimiento Google Play Data Safety &amp; AdMob verificado</span>
+                <a href="app-ads.txt" class="btn btn-secondary btn-sm">Ver app-ads.txt</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="section section-muted">
       <div class="container">
         <header class="section-header">
           <span class="section-eyebrow">Preguntas frecuentes</span>
@@ -451,53 +735,46 @@
             <p>Se guardan únicamente en el almacenamiento privado interno de tu dispositivo Android. Tasa VE no crea cuentas de usuario ni sube tus perfiles de cobro a servidores externos, e incluso excluye esas preferencias de las copias automáticas en la nube.</p>
           </article>
           <article class="faq-item">
-            <h3>¿Cómo descargo Tasa VE y cuándo estará en Google Play?</h3>
-            <p>Puedes instalar hoy mismo la compilación Beta oficial mediante el botón «Descargar APK Beta» en esta página. La publicación oficial en Google Play Store se encuentra en proceso y se anunciará directamente en tasave.net.</p>
+            <h3>¿Cómo descargo Tasa VE y cuándo estará disponible para todos en Google Play?</h3>
+            <p>Puedes instalar hoy mismo el APK oficial desde la sección «Descargar» en esta página o unirte al grupo de testers en Google Play. Una vez completada la fase cerrada, la descarga pública en Google Play se activará directamente desde tasave.net.</p>
           </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- FINAL CTA -->
-    <section class="section" style="padding-top:0;">
-      <div class="container">
-        <div class="cta-band">
-          <div>
-            <h2>Lleva el control exacto de tus tasas y cobros hoy mismo</h2>
-            <p>Descarga la versión Beta v1.2 para Android, síguenos en nuestras redes oficiales <strong style="color:var(--text-primary);">@tasa.ve</strong> o escríbenos a <a href="mailto:soporte@tasave.net" style="color:var(--emerald-light);font-weight:700;">soporte@tasave.net</a>.</p>
-            <div class="social-pill-row">
-              <a href="https://www.instagram.com/tasa.ve/" target="_blank" rel="noopener noreferrer" class="social-pill">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                Instagram @tasa.ve
-              </a>
-              <a href="https://www.tiktok.com/@tasa.ve" target="_blank" rel="noopener noreferrer" class="social-pill">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg>
-                TikTok @tasa.ve
-              </a>
-            </div>
-          </div>
-          <div class="hero-cta-row" style="margin-bottom:0;">
-            <a href="https://github.com/Julcer26/TasaVE/releases/download/v1.2.0-ultra-test/TasaVE-v1.2-ultra-test.apk" class="btn btn-primary">Descargar APK Beta (v1.2)</a>
-            <a href="privacy-policy.html" class="btn btn-secondary">Política de Privacidad</a>
-          </div>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>
-        <strong>Tasa VE</strong> &bull; Herramienta informativa independiente (no afiliada al BCV ni entidades bancarias).
+    <div class="container footer-columns">
+      <div class="footer-brand-col">
+        <a href="#inicio" class="brand-lockup">
+          <img src="assets/app_icon_512x512.png" alt="Logo Tasa VE" class="brand-icon" width="34" height="34">
+          <span>Tasa VE</span>
+        </a>
+        <p class="footer-disclaimer">
+          Herramienta financiera informativa independiente para Venezuela. No afiliada al BCV, SENIAT, SUDEBAN ni entidades bancarias.
+        </p>
       </div>
-      <div class="footer-links">
-        <a href="#demo">Demo</a>
+
+      <div class="footer-col">
+        <h4>Producto</h4>
+        <a href="#demo">Simulador en vivo</a>
         <a href="#funciones">Funciones</a>
-        <a href="#planes">Planes</a>
+        <a href="#descargar">Descargar app</a>
+        <a href="#planes">Gratis vs Ultra</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Redes y Soporte</h4>
         <a href="https://www.instagram.com/tasa.ve/" target="_blank" rel="noopener noreferrer">Instagram (@tasa.ve)</a>
         <a href="https://www.tiktok.com/@tasa.ve" target="_blank" rel="noopener noreferrer">TikTok (@tasa.ve)</a>
-        <a href="privacy-policy.html">Privacidad y Términos</a>
         <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Apartado Legal</h4>
+        <a href="#legal">Centro Legal</a>
+        <a href="privacy-policy.html">Política de Privacidad</a>
+        <a href="app-ads.txt">app-ads.txt</a>
       </div>
     </div>
   </footer>

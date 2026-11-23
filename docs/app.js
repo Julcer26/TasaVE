@@ -540,6 +540,43 @@ Descarga Tasa VE: https://tasave.net`;
     });
   }
 
+  // Download Hub Tabs (#descargar)
+  const dlTabBtns = Array.from(document.querySelectorAll("[data-dl-tab]"));
+  const dlPanels = Array.from(document.querySelectorAll("[data-dl-panel]"));
+  function selectDlTab(key) {
+    dlTabBtns.forEach((b) => {
+      const active = b.getAttribute("data-dl-tab") === key;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-selected", String(active));
+    });
+    dlPanels.forEach((p) => {
+      p.classList.toggle("is-active", p.getAttribute("data-dl-panel") === key);
+    });
+  }
+  dlTabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => selectDlTab(btn.getAttribute("data-dl-tab")));
+  });
+  document.querySelectorAll("[data-switch-dl]").forEach((btn) => {
+    btn.addEventListener("click", () => selectDlTab(btn.getAttribute("data-switch-dl")));
+  });
+
+  // Legal Hub Tabs (#legal)
+  const legalTabBtns = Array.from(document.querySelectorAll("[data-legal-tab]"));
+  const legalPanels = Array.from(document.querySelectorAll("[data-legal-panel]"));
+  function selectLegalTab(key) {
+    legalTabBtns.forEach((b) => {
+      const active = b.getAttribute("data-legal-tab") === key;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-selected", String(active));
+    });
+    legalPanels.forEach((p) => {
+      p.classList.toggle("is-active", p.getAttribute("data-legal-panel") === key);
+    });
+  }
+  legalTabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => selectLegalTab(btn.getAttribute("data-legal-tab")));
+  });
+
   // Initial render & gentle autoplay timer
   setAutoplay(state.autoplay);
   selectTab("converter");
