@@ -1806,7 +1806,7 @@ fun MarketTab(
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(1.dp, Color(0x4D10B981))
             ) {
-                Icon(Icons.Default.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(17.dp), tint = EmeraldLight)
+                Icon(Icons.AutoMirrored.Filled.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(17.dp), tint = EmeraldLight)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Fijar Widget Tasas en Vivo (Gratis)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
             }

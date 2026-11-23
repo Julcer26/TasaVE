@@ -831,6 +831,10 @@ fun TasaVeScreen(
                             selected = !viewModel.previewTomorrowBcv,
                             onClick = { viewModel.setTomorrowBcvPreview(false) },
                             shape = RoundedCornerShape(14.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = if (isDark) Color(0x2610B981) else Color(0x1F059669),
+                                selectedLabelColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                            ),
                             label = {
                                 Text(
                                     text = "BCV Hoy",
@@ -886,22 +890,6 @@ fun TasaVeScreen(
                             )
                         }
                     )
-
-                    if (nextUsd != null) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0x26F59E0B))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Próx: Bs. ${String.format(Locale.US, "%.4f", nextUsd.rate)}",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFF59E0B)
-                            )
-                        }
-                    }
                 }
 
                 Row(
@@ -924,6 +912,36 @@ fun TasaVeScreen(
                             isDark = isDark,
                             isSelected = isSelected,
                             onSelect = { viewModel.selectRate(key) }
+                        )
+                    }
+                }
+
+                val todayUsdVal = uiState.usdBcv?.rate ?: 0.0
+                if (nextUsd != null && nextDateIso != null && !viewModel.previewTomorrowBcv &&
+                    kotlin.math.abs(nextUsd.rate - todayUsdVal) >= 0.0001
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x1FF59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(12.dp))
+                            .clickable { viewModel.setTomorrowBcvPreview(true) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Próxima BCV (${TasaVeRepository.formatIsoShortDate(nextDateIso)}): Bs. ${String.format(Locale.US, "%.4f", nextUsd.rate)}",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Ver mañana →",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
                         )
                     }
                 }
@@ -1333,8 +1351,8 @@ fun TasaVeScreen(
                         }
                     }
 
-                    val parsedVes = viewModel.vesAmount.toDoubleOrNull() ?: 0.0
-                    val parsedForeign = viewModel.foreignAmount.toDoubleOrNull() ?: 0.0
+                    val parsedVes = viewModel.vesAmount.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val parsedForeign = viewModel.foreignAmount.replace(",", ".").toDoubleOrNull() ?: 0.0
 
                     // Actions: Guardar en Historial y Ver Historial
                     Row(
@@ -1392,10 +1410,20 @@ fun TasaVeScreen(
                     if (parsedVes > 0.0) {
                         OutlinedButton(
                             onClick = {
+                                val isCop = currentRateInfo?.key == "COP"
                                 val rateDecimals = if (currentRateInfo?.key == "USDT") "%.2f" else "%.4f"
                                 val sym = currentRateInfo?.symbol ?: "$"
-                                val foreignStr = "$sym ${String.format(Locale.US, "%,.2f", parsedForeign)}"
+                                val foreignStr = if (isCop) {
+                                    "${String.format(Locale.US, "%,.0f", parsedForeign)} COP"
+                                } else {
+                                    "$sym ${String.format(Locale.US, "%,.2f", parsedForeign)}"
+                                }
                                 val vesStr = "Bs. ${String.format(Locale.US, "%,.2f", parsedVes)}"
+                                val shareRateDisplay = if (isCop) {
+                                    "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", (currentRateInfo?.rate ?: 0.0) * 1000.0)}"
+                                } else {
+                                    "Bs. ${String.format(Locale.US, rateDecimals, currentRateInfo?.rate ?: 0.0)}"
+                                }
 
                                 val eqList = buildList {
                                     if (bcvUsdRate > 0) add("Dólar BCV" to "$${String.format(Locale.US, "%.2f", parsedVes / bcvUsdRate)}")
@@ -1411,7 +1439,7 @@ fun TasaVeScreen(
                                     outputLabel = if (viewModel.isVesAsInput) (currentRateInfo?.label ?: "Divisa") else "Bolívares (VES)",
                                     outputDisplay = if (viewModel.isVesAsInput) foreignStr else vesStr,
                                     rateLabel = currentRateInfo?.label ?: "Tasa BCV",
-                                    rateDisplay = "Bs. ${String.format(Locale.US, rateDecimals, currentRateInfo?.rate ?: 0.0)}",
+                                    rateDisplay = shareRateDisplay,
                                     updatedAt = currentRateInfo?.dateUpdated,
                                     modifierText = null,
                                     adjustedTotalText = null,
@@ -1601,7 +1629,7 @@ fun TasaVeScreen(
                                 }
                             }
 
-                            if (parsedForeign > 0.0) {
+                            if (parsedForeign > 0.0 && currentRateInfo?.key != "COP") {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1754,9 +1782,9 @@ fun TasaVeScreen(
             currentUsd = viewModel.getEffectiveUsdBcv()?.rate ?: uiState.usdBcv?.rate ?: 0.0,
             currentEur = viewModel.getEffectiveEurBcv()?.rate ?: uiState.eurBcv?.rate ?: 0.0,
             currentUsdt = uiState.usdtParalelo?.rate ?: 0.0,
-            onApplyQuickAmount = { amountUsd ->
+            onApplyQuickAmount = { amountUsd, useUsdt ->
                 currentTab = AppTab.CONVERTER
-                viewModel.selectRate("USD_BCV")
+                viewModel.selectRate(if (useUsdt) "USDT" else "USD_BCV")
                 viewModel.updateForeignAmount(amountUsd)
                 showCalendarDialog = false
             },
@@ -2117,8 +2145,15 @@ fun HistoryDialog(
                                             fontWeight = FontWeight.Bold,
                                             color = textPrimary
                                         )
+                                        val isCopItem = item.currencyFrom == "COP" || item.currencyTo == "COP"
+                                        val isUsdtItem = item.currencyFrom == "₮" || item.currencyTo == "₮"
+                                        val historyRateLabel = when {
+                                            isCopItem -> "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", item.rate * 1000.0)}"
+                                            isUsdtItem -> "Tasa: Bs. ${String.format(Locale.US, "%.2f", item.rate)}"
+                                            else -> "Tasa: Bs. ${String.format(Locale.US, "%.4f", item.rate)}"
+                                        }
                                         Text(
-                                            text = "Tasa: Bs. ${String.format(Locale.US, "%.2f", item.rate)} • $dateStr",
+                                            text = "$historyRateLabel • $dateStr",
                                             fontSize = 10.sp,
                                             color = textSecondary
                                         )
@@ -3240,7 +3275,7 @@ private fun LegalCenterDialog(
                             color = textPrimary
                         )
                         Text(
-                            text = "Actualizado: 22 nov 2026 • Versión 1.2.0",
+                            text = "Actualizado: 23 nov 2026 • Versión 1.2.0",
                             fontSize = 10.5.sp,
                             color = Color(0xFF10B981),
                             fontWeight = FontWeight.SemiBold
@@ -3251,7 +3286,7 @@ private fun LegalCenterDialog(
                     }
                 }
 
-                // Segmented Selector: Privacidad (10) / Términos (5)
+                // Segmented Selector: Privacidad / Términos
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -3267,7 +3302,7 @@ private fun LegalCenterDialog(
                         ),
                         label = {
                             Text(
-                                text = "Privacidad (10)",
+                                text = "Privacidad (${privacySections.size})",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
@@ -3468,7 +3503,7 @@ private fun BcvCalendarDialog(
     currentUsd: Double,
     currentEur: Double,
     currentUsdt: Double,
-    onApplyQuickAmount: (amountUsd: String) -> Unit,
+    onApplyQuickAmount: (amountUsd: String, useUsdt: Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -3795,7 +3830,7 @@ private fun BcvCalendarDialog(
                             )
                         }
                         Button(
-                            onClick = { onApplyQuickAmount(quickUsdText) },
+                            onClick = { onApplyQuickAmount(quickUsdText, quickUseUsdt) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = emerald, contentColor = Color.Black)
