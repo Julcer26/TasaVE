@@ -27,6 +27,19 @@ jobs:
     - name: Create .env template
       run: cp .env.example .env
 
+    - name: Configure Firebase Analytics (google-services.json)
+      env:
+        GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      run: |
+        if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+          TRIMMED=$(printf '%s' "$GOOGLE_SERVICES_JSON" | tr -d '\r' | sed 's/^[[:space:]]*//')
+          if [ "${TRIMMED#\{}" != "$TRIMMED" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          else
+            printf '%s' "$GOOGLE_SERVICES_JSON" | base64 -d > app/google-services.json
+          fi
+        fi
+
     - name: Build Debug APK
       run: ./gradlew assembleDebug --no-daemon
 

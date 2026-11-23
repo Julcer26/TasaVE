@@ -146,6 +146,24 @@ fun TasaVeScreen(
     var showPlansDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(isUltraUser, isDark, analyticsEnabled) {
+        if (analyticsEnabled) {
+            AnalyticsTracker.syncUserProperties(context, isUltra = isUltraUser, isDark = isDark)
+        }
+    }
+
+    LaunchedEffect(showPlansDialog) {
+        if (showPlansDialog) {
+            AnalyticsTracker.logPlansOpened(context, isUltra = isUltraUser)
+        }
+    }
+
+    LaunchedEffect(showScanner) {
+        if (showScanner) {
+            AnalyticsTracker.logScannerOpened(context, source = if (scannerForCart) "cart" else "topbar")
+        }
+    }
+
     LaunchedEffect(widgetAction) {
         when (widgetAction) {
             com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CONVERTER -> {
@@ -175,10 +193,12 @@ fun TasaVeScreen(
     }
 
     val triggerWatchAdFreePass: () -> Unit = {
+        AnalyticsTracker.logAction(context, "ad_free_pass_clicked")
         rewardedAdManager.showOrLoad(
             activity = activity,
             onRewarded = {
                 viewModel.grantAdFreePass12Hours()
+                AnalyticsTracker.logAction(context, "ad_free_pass_granted")
                 Toast.makeText(
                     context,
                     "¡Pase de 12 horas sin anuncios activado!",
@@ -1753,6 +1773,7 @@ fun TasaVeScreen(
             ultraMonthlyPrice = ultraMonthlyPrice,
             ultraYearlyPrice = ultraYearlyPrice,
             onPurchaseUltraMonthly = {
+                AnalyticsTracker.logUltraPurchaseClicked(context, "monthly")
                 if (activity != null) {
                     viewModel.purchaseUltra(activity, yearly = false)
                 } else {
@@ -1760,6 +1781,7 @@ fun TasaVeScreen(
                 }
             },
             onPurchaseUltraYearly = {
+                AnalyticsTracker.logUltraPurchaseClicked(context, "yearly")
                 if (activity != null) {
                     viewModel.purchaseUltra(activity, yearly = true)
                 } else {

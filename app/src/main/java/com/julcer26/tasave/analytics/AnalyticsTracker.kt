@@ -32,6 +32,14 @@ object AnalyticsTracker {
         }
     }
 
+    fun syncUserProperties(context: Context, isUltra: Boolean, isDark: Boolean) {
+        val analytics = getAnalyticsIfReady(context) ?: return
+        runCatching {
+            analytics.setUserProperty("user_tier", if (isUltra) "ultra" else "free")
+            analytics.setUserProperty("app_theme", if (isDark) "dark" else "light")
+        }
+    }
+
     fun logTabOpened(context: Context, tabName: String) {
         logEvent(context, "tasave_tab_opened", mapOf("tab_name" to tabName))
     }
@@ -53,6 +61,33 @@ object AnalyticsTracker {
             context,
             "tasave_calendar_day_selected",
             mapOf("is_bank_holiday" to if (isHoliday) "true" else "false")
+        )
+    }
+
+    fun logScannerOpened(context: Context, source: String) {
+        logEvent(context, "tasave_scanner_opened", mapOf("source" to source))
+    }
+
+    fun logPlansOpened(context: Context, isUltra: Boolean) {
+        logEvent(
+            context,
+            "tasave_plans_opened",
+            mapOf("current_tier" to if (isUltra) "ultra" else "free")
+        )
+    }
+
+    fun logUltraPurchaseClicked(context: Context, billingPeriod: String) {
+        logEvent(context, "tasave_ultra_cta_clicked", mapOf("period" to billingPeriod))
+    }
+
+    fun logShareCard(context: Context, cardType: String, hasCustomBrand: Boolean) {
+        logEvent(
+            context,
+            "tasave_share_card",
+            mapOf(
+                "card_type" to cardType,
+                "custom_brand" to if (hasCustomBrand) "true" else "false"
+            )
         )
     }
 

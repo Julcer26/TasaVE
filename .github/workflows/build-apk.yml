@@ -28,6 +28,30 @@ jobs:
     - name: Create .env from template
       run: cp .env.example .env
 
+    - name: Configure Firebase Analytics (google-services.json)
+      env:
+        GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      run: |
+        if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+          TRIMMED=$(printf '%s' "$GOOGLE_SERVICES_JSON" | tr -d '\r' | sed 's/^[[:space:]]*//')
+          if [ "${TRIMMED#\{}" != "$TRIMMED" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          else
+            printf '%s' "$GOOGLE_SERVICES_JSON" | base64 -d > app/google-services.json
+          fi
+          python3 - <<'PY'
+        import json, sys
+        with open('app/google-services.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        pkgs = [c.get('client_info', {}).get('android_client_info', {}).get('package_name') for c in data.get('client', [])]
+        print('Firebase packages configured:', pkgs)
+        if 'com.julcer26.tasave.ultra' not in pkgs:
+            print('::warning::com.julcer26.tasave.ultra is not registered in google-services.json; Debug APK build requires it.')
+        PY
+        else
+          echo "GOOGLE_SERVICES_JSON secret not configured yet; building without Firebase config."
+        fi
+
     - name: Run Unit Tests
       run: ./gradlew testDebugUnitTest --no-daemon
 
@@ -50,7 +74,7 @@ jobs:
           TAG="v1.2.0-ultra-test"
           ASSET="TasaVE-v1.2-ultra-test.apk"
           TITLE="Tasa VE v1.2.0 - Prueba Ultra"
-          NOTES="APK de prueba para Tasa VE v1.2 Ultra (BCV Hoy/Mañana, COP, Calendario SUDEBAN, Conversor flotante en WhatsApp, Barra Rápida, Notificación fija, Útiles, Carrito con Tarjeta PNG y Cobros)."
+          NOTES="APK de prueba para Tasa VE v1.2 Ultra (BCV Hoy/Mañana, COP, Calendario SUDEBAN, Barra Rápida, Notificación fija, Conversor flotante, Útiles, Carrito con Tarjeta PNG, Cobros y Firebase Analytics)."
         else
           TAG="v1.1.0-scanner-test"
           ASSET="TasaVE-scanner-test.apk"

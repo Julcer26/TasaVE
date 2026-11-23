@@ -125,6 +125,7 @@ object ShareCardGenerator {
         equivalences: List<Pair<String, String>>,
         isTomorrowBcv: Boolean
     ) {
+        com.julcer26.tasave.analytics.AnalyticsTracker.logShareCard(context, "calculation", false)
         runCatching {
             val width = 1080
             val hasModifier = !modifierText.isNullOrBlank() && !adjustedTotalText.isNullOrBlank()
@@ -303,6 +304,11 @@ object ShareCardGenerator {
         customBrandName: String? = null,
         customBrandLogoFile: File? = null
     ) {
+        com.julcer26.tasave.analytics.AnalyticsTracker.logShareCard(
+            context,
+            "checkout",
+            !customBrandName.isNullOrBlank() || customBrandLogoFile != null
+        )
         runCatching {
             val hasTotal = totalUsd > 0.005
             val profileLines = buildProfileLines(profile)
@@ -551,6 +557,11 @@ object ShareCardGenerator {
         customBrandLogoFile: File? = null
     ) {
         if (items.isEmpty()) return
+        com.julcer26.tasave.analytics.AnalyticsTracker.logShareCard(
+            context,
+            "cart_quote",
+            !customBrandName.isNullOrBlank() || customBrandLogoFile != null
+        )
         runCatching {
             val visibleItems = items.take(7)
             val hiddenCount = (items.size - visibleItems.size).coerceAtLeast(0)
