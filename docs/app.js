@@ -540,24 +540,21 @@ Descarga Tasa VE: https://tasave.net`;
     });
   }
 
-  // Download Hub Tabs (#descargar)
-  const dlTabBtns = Array.from(document.querySelectorAll("[data-dl-tab]"));
-  const dlPanels = Array.from(document.querySelectorAll("[data-dl-panel]"));
-  function selectDlTab(key) {
-    dlTabBtns.forEach((b) => {
-      const active = b.getAttribute("data-dl-tab") === key;
-      b.classList.toggle("is-active", active);
-      b.setAttribute("aria-selected", String(active));
+  // Spotlight Real-Screen Switchers (sp1, sp4)
+  document.querySelectorAll("[data-spotlight-group]").forEach((groupEl) => {
+    const groupId = groupEl.getAttribute("data-spotlight-group");
+    const targetImg = document.getElementById(`${groupId}-img`);
+    if (!targetImg) return;
+    const pills = Array.from(groupEl.querySelectorAll(".switcher-pill"));
+    pills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        pills.forEach((p) => p.classList.toggle("is-active", p === pill));
+        const nextSrc = pill.getAttribute("data-src");
+        const nextAlt = pill.getAttribute("data-alt");
+        if (nextSrc) targetImg.src = nextSrc;
+        if (nextAlt) targetImg.alt = nextAlt;
+      });
     });
-    dlPanels.forEach((p) => {
-      p.classList.toggle("is-active", p.getAttribute("data-dl-panel") === key);
-    });
-  }
-  dlTabBtns.forEach((btn) => {
-    btn.addEventListener("click", () => selectDlTab(btn.getAttribute("data-dl-tab")));
-  });
-  document.querySelectorAll("[data-switch-dl]").forEach((btn) => {
-    btn.addEventListener("click", () => selectDlTab(btn.getAttribute("data-switch-dl")));
   });
 
   // Legal Hub Tabs (#legal)
