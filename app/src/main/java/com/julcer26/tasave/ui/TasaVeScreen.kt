@@ -929,7 +929,7 @@ fun TasaVeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Próxima BCV (${TasaVeRepository.formatIsoShortDate(nextDateIso)}): Bs. ${String.format(Locale.US, "%.4f", nextUsd.rate)}",
+                            text = "Próxima BCV (${TasaVeRepository.formatIsoShortDate(nextDateIso)}): Bs. ${VeNumberFormat.formatRate(nextUsd.rate, 4)}",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = textPrimary
@@ -955,13 +955,13 @@ fun TasaVeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "🇨🇴 Modo Frontera: 1 USD = ${String.format(Locale.US, "%,.0f", uiState.copPerUsd)} COP",
+                            text = "🇨🇴 Modo Frontera: 1 USD = ${VeNumberFormat.formatInt(uiState.copPerUsd)} COP",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = textPrimary
                         )
                         Text(
-                            text = "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", copRateInfo.rate * 1000.0)}",
+                            text = "1.000 COP = Bs. ${VeNumberFormat.formatMoney(copRateInfo.rate * 1000.0)}",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFF59E0B)
@@ -1002,10 +1002,10 @@ fun TasaVeScreen(
 
                         currentRateInfo?.let {
                             val badgeText = if (it.key == "COP") {
-                                "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", it.rate * 1000.0)}"
+                                "1.000 COP = Bs. ${VeNumberFormat.formatMoney(it.rate * 1000.0)}"
                             } else {
-                                val decimals = if (it.key == "USDT") "%.2f" else "%.4f"
-                                "Tasa actual: Bs. ${String.format(Locale.US, decimals, it.rate)}"
+                                val decs = if (it.key == "USDT") 2 else 4
+                                "Tasa actual: Bs. ${VeNumberFormat.formatRate(it.rate, decs)}"
                             }
                             Box(
                                 modifier = Modifier
@@ -1033,6 +1033,7 @@ fun TasaVeScreen(
                     val topTextColor = if (viewModel.isVesAsInput) {
                         if (isDark) Color(0xFF34D399) else Color(0xFF047857)
                     } else textPrimary
+                    val topFontSize = VeNumberFormat.adaptiveConverterFontSize(topValue)
 
                     val bottomLabel = if (viewModel.isVesAsInput) "Divisa (${currentRateInfo?.label ?: "Moneda Extranjera"})" else "Bolívares (VES)"
                     val bottomSymbol = if (viewModel.isVesAsInput) (currentRateInfo?.symbol ?: "$") else "Bs."
@@ -1044,6 +1045,7 @@ fun TasaVeScreen(
                     } else {
                         if (isDark) Color(0xFF34D399) else Color(0xFF047857)
                     }
+                    val bottomFontSize = VeNumberFormat.adaptiveConverterFontSize(bottomValue)
 
                     // Panel 1: Top Input
                     Column(
@@ -1094,7 +1096,7 @@ fun TasaVeScreen(
                         ) {
                             Text(
                                 text = topSymbol,
-                                fontSize = 28.sp,
+                                fontSize = topFontSize,
                                 fontWeight = FontWeight.Light,
                                 color = if (topFocused) {
                                     Color(0xFF10B981)
@@ -1103,19 +1105,21 @@ fun TasaVeScreen(
                                 } else {
                                     if (isDark) Color(0xFF64748B) else Color(0xFF475569)
                                 },
-                                modifier = Modifier.padding(end = 12.dp)
+                                maxLines = 1,
+                                modifier = Modifier.padding(end = if (VeNumberFormat.visualLength(topValue) > 12) 8.dp else 12.dp)
                             )
                             
                             BasicTextField(
                                 value = topValue,
                                 onValueChange = onTopValueChange,
+                                visualTransformation = VenezuelanNumberVisualTransformation,
                                 modifier = Modifier
                                     .weight(1f)
                                     .onFocusChanged { topFocused = it.isFocused }
                                     .testTag(topTestTag),
                                 textStyle = TextStyle(
                                     color = topTextColor,
-                                    fontSize = 28.sp,
+                                    fontSize = topFontSize,
                                     fontWeight = FontWeight.SemiBold,
                                     fontFamily = FontFamily.Default
                                 ),
@@ -1132,7 +1136,7 @@ fun TasaVeScreen(
                                     Box(contentAlignment = Alignment.CenterStart) {
                                         if (topValue.isEmpty()) {
                                             Text(
-                                                text = "0.00",
+                                                text = "0,00",
                                                 color = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1),
                                                 fontSize = 28.sp,
                                                 fontWeight = FontWeight.SemiBold
@@ -1144,6 +1148,7 @@ fun TasaVeScreen(
                             )
 
                             if (topValue.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
@@ -1242,7 +1247,7 @@ fun TasaVeScreen(
                         ) {
                             Text(
                                 text = bottomSymbol,
-                                fontSize = 28.sp,
+                                fontSize = bottomFontSize,
                                 fontWeight = FontWeight.Light,
                                 color = if (bottomFocused) {
                                     Color(0xFF10B981)
@@ -1251,19 +1256,21 @@ fun TasaVeScreen(
                                 } else {
                                     if (isDark) Color(0xFF64748B) else Color(0xFF475569)
                                 },
-                                modifier = Modifier.padding(end = 12.dp)
+                                maxLines = 1,
+                                modifier = Modifier.padding(end = if (VeNumberFormat.visualLength(bottomValue) > 12) 8.dp else 12.dp)
                             )
                             
                             BasicTextField(
                                 value = bottomValue,
                                 onValueChange = onBottomValueChange,
+                                visualTransformation = VenezuelanNumberVisualTransformation,
                                 modifier = Modifier
                                     .weight(1f)
                                     .onFocusChanged { bottomFocused = it.isFocused }
                                     .testTag(bottomTestTag),
                                 textStyle = TextStyle(
                                     color = bottomTextColor,
-                                    fontSize = 28.sp,
+                                    fontSize = bottomFontSize,
                                     fontWeight = FontWeight.SemiBold,
                                     fontFamily = FontFamily.Default
                                 ),
@@ -1280,7 +1287,7 @@ fun TasaVeScreen(
                                     Box(contentAlignment = Alignment.CenterStart) {
                                         if (bottomValue.isEmpty()) {
                                             Text(
-                                                text = "0.00",
+                                                text = "0,00",
                                                 color = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1),
                                                 fontSize = 28.sp,
                                                 fontWeight = FontWeight.SemiBold
@@ -1292,11 +1299,12 @@ fun TasaVeScreen(
                             )
 
                             if (bottomValue.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Copiar resultado de conversión
+                                    // Copiar resultado de conversión en formato bancario venezolano
                                     Box(
                                         modifier = Modifier
                                             .size(24.dp)
@@ -1309,13 +1317,14 @@ fun TasaVeScreen(
                                                 }
                                             )
                                             .clickable {
-                                                copyToClipboard(context, bottomValue)
+                                                val formattedCopy = VeNumberFormat.formatCanonicalString(bottomValue)
+                                                copyToClipboard(context, formattedCopy)
                                                 isConvertedCopied = true
                                                 coroutineScope.launch {
                                                     delay(2000)
                                                     isConvertedCopied = false
                                                 }
-                                                Toast.makeText(context, "$bottomSymbol $bottomValue copiado al portapapeles", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "$bottomSymbol $formattedCopy copiado al portapapeles", Toast.LENGTH_SHORT).show()
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -1348,8 +1357,8 @@ fun TasaVeScreen(
                         }
                     }
 
-                    val parsedVes = viewModel.vesAmount.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    val parsedForeign = viewModel.foreignAmount.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val parsedVes = VeNumberFormat.parseFlexibleDouble(viewModel.vesAmount) ?: 0.0
+                    val parsedForeign = VeNumberFormat.parseFlexibleDouble(viewModel.foreignAmount) ?: 0.0
 
                     // Actions: Guardar en Historial y Ver Historial
                     Row(
@@ -1408,24 +1417,24 @@ fun TasaVeScreen(
                         OutlinedButton(
                             onClick = {
                                 val isCop = currentRateInfo?.key == "COP"
-                                val rateDecimals = if (currentRateInfo?.key == "USDT") "%.2f" else "%.4f"
+                                val rateDecimals = if (currentRateInfo?.key == "USDT") 2 else 4
                                 val sym = currentRateInfo?.symbol ?: "$"
                                 val foreignStr = if (isCop) {
-                                    "${String.format(Locale.US, "%,.0f", parsedForeign)} COP"
+                                    "${VeNumberFormat.formatCop(parsedForeign)} COP"
                                 } else {
-                                    "$sym ${String.format(Locale.US, "%,.2f", parsedForeign)}"
+                                    "$sym ${VeNumberFormat.formatMoney(parsedForeign)}"
                                 }
-                                val vesStr = "Bs. ${String.format(Locale.US, "%,.2f", parsedVes)}"
+                                val vesStr = "Bs. ${VeNumberFormat.formatMoney(parsedVes)}"
                                 val shareRateDisplay = if (isCop) {
-                                    "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", (currentRateInfo?.rate ?: 0.0) * 1000.0)}"
+                                    "1.000 COP = Bs. ${VeNumberFormat.formatMoney((currentRateInfo?.rate ?: 0.0) * 1000.0)}"
                                 } else {
-                                    "Bs. ${String.format(Locale.US, rateDecimals, currentRateInfo?.rate ?: 0.0)}"
+                                    "Bs. ${VeNumberFormat.formatRate(currentRateInfo?.rate ?: 0.0, rateDecimals)}"
                                 }
 
                                 val eqList = buildList {
-                                    if (bcvUsdRate > 0) add("Dólar BCV" to "$${String.format(Locale.US, "%.2f", parsedVes / bcvUsdRate)}")
-                                    if (bcvEurRate > 0) add("Euro BCV" to "€${String.format(Locale.US, "%.2f", parsedVes / bcvEurRate)}")
-                                    if (parallelUsdtRate > 0) add("USDT Binance" to "₮${String.format(Locale.US, "%.2f", parsedVes / parallelUsdtRate)}")
+                                    if (bcvUsdRate > 0) add("Dólar BCV" to "$${VeNumberFormat.formatMoney(parsedVes / bcvUsdRate)}")
+                                    if (bcvEurRate > 0) add("Euro BCV" to "€${VeNumberFormat.formatMoney(parsedVes / bcvEurRate)}")
+                                    if (parallelUsdtRate > 0) add("USDT Binance" to "₮${VeNumberFormat.formatMoney(parsedVes / parallelUsdtRate)}")
                                 }
 
                                 ShareCardGenerator.shareCalculationCard(
@@ -1483,13 +1492,18 @@ fun TasaVeScreen(
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isDark) Color(0xFF10B981) else Color(0xFF059669),
-                                    letterSpacing = 0.5.sp
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(end = 6.dp)
                                 )
+                                val headerVesFormatted = "Bs. ${VeNumberFormat.formatMoney(parsedVes)}"
                                 Text(
-                                    text = "Bs. ${String.format(Locale.US, "%,.2f", parsedVes)}",
-                                    fontSize = 11.sp,
+                                    text = headerVesFormatted,
+                                    fontSize = if (headerVesFormatted.length > 18) 9.5.sp else 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = textPrimary
+                                    color = textPrimary,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
 
@@ -1502,9 +1516,12 @@ fun TasaVeScreen(
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // 1. USD Equivalent
+                                val usdVal = if (bcvUsdRate > 0) parsedVes / bcvUsdRate else 0.0
+                                val usdFormatted = "$${VeNumberFormat.formatMoney(usdVal)}"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -1513,20 +1530,24 @@ fun TasaVeScreen(
                                         text = "Dólar BCV",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        maxLines = 1
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val usdVal = if (bcvUsdRate > 0) parsedVes / bcvUsdRate else 0.0
                                     Text(
-                                        text = "$${String.format(Locale.US, "%.2f", usdVal)}",
-                                        fontSize = 14.sp,
+                                        text = usdFormatted,
+                                        fontSize = VeNumberFormat.adaptiveTriColumnFontSize(usdFormatted),
                                         fontWeight = FontWeight.Bold,
-                                        color = textPrimary
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.4f", bcvUsdRate)}",
+                                        text = "Tasa: ${VeNumberFormat.formatRate(bcvUsdRate, 4)}",
                                         fontSize = 8.sp,
-                                        color = textSecondary.copy(alpha = 0.7f)
+                                        color = textSecondary.copy(alpha = 0.7f),
+                                        maxLines = 1
                                     )
                                 }
 
@@ -1539,6 +1560,8 @@ fun TasaVeScreen(
                                 )
 
                                 // 2. EUR Equivalent
+                                val eurVal = if (bcvEurRate > 0) parsedVes / bcvEurRate else 0.0
+                                val eurFormatted = "€${VeNumberFormat.formatMoney(eurVal)}"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -1547,20 +1570,24 @@ fun TasaVeScreen(
                                         text = "Euro BCV",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        maxLines = 1
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val eurVal = if (bcvEurRate > 0) parsedVes / bcvEurRate else 0.0
                                     Text(
-                                        text = "€${String.format(Locale.US, "%.2f", eurVal)}",
-                                        fontSize = 14.sp,
+                                        text = eurFormatted,
+                                        fontSize = VeNumberFormat.adaptiveTriColumnFontSize(eurFormatted),
                                         fontWeight = FontWeight.Bold,
-                                        color = textPrimary
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.4f", bcvEurRate)}",
+                                        text = "Tasa: ${VeNumberFormat.formatRate(bcvEurRate, 4)}",
                                         fontSize = 8.sp,
-                                        color = textSecondary.copy(alpha = 0.7f)
+                                        color = textSecondary.copy(alpha = 0.7f),
+                                        maxLines = 1
                                     )
                                 }
 
@@ -1573,6 +1600,8 @@ fun TasaVeScreen(
                                 )
 
                                 // 3. USDT Equivalent
+                                val usdtVal = if (parallelUsdtRate > 0) parsedVes / parallelUsdtRate else 0.0
+                                val usdtFormatted = "₮${VeNumberFormat.formatMoney(usdtVal)}"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -1581,20 +1610,24 @@ fun TasaVeScreen(
                                         text = "USDT Bin.",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        maxLines = 1
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val usdtVal = if (parallelUsdtRate > 0) parsedVes / parallelUsdtRate else 0.0
                                     Text(
-                                        text = "₮${String.format(Locale.US, "%.2f", usdtVal)}",
-                                        fontSize = 14.sp,
+                                        text = usdtFormatted,
+                                        fontSize = VeNumberFormat.adaptiveTriColumnFontSize(usdtFormatted),
                                         fontWeight = FontWeight.Bold,
-                                        color = textPrimary
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.2f", parallelUsdtRate)}",
+                                        text = "Tasa: ${VeNumberFormat.formatRate(parallelUsdtRate, 2)}",
                                         fontSize = 8.sp,
-                                        color = textSecondary.copy(alpha = 0.7f)
+                                        color = textSecondary.copy(alpha = 0.7f),
+                                        maxLines = 1
                                     )
                                 }
                             }
@@ -1602,6 +1635,7 @@ fun TasaVeScreen(
                             val copVesRate = viewModel.getEffectiveCopRate()?.rate ?: 0.0
                             if (copVesRate > 0.0) {
                                 val copEquiv = parsedVes / copVesRate
+                                val copFormatted = "${VeNumberFormat.formatInt(copEquiv)} COP"
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1612,16 +1646,20 @@ fun TasaVeScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "🇨🇴 Frontera (TRM ${String.format(Locale.US, "%,.0f", uiState.copPerUsd)}):",
+                                        text = "🇨🇴 Frontera (TRM ${VeNumberFormat.formatInt(uiState.copPerUsd)}):",
                                         fontSize = 9.5.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        modifier = Modifier.padding(end = 6.dp)
                                     )
                                     Text(
-                                        text = "${String.format(Locale.US, "%,.0f", copEquiv)} COP",
-                                        fontSize = 11.sp,
+                                        text = copFormatted,
+                                        fontSize = if (copFormatted.length > 16) 9.5.sp else 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFF59E0B)
+                                        color = Color(0xFFF59E0B),
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
@@ -1640,42 +1678,63 @@ fun TasaVeScreen(
                                 ) {
                                     val symbol = currentRateInfo?.symbol ?: "$"
                                     Text(
-                                        text = "CON ${String.format(Locale.US, "%,.2f", parsedForeign)} $symbol EN CADA MONEDA:",
+                                        text = "CON ${VeNumberFormat.formatMoney(parsedForeign)} $symbol EN CADA MONEDA:",
                                         fontSize = 8.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = textSecondary,
-                                        letterSpacing = 0.5.sp
+                                        letterSpacing = 0.5.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
+
+                                    val bsUsdStr = "Bs. ${VeNumberFormat.formatMoney(parsedForeign * bcvUsdRate)}"
+                                    val bsEurStr = "Bs. ${VeNumberFormat.formatMoney(parsedForeign * bcvEurRate)}"
+                                    val bsUsdtStr = "Bs. ${VeNumberFormat.formatMoney(parsedForeign * parallelUsdtRate)}"
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Column {
-                                            Text(text = "USD BCV", fontSize = 8.5.sp, color = textSecondary)
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = "USD BCV", fontSize = 8.5.sp, color = textSecondary, maxLines = 1)
                                             Text(
-                                                text = "Bs. ${String.format(Locale.US, "%,.2f", parsedForeign * bcvUsdRate)}",
-                                                fontSize = 11.sp,
+                                                text = bsUsdStr,
+                                                fontSize = VeNumberFormat.adaptiveSecondaryTriColumnFontSize(bsUsdStr),
                                                 fontWeight = FontWeight.Bold,
-                                                color = textPrimary
+                                                color = textPrimary,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
-                                        Column {
-                                            Text(text = "EUR BCV", fontSize = 8.5.sp, color = textSecondary)
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(text = "EUR BCV", fontSize = 8.5.sp, color = textSecondary, maxLines = 1)
                                             Text(
-                                                text = "Bs. ${String.format(Locale.US, "%,.2f", parsedForeign * bcvEurRate)}",
-                                                fontSize = 11.sp,
+                                                text = bsEurStr,
+                                                fontSize = VeNumberFormat.adaptiveSecondaryTriColumnFontSize(bsEurStr),
                                                 fontWeight = FontWeight.Bold,
-                                                color = textPrimary
+                                                color = textPrimary,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
-                                        Column {
-                                            Text(text = "USDT Bin.", fontSize = 8.5.sp, color = textSecondary)
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.End
+                                        ) {
+                                            Text(text = "USDT Bin.", fontSize = 8.5.sp, color = textSecondary, maxLines = 1)
                                             Text(
-                                                text = "Bs. ${String.format(Locale.US, "%,.2f", parsedForeign * parallelUsdtRate)}",
-                                                fontSize = 11.sp,
+                                                text = bsUsdtStr,
+                                                fontSize = VeNumberFormat.adaptiveSecondaryTriColumnFontSize(bsUsdtStr),
                                                 fontWeight = FontWeight.Bold,
-                                                color = textPrimary
+                                                color = textPrimary,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
@@ -1927,9 +1986,9 @@ fun RateSelectorCard(
                     )
                 }
             } else {
-                val decimals = if (key == "USDT") "%.2f" else "%.4f"
+                val decimals = if (key == "USDT") 2 else 4
                 Text(
-                    text = String.format(Locale.US, decimals, rateInfo.rate),
+                    text = VeNumberFormat.formatRate(rateInfo.rate, decimals),
                     fontSize = if (key == "USDT") 17.sp else 15.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) Color.White else Color(0xFF0F172A),
@@ -1949,7 +2008,7 @@ fun RateSelectorCard(
                             .padding(horizontal = 6.dp, vertical = 1.dp)
                     ) {
                         Text(
-                            text = "$pctSign${String.format(Locale.US, "%.2f", pct)}%",
+                            text = "$pctSign${VeNumberFormat.formatPercent(pct, 2)}%",
                             fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = pctColor
@@ -2099,7 +2158,7 @@ fun HistoryDialog(
                                 ) {
                                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                         Text(
-                                            text = "${String.format(Locale.US, "%,.2f", item.amountFrom)} ${item.currencyFrom} = ${String.format(Locale.US, "%,.2f", item.amountTo)} ${item.currencyTo}",
+                                            text = "${VeNumberFormat.formatMoney(item.amountFrom)} ${item.currencyFrom} = ${VeNumberFormat.formatMoney(item.amountTo)} ${item.currencyTo}",
                                             fontSize = 13.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = textPrimary
@@ -2107,9 +2166,9 @@ fun HistoryDialog(
                                         val isCopItem = item.currencyFrom == "COP" || item.currencyTo == "COP"
                                         val isUsdtItem = item.currencyFrom == "₮" || item.currencyTo == "₮"
                                         val historyRateLabel = when {
-                                            isCopItem -> "1,000 COP = Bs. ${String.format(Locale.US, "%.2f", item.rate * 1000.0)}"
-                                            isUsdtItem -> "Tasa: Bs. ${String.format(Locale.US, "%.2f", item.rate)}"
-                                            else -> "Tasa: Bs. ${String.format(Locale.US, "%.4f", item.rate)}"
+                                            isCopItem -> "1.000 COP = Bs. ${VeNumberFormat.formatMoney(item.rate * 1000.0)}"
+                                            isUsdtItem -> "Tasa: Bs. ${VeNumberFormat.formatRate(item.rate, 2)}"
+                                            else -> "Tasa: Bs. ${VeNumberFormat.formatRate(item.rate, 4)}"
                                         }
                                         Text(
                                             text = "$historyRateLabel • $dateStr",
@@ -3693,7 +3752,7 @@ private fun BcvCalendarDialog(
                             ) {
                                 Text(label, fontSize = 9.sp, color = textSecondary)
                                 Text(
-                                    text = "Bs. ${String.format(Locale.US, "%.2f", rateVal)}",
+                                    text = "Bs. ${VeNumberFormat.formatRate(rateVal, 2)}",
                                     fontSize = 12.5.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = accent
@@ -3703,7 +3762,7 @@ private fun BcvCalendarDialog(
                     }
 
                     // Cálculo rápido en el día elegido
-                    val quickAmt = quickUsdText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val quickAmt = VeNumberFormat.parseFlexibleDouble(quickUsdText) ?: 0.0
                     val chosenRate = if (quickUseUsdt) dayLookup.usdt else dayLookup.usdBcv
                     val quickBs = quickAmt * chosenRate
 
@@ -3714,7 +3773,12 @@ private fun BcvCalendarDialog(
                     ) {
                         OutlinedTextField(
                             value = quickUsdText,
-                            onValueChange = { if (it.length <= 8) quickUsdText = it },
+                            onValueChange = { raw ->
+                                VeNumberFormat.sanitizeEditableInput(raw, quickUsdText, maxIntDigits = 10)?.let {
+                                    quickUsdText = it
+                                }
+                            },
+                            visualTransformation = VenezuelanNumberVisualTransformation,
                             label = { Text("Cálculo rápido ($)") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -3731,10 +3795,12 @@ private fun BcvCalendarDialog(
                                 modifier = Modifier.clickable { quickUseUsdt = !quickUseUsdt }
                             )
                             Text(
-                                text = "Bs. ${String.format(Locale.US, "%,.2f", quickBs)}",
+                                text = "Bs. ${VeNumberFormat.formatMoney(quickBs)}",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = emeraldLight
+                                color = emeraldLight,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

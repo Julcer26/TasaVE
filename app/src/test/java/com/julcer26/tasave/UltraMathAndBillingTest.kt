@@ -408,7 +408,7 @@ class UltraMathAndBillingTest {
             foreignSymbol = "$"
         )
         assertEquals("$ 10", leftUsd)
-        assertEquals("Bs. 2,400.00", rightBs)
+        assertEquals("Bs. 2.400,00", rightBs)
 
         val (leftBs, rightUsd) = com.julcer26.tasave.widget.WidgetCalcMath.formatDisplayPair(
             input = "2400",
@@ -416,8 +416,8 @@ class UltraMathAndBillingTest {
             isVesInput = true,
             foreignSymbol = "$"
         )
-        assertEquals("Bs. 2400", leftBs)
-        assertEquals("$ 10.00", rightUsd)
+        assertEquals("Bs. 2.400", leftBs)
+        assertEquals("$ 10,00", rightUsd)
 
         val profile = com.julcer26.tasave.ultra.PaymentMethodProfile(
             id = 1L,

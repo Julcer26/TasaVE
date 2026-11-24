@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import com.julcer26.tasave.R
 import com.julcer26.tasave.data.CachedRatesBundle
 import com.julcer26.tasave.data.LocalStorageHelper
-import java.util.Locale
+import com.julcer26.tasave.ui.VeNumberFormat
 
 data class PersistentRateSummary(
     val title: String,
@@ -52,11 +52,11 @@ object PersistentRateNotificationManager {
         val usdt = bundle.usdtParalelo.rate
         val nextUsd = bundle.nextUsdBcv?.rate
 
-        val usdStr = if (usd > 0.0) String.format(Locale.US, "%.2f", usd) else "--"
-        val eurStr = if (eur > 0.0) String.format(Locale.US, "%.2f", eur) else "--"
-        val usdtStr = if (usdt > 0.0) String.format(Locale.US, "%.2f", usdt) else "--"
-        val usdExact = if (usd > 0.0) String.format(Locale.US, "%.4f", usd) else "--"
-        val eurExact = if (eur > 0.0) String.format(Locale.US, "%.4f", eur) else "--"
+        val usdStr = if (usd > 0.0) VeNumberFormat.formatRate(usd, 2) else "--"
+        val eurStr = if (eur > 0.0) VeNumberFormat.formatRate(eur, 2) else "--"
+        val usdtStr = if (usdt > 0.0) VeNumberFormat.formatRate(usdt, 2) else "--"
+        val usdExact = if (usd > 0.0) VeNumberFormat.formatRate(usd, 4) else "--"
+        val eurExact = if (eur > 0.0) VeNumberFormat.formatRate(eur, 4) else "--"
 
         val title = "Tasa VE • BCV Bs. $usdStr"
         val compactLine = "USD $usdStr • EUR $eurStr • USDT $usdtStr"
@@ -68,7 +68,7 @@ object PersistentRateNotificationManager {
         )
         if (nextUsd != null && nextUsd > 0.0) {
             val nextLabel = bundle.nextBcvDateIso?.takeIf { it.isNotBlank() } ?: "Próx."
-            lines += "BCV Mañana ($nextLabel): Bs. ${String.format(Locale.US, "%.4f", nextUsd)}"
+            lines += "BCV Mañana ($nextLabel): Bs. ${VeNumberFormat.formatRate(nextUsd, 4)}"
         }
 
         val bigText = lines.joinToString("\n")

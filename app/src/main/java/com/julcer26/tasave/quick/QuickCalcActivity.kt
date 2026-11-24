@@ -50,6 +50,8 @@ import com.julcer26.tasave.R
 import com.julcer26.tasave.analytics.AnalyticsTracker
 import com.julcer26.tasave.data.CachedRatesBundle
 import com.julcer26.tasave.data.LocalStorageHelper
+import com.julcer26.tasave.ui.VeNumberFormat
+import com.julcer26.tasave.ui.VenezuelanNumberVisualTransformation
 import com.julcer26.tasave.ui.theme.TasaVeTheme
 import com.julcer26.tasave.ultra.PaymentMethodProfile
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
@@ -367,10 +369,10 @@ class QuickCalcActivity : ComponentActivity() {
     }
 
     private fun formatCleanInput(value: Double): String {
-        return if (value % 1.0 == 0.0 && value < 1_000_000_000.0) {
+        return if (value % 1.0 == 0.0 && value < 1_000_000_000_000.0) {
             value.toLong().toString()
         } else {
-            String.format(Locale.US, "%.2f", value)
+            VeNumberFormat.toCanonicalFixed(value, decimals = 2)
         }
     }
 }
@@ -448,7 +450,7 @@ private fun QuickCalcOverlayContent(
         else -> "USD BCV$tomorrowSuffix" to "$"
     }
 
-    val parsedAmount = amountText.replace(",", ".").toDoubleOrNull() ?: 0.0
+    val parsedAmount = VeNumberFormat.parseFlexibleDouble(amountText) ?: 0.0
     val converted = when {
         activeRate <= 0.0 || parsedAmount <= 0.0 -> 0.0
         inputIsVes -> parsedAmount / activeRate
@@ -457,21 +459,21 @@ private fun QuickCalcOverlayContent(
 
     val resultDisplay = if (inputIsVes) {
         if (selectedRateKey == "COP") {
-            "${String.format(Locale.US, "%,.0f", converted)} COP"
+            "${VeNumberFormat.formatInt(converted)} COP"
         } else {
-            "$unitSymbol ${String.format(Locale.US, "%,.2f", converted)}"
+            "$unitSymbol ${VeNumberFormat.formatMoney(converted)}"
         }
     } else {
-        "Bs. ${String.format(Locale.US, "%,.2f", converted)}"
+        "Bs. ${VeNumberFormat.formatMoney(converted)}"
     }
 
     val conversionCopyLine = if (inputIsVes) {
-        "Bs. ${String.format(Locale.US, "%,.2f", parsedAmount)} = $resultDisplay ($rateLabel)"
+        "Bs. ${VeNumberFormat.formatMoney(parsedAmount)} = $resultDisplay ($rateLabel)"
     } else {
         val left = if (selectedRateKey == "COP") {
-            "${String.format(Locale.US, "%,.0f", parsedAmount)} COP"
+            "${VeNumberFormat.formatInt(parsedAmount)} COP"
         } else {
-            "$unitSymbol ${String.format(Locale.US, "%,.2f", parsedAmount)}"
+            "$unitSymbol ${VeNumberFormat.formatMoney(parsedAmount)}"
         }
         "$left = $resultDisplay ($rateLabel)"
     }
@@ -735,19 +737,25 @@ private fun QuickCalcOverlayContent(
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(end = 4.dp)
                         )
+                        val quickInputFontSize = when {
+                            VeNumberFormat.visualLength(amountText) <= 8 -> 16.sp
+                            VeNumberFormat.visualLength(amountText) <= 12 -> 13.5.sp
+                            else -> 11.5.sp
+                        }
                         BasicTextField(
                             value = amountText,
                             onValueChange = { raw ->
-                                if (raw.length <= 12 && raw.all { it.isDigit() || it == '.' || it == ',' }) {
-                                    amountText = raw
+                                VeNumberFormat.sanitizeEditableInput(raw, amountText)?.let {
+                                    amountText = it
                                 }
                             },
+                            visualTransformation = VenezuelanNumberVisualTransformation,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             cursorBrush = SolidColor(emerald),
                             textStyle = TextStyle(
                                 color = textPrimary,
-                                fontSize = 16.sp,
+                                fontSize = quickInputFontSize,
                                 fontWeight = FontWeight.Bold
                             ),
                             modifier = Modifier.weight(1f),
@@ -796,18 +804,24 @@ private fun QuickCalcOverlayContent(
                             .padding(horizontal = 8.dp, vertical = 5.dp),
                         horizontalAlignment = Alignment.End
                     ) {
+                        val quickResultFontSize = when {
+                            resultDisplay.length <= 12 -> 15.5.sp
+                            resultDisplay.length <= 16 -> 13.sp
+                            else -> 10.8.sp
+                        }
                         Text(
                             text = resultDisplay,
                             color = emeraldText,
-                            fontSize = 15.5.sp,
+                            fontSize = quickResultFontSize,
                             fontWeight = FontWeight.ExtraBold,
                             maxLines = 1,
+                            softWrap = false,
                             overflow = TextOverflow.Ellipsis
                         )
                         val miniRate = if (selectedRateKey == "COP") {
-                            "${String.format(Locale.US, "%.0f", copPerUsd)} COP/$"
+                            "${VeNumberFormat.formatInt(copPerUsd)} COP/$"
                         } else {
-                            "Tasa: Bs. ${String.format(Locale.US, "%.2f", activeRate)}"
+                            "Tasa: Bs. ${VeNumberFormat.formatRate(activeRate, 2)}"
                         }
                         Text(
                             text = miniRate,

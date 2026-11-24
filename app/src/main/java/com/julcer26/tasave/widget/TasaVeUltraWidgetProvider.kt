@@ -16,6 +16,7 @@ import com.julcer26.tasave.MainActivity
 import com.julcer26.tasave.R
 import com.julcer26.tasave.data.LocalStorageHelper
 import com.julcer26.tasave.data.TasaVeRepository
+import com.julcer26.tasave.ui.VeNumberFormat
 import com.julcer26.tasave.ultra.UltraMath
 import java.util.Locale
 
@@ -277,24 +278,24 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                 )
 
                 // Panel 1: Rates + Shortcuts
-                setTextViewText(R.id.ultra_rates_usd, String.format(Locale.US, "%.4f", usd.rate))
-                setTextViewText(R.id.ultra_rates_eur, String.format(Locale.US, "%.4f", eur.rate))
-                setTextViewText(R.id.ultra_rates_usdt, String.format(Locale.US, "%.2f", usdt.rate))
+                setTextViewText(R.id.ultra_rates_usd, VeNumberFormat.formatRate(usd.rate, 4))
+                setTextViewText(R.id.ultra_rates_eur, VeNumberFormat.formatRate(eur.rate, 4))
+                setTextViewText(R.id.ultra_rates_usdt, VeNumberFormat.formatRate(usdt.rate, 2))
                 val nextUsd = bundle.nextUsdBcv
                 val nextDate = bundle.nextBcvDateIso
                 val metaText = if (nextUsd != null && nextDate != null) {
-                    "Brecha ${String.format(Locale.US, "%.1f", spread)}% • Mañana (${TasaVeRepository.formatIsoShortDate(nextDate)}): ${String.format(Locale.US, "%.4f", nextUsd.rate)}"
+                    "Brecha ${VeNumberFormat.formatPercent(spread, 1)}% • Mañana (${TasaVeRepository.formatIsoShortDate(nextDate)}): ${VeNumberFormat.formatRate(nextUsd.rate, 4)}"
                 } else {
-                    "Brecha ${String.format(Locale.US, "%.1f", spread)}% • Actualizado: ${usd.dateUpdated}"
+                    "Brecha ${VeNumberFormat.formatPercent(spread, 1)}% • Actualizado: ${usd.dateUpdated}"
                 }
                 setTextViewText(R.id.ultra_rates_meta, metaText)
                 setOnClickPendingIntent(R.id.ultra_btn_scanner, launchActivityIntent(context, 420, LAUNCH_SCANNER))
                 setOnClickPendingIntent(R.id.ultra_btn_cart, launchActivityIntent(context, 421, LAUNCH_CART))
 
-                // Panel 2: Classic 4x4 Calculator
-                setTextViewText(R.id.ultra_rate_usd, "USD ${String.format(Locale.US, "%.2f", usd.rate)}")
-                setTextViewText(R.id.ultra_rate_eur, "EUR ${String.format(Locale.US, "%.2f", eur.rate)}")
-                setTextViewText(R.id.ultra_rate_usdt, "USDT ${String.format(Locale.US, "%.2f", usdt.rate)}")
+                // Panel 2: Classic Calculator
+                setTextViewText(R.id.ultra_rate_usd, "USD ${VeNumberFormat.formatRate(usd.rate, 2)}")
+                setTextViewText(R.id.ultra_rate_eur, "EUR ${VeNumberFormat.formatRate(eur.rate, 2)}")
+                setTextViewText(R.id.ultra_rate_usdt, "USDT ${VeNumberFormat.formatRate(usdt.rate, 2)}")
 
                 setInt(
                     R.id.ultra_rate_usd,

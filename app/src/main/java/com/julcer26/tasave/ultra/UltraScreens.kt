@@ -71,6 +71,8 @@ import com.julcer26.tasave.data.RateInfo
 import com.julcer26.tasave.share.ShareCardGenerator
 import com.julcer26.tasave.ui.RateSelectorCard
 import com.julcer26.tasave.ui.TasaVeUiState
+import com.julcer26.tasave.ui.VeNumberFormat
+import com.julcer26.tasave.ui.VenezuelanNumberVisualTransformation
 import com.julcer26.tasave.widget.TasaVeRatesWidgetProvider
 import com.julcer26.tasave.widget.TasaVeUltraWidgetProvider
 import java.util.Locale
@@ -190,10 +192,12 @@ fun CartTab(
                         }
                     }
                     Text(
-                        text = "$ ${String.format(Locale.US, "%,.2f", summary.totalUsd)}",
+                        text = "$ ${VeNumberFormat.formatMoney(summary.totalUsd)}",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = textPrimary
+                        color = textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -203,15 +207,19 @@ fun CartTab(
                         color = textSecondary
                     )
                     Text(
-                        text = "Bs. ${String.format(Locale.US, "%,.2f", summary.totalVes)}",
+                        text = "Bs. ${VeNumberFormat.formatMoney(summary.totalVes)}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = EmeraldLight
+                        color = EmeraldLight,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "€ ${String.format(Locale.US, "%.2f", summary.totalEur)}  •  ₮ ${String.format(Locale.US, "%.2f", summary.totalUsdt)}",
+                        text = "€ ${VeNumberFormat.formatMoney(summary.totalEur)}  •  ₮ ${VeNumberFormat.formatMoney(summary.totalUsdt)}",
                         fontSize = 10.5.sp,
-                        color = textSecondary
+                        color = textSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -312,9 +320,9 @@ fun CartTab(
 
             if (effectiveApplyIva || effectiveApplyIgtf) {
                 Text(
-                    text = "Subtotal: $${String.format(Locale.US, "%.2f", summary.subtotalUsd)}" +
-                        (if (effectiveApplyIva) " + IVA $${String.format(Locale.US, "%.2f", summary.ivaUsd)}" else "") +
-                        (if (effectiveApplyIgtf) " + IGTF $${String.format(Locale.US, "%.2f", summary.igtfUsd)}" else ""),
+                    text = "Subtotal: $${VeNumberFormat.formatMoney(summary.subtotalUsd)}" +
+                        (if (effectiveApplyIva) " + IVA $${VeNumberFormat.formatMoney(summary.ivaUsd)}" else "") +
+                        (if (effectiveApplyIgtf) " + IGTF $${VeNumberFormat.formatMoney(summary.igtfUsd)}" else ""),
                     fontSize = 10.5.sp,
                     color = textSecondary
                 )
@@ -579,7 +587,7 @@ fun CartTab(
                                 )
                             }
                             Text(
-                                text = "$${String.format(Locale.US, "%.2f", item.unitPriceUsd)} c/u • Total Bs. ${String.format(Locale.US, "%,.2f", lineVes)}",
+                                text = "$${VeNumberFormat.formatMoney(item.unitPriceUsd)} c/u • Total Bs. ${VeNumberFormat.formatMoney(lineVes)}",
                                 fontSize = 11.sp,
                                 color = textSecondary
                             )
@@ -685,7 +693,7 @@ private fun CartItemEditorDialog(
     var isVes by remember(initialItem) { mutableStateOf(false) }
     var amountStr by remember(initialItem) {
         mutableStateOf(
-            if (initialItem != null) String.format(Locale.US, "%.2f", initialItem.unitPriceUsd) else ""
+            if (initialItem != null) VeNumberFormat.toCanonicalFixed(initialItem.unitPriceUsd, 2) else ""
         )
     }
     var qty by remember(initialItem) { mutableStateOf(initialItem?.quantity ?: 1) }
@@ -741,9 +749,12 @@ private fun CartItemEditorDialog(
 
                 OutlinedTextField(
                     value = amountStr,
-                    onValueChange = { amountStr = it },
+                    onValueChange = { raw ->
+                        VeNumberFormat.sanitizeEditableInput(raw, amountStr)?.let { amountStr = it }
+                    },
+                    visualTransformation = VenezuelanNumberVisualTransformation,
                     label = { Text(if (isVes) "Precio unitario (Bs.)" else "Precio unitario ($)") },
-                    placeholder = { Text("0.00") },
+                    placeholder = { Text("0,00") },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -758,9 +769,9 @@ private fun CartItemEditorDialog(
                         selected = !isVes,
                         onClick = {
                             if (isVes && usdRate > 0.0) {
-                                val current = amountStr.replace(",", ".").toDoubleOrNull()
+                                val current = VeNumberFormat.parseFlexibleDouble(amountStr)
                                 if (current != null && current > 0) {
-                                    amountStr = String.format(Locale.US, "%.2f", current / usdRate)
+                                    amountStr = VeNumberFormat.toCanonicalFixed(current / usdRate, 2)
                                 }
                             }
                             isVes = false
@@ -785,9 +796,9 @@ private fun CartItemEditorDialog(
                         selected = isVes,
                         onClick = {
                             if (!isVes && usdRate > 0.0) {
-                                val current = amountStr.replace(",", ".").toDoubleOrNull()
+                                val current = VeNumberFormat.parseFlexibleDouble(amountStr)
                                 if (current != null && current > 0) {
-                                    amountStr = String.format(Locale.US, "%.2f", current * usdRate)
+                                    amountStr = VeNumberFormat.toCanonicalFixed(current * usdRate, 2)
                                 }
                             }
                             isVes = true
@@ -877,7 +888,7 @@ private fun CartItemEditorDialog(
                     }
                     Button(
                         onClick = {
-                            val value = amountStr.replace(",", ".").toDoubleOrNull()
+                            val value = VeNumberFormat.parseFlexibleDouble(amountStr)
                             if (value != null && value > 0.0) {
                                 onConfirm(name, value, isVes, qty)
                             }
@@ -905,11 +916,9 @@ private enum class UtilTool(val title: String, val subtitle: String, val analyti
     SPLIT("Dividir cuenta", "Entre amigos o grupo", "split_bill")
 }
 
-private fun formatDec2(value: Double): String = String.format(Locale.US, "%.2f", value)
+private fun formatDec2(value: Double): String = VeNumberFormat.formatMoney(value, decimals = 2)
 
-private fun formatCopAmount(value: Double): String =
-    if (value % 1.0 == 0.0) String.format(Locale.US, "%,.0f", value)
-    else String.format(Locale.US, "%,.2f", value)
+private fun formatCopAmount(value: Double): String = VeNumberFormat.formatCop(value)
 
 private fun formatSplitCurrencyValue(value: Double, currency: SplitCurrency): String =
     when (currency) {
@@ -1021,8 +1030,8 @@ fun MarketTab(
                     var discountText by remember { mutableStateOf("0") }
                     var isFixedUsdDiscount by remember { mutableStateOf(false) }
 
-                    val price = priceText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                    val discountVal = discountText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val price = VeNumberFormat.parseFlexibleDouble(priceText) ?: 0.0
+                    val discountVal = VeNumberFormat.parseFlexibleDouble(discountText) ?: 0.0
                     val res = UltraMath.calculatePaymentComparison(
                         priceUsd = price,
                         bcvRate = usdRate,
@@ -1048,7 +1057,10 @@ fun MarketTab(
 
                         OutlinedTextField(
                             value = priceText,
-                            onValueChange = { if (it.length <= 10) priceText = it },
+                            onValueChange = { raw ->
+                                VeNumberFormat.sanitizeEditableInput(raw, priceText)?.let { priceText = it }
+                            },
+                            visualTransformation = VenezuelanNumberVisualTransformation,
                             label = { Text("Monto a pagar ($)") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -1131,7 +1143,12 @@ fun MarketTab(
 
                             OutlinedTextField(
                                 value = discountText,
-                                onValueChange = { if (it.length <= 10) discountText = it },
+                                onValueChange = { raw ->
+                                    VeNumberFormat.sanitizeEditableInput(raw, discountText, maxIntDigits = 10)?.let {
+                                        discountText = it
+                                    }
+                                },
+                                visualTransformation = VenezuelanNumberVisualTransformation,
                                 label = {
                                     Text(
                                         if (isFixedUsdDiscount) "Descuento libre en dólares ($)"
@@ -1139,7 +1156,7 @@ fun MarketTab(
                                     )
                                 },
                                 placeholder = {
-                                    Text(if (isFixedUsdDiscount) "Ej: 8.50" else "Ej: 7.5")
+                                    Text(if (isFixedUsdDiscount) "Ej: 8,50" else "Ej: 7,5")
                                 },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -1182,7 +1199,7 @@ fun MarketTab(
                             val discountDesc = when {
                                 discountVal <= 0.0 -> "Pago directo en divisas"
                                 isFixedUsdDiscount -> "Con -$${formatDec2(res.cashDiscountUsd)} de desc."
-                                else -> "Con -${formatDec2(res.cashDiscountPercent).removeSuffix(".00")}% de desc."
+                                else -> "Con -${formatDec2(res.cashDiscountPercent).removeSuffix(",00")}% de desc."
                             }
 
                             Column(
@@ -1249,7 +1266,7 @@ fun MarketTab(
                                     "Conviene pagar $${formatDec2(res.cashOrZelleEffectiveUsd)} directo (ahorro $${formatDec2(res.cashSavingsVsUsdtUsd)})"
                                 }
                                 val discNote = if (res.cashDiscountUsd > 0.0) {
-                                    " (desc. -$${formatDec2(res.cashDiscountUsd)} / -${formatDec2(res.cashDiscountPercent).removeSuffix(".00")}%)"
+                                    " (desc. -$${formatDec2(res.cashDiscountUsd)} / -${formatDec2(res.cashDiscountPercent).removeSuffix(",00")}%)"
                                 } else ""
                                 sharePlainText(
                                     context,
@@ -1273,7 +1290,7 @@ fun MarketTab(
                     var totalBillText by remember { mutableStateOf("60") }
                     var people by remember { mutableIntStateOf(4) }
 
-                    val billTotal = totalBillText.replace(",", ".").toDoubleOrNull() ?: 0.0
+                    val billTotal = VeNumberFormat.parseFlexibleDouble(totalBillText) ?: 0.0
                     val splitRes = UltraMath.calculateSplitBillMultiCurrency(
                         totalAmount = billTotal,
                         currency = selectedCurrency,
@@ -1334,7 +1351,10 @@ fun MarketTab(
 
                         OutlinedTextField(
                             value = totalBillText,
-                            onValueChange = { if (it.length <= 12) totalBillText = it },
+                            onValueChange = { raw ->
+                                VeNumberFormat.sanitizeEditableInput(raw, totalBillText)?.let { totalBillText = it }
+                            },
+                            visualTransformation = VenezuelanNumberVisualTransformation,
                             label = { Text(selectedCurrency.inputLabel) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -1919,30 +1939,30 @@ fun CheckoutTab(
         "USDT" -> "USDT"
         else -> "Dólar BCV"
     }
-    val rateFmt = if (selectedRateKey == "USDT") "%.2f" else "%.4f"
+    val rateDecimals = if (selectedRateKey == "USDT") 2 else 4
 
-    val totalUsd = totalUsdStr.replace(",", ".").toDoubleOrNull() ?: 0.0
-    val cashUsd = cashUsdStr.replace(",", ".").toDoubleOrNull() ?: 0.0
-    val paidVes = paidVesStr.replace(",", ".").toDoubleOrNull() ?: 0.0
+    val totalUsd = VeNumberFormat.parseFlexibleDouble(totalUsdStr) ?: 0.0
+    val cashUsd = VeNumberFormat.parseFlexibleDouble(cashUsdStr) ?: 0.0
+    val paidVes = VeNumberFormat.parseFlexibleDouble(paidVesStr) ?: 0.0
 
     val result = remember(totalUsd, cashUsd, paidVes, activeRate) {
         UltraMath.calculateMixedPayment(totalUsd, cashUsd, paidVes, activeRate)
     }
 
-    val shareSummaryText = remember(result, rateLabel, rateFmt, activeRate, selectedProfile, isUltraUser, customBrandName) {
+    val shareSummaryText = remember(result, rateLabel, rateDecimals, activeRate, selectedProfile, isUltraUser, customBrandName) {
         buildString {
             if (result.totalUsd > 0.005) {
                 val brandHeader = if (isUltraUser && customBrandName.isNotBlank()) customBrandName.trim() else "Tasa VE"
                 appendLine("*$brandHeader • Resumen de Cobro*")
-                appendLine("Total: $${String.format(Locale.US, "%.2f", result.totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", result.totalVes)}")
-                appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, activeRate)}")
+                appendLine("Total: $${VeNumberFormat.formatMoney(result.totalUsd)} • Bs. ${VeNumberFormat.formatMoney(result.totalVes)}")
+                appendLine("Tasa ($rateLabel): Bs. ${VeNumberFormat.formatRate(activeRate, rateDecimals)}")
                 if (result.paidForeignUsd > 0 || result.paidVes > 0) {
-                    appendLine("Abonado: $${String.format(Locale.US, "%.2f", result.paidForeignUsd)} + Bs. ${String.format(Locale.US, "%,.2f", result.paidVes)}")
+                    appendLine("Abonado: $${VeNumberFormat.formatMoney(result.paidForeignUsd)} + Bs. ${VeNumberFormat.formatMoney(result.paidVes)}")
                 }
                 if (result.remainingUsd > 0.005) {
-                    appendLine("Por pagar: $${String.format(Locale.US, "%.2f", result.remainingUsd)} / Bs. ${String.format(Locale.US, "%,.2f", result.remainingVes)}")
+                    appendLine("Por pagar: $${VeNumberFormat.formatMoney(result.remainingUsd)} / Bs. ${VeNumberFormat.formatMoney(result.remainingVes)}")
                 } else if (result.changeUsd > 0.005) {
-                    appendLine("Vuelto: $${String.format(Locale.US, "%.2f", result.changeUsd)} / Bs. ${String.format(Locale.US, "%,.2f", result.changeVes)}")
+                    appendLine("Vuelto: $${VeNumberFormat.formatMoney(result.changeUsd)} / Bs. ${VeNumberFormat.formatMoney(result.changeVes)}")
                 } else {
                     appendLine("Estado: Pagado completo ✅")
                 }
@@ -2033,9 +2053,12 @@ fun CheckoutTab(
 
             OutlinedTextField(
                 value = totalUsdStr,
-                onValueChange = { totalUsdStr = it },
+                onValueChange = { raw ->
+                    VeNumberFormat.sanitizeEditableInput(raw, totalUsdStr)?.let { totalUsdStr = it }
+                },
+                visualTransformation = VenezuelanNumberVisualTransformation,
                 label = { Text("Total de la cuenta ($)") },
-                placeholder = { Text("Ej. 25.00") },
+                placeholder = { Text("Ej. 25,00") },
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -2048,9 +2071,12 @@ fun CheckoutTab(
             ) {
                 OutlinedTextField(
                     value = cashUsdStr,
-                    onValueChange = { cashUsdStr = it },
+                    onValueChange = { raw ->
+                        VeNumberFormat.sanitizeEditableInput(raw, cashUsdStr)?.let { cashUsdStr = it }
+                    },
+                    visualTransformation = VenezuelanNumberVisualTransformation,
                     label = { Text("Paga en $") },
-                    placeholder = { Text("0.00") },
+                    placeholder = { Text("0,00") },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -2058,9 +2084,12 @@ fun CheckoutTab(
                 )
                 OutlinedTextField(
                     value = paidVesStr,
-                    onValueChange = { paidVesStr = it },
+                    onValueChange = { raw ->
+                        VeNumberFormat.sanitizeEditableInput(raw, paidVesStr)?.let { paidVesStr = it }
+                    },
+                    visualTransformation = VenezuelanNumberVisualTransformation,
                     label = { Text("Paga en Bs.") },
-                    placeholder = { Text("0.00") },
+                    placeholder = { Text("0,00") },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -2108,16 +2137,21 @@ fun CheckoutTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$ ${String.format(Locale.US, "%,.2f", showUsd)}",
+                    text = "$ ${VeNumberFormat.formatMoney(showUsd)}",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = accentColor
+                    color = accentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp)
                 )
                 Text(
-                    text = "Bs. ${String.format(Locale.US, "%,.2f", showVes)}",
+                    text = "Bs. ${VeNumberFormat.formatMoney(showVes)}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = EmeraldLight
+                    color = EmeraldLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

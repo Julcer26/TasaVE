@@ -10,6 +10,7 @@ import androidx.annotation.OptIn
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -60,8 +61,9 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.julcer26.tasave.data.RateInfo
-import java.util.Locale
+import com.julcer26.tasave.ui.VeNumberFormat
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 @OptIn(ExperimentalGetImage::class)
@@ -112,10 +114,12 @@ fun PriceScannerDialog(
     }
     var detectedPrices by remember { mutableStateOf<List<DetectedPrice>>(emptyList()) }
     var selectedPrice by remember { mutableStateOf<DetectedPrice?>(null) }
+    var isUserPinned by remember { mutableStateOf(false) }
     var isPaused by remember { mutableStateOf(false) }
     var isTorchOn by remember { mutableStateOf(false) }
     var hasFlash by remember { mutableStateOf(false) }
     var manualIsVesOverride by remember { mutableStateOf<Boolean?>(null) }
+    val stabilizer = remember { PriceScannerStabilizer() }
 
     // Bounds for mapping the targeting reticle strictly to ML Kit image coordinates
     var previewBounds by remember { mutableStateOf<Rect?>(null) }
@@ -303,11 +307,37 @@ fun PriceScannerDialog(
                 val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
                 val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
                 var cameraRef by remember { mutableStateOf<Camera?>(null) }
+                var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
                 var cameraProviderRef by remember { mutableStateOf<ProcessCameraProvider?>(null) }
                 val lastAnalyzedAt = remember { mutableLongStateOf(0L) }
                 val isPausedState by rememberUpdatedState(isPaused)
                 val previewBoundsState by rememberUpdatedState(previewBounds)
                 val reticleBoundsState by rememberUpdatedState(reticleBounds)
+
+                val triggerReticleFocus: () -> Unit = {
+                    val cam = cameraRef
+                    val pv = previewViewRef
+                    val pB = previewBounds
+                    val rB = reticleBounds
+                    if (cam != null && pv != null && pB != null && rB != null) {
+                        runCatching {
+                            val cx = (rB.center.x - pB.left).coerceIn(0f, pB.width)
+                            val cy = (rB.center.y - pB.top).coerceIn(0f, pB.height)
+                            val point = pv.meteringPointFactory.createPoint(cx, cy)
+                            val action = FocusMeteringAction.Builder(
+                                point,
+                                FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
+                            ).setAutoCancelDuration(3, TimeUnit.SECONDS).build()
+                            cam.cameraControl.startFocusAndMetering(action)
+                        }
+                    }
+                }
+
+                LaunchedEffect(cameraRef, reticleBounds != null, previewBounds != null) {
+                    if (cameraRef != null && reticleBounds != null && previewBounds != null) {
+                        triggerReticleFocus()
+                    }
+                }
 
                 DisposableEffect(Unit) {
                     onDispose {
@@ -336,6 +366,7 @@ fun PriceScannerDialog(
                         val previewView = PreviewView(ctx).apply {
                             scaleType = PreviewView.ScaleType.FILL_CENTER
                         }
+                        previewViewRef = previewView
                         val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                         cameraProviderFuture.addListener({
                             try {
@@ -352,7 +383,7 @@ fun PriceScannerDialog(
 
                                 imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
                                     val now = System.currentTimeMillis()
-                                    if (isPausedState || now - lastAnalyzedAt.longValue < 320L) {
+                                    if (isPausedState || now - lastAnalyzedAt.longValue < 280L) {
                                         imageProxy.close()
                                         return@setAnalyzer
                                     }
@@ -388,21 +419,45 @@ fun PriceScannerDialog(
                                     textRecognizer.process(image)
                                         .addOnSuccessListener { visionText ->
                                             val textInsideBox = if (roiInImage != null) {
-                                                visionText.textBlocks
+                                                val padX = roiInImage.width() * 0.06f
+                                                val padY = roiInImage.height() * 0.08f
+                                                val expandedRoi = RectF(
+                                                    (roiInImage.left - padX).coerceAtLeast(0f),
+                                                    (roiInImage.top - padY).coerceAtLeast(0f),
+                                                    (roiInImage.right + padX).coerceAtMost(rotatedImgW),
+                                                    (roiInImage.bottom + padY).coerceAtMost(rotatedImgH)
+                                                )
+                                                val matchingLines = visionText.textBlocks
                                                     .flatMap { it.lines }
                                                     .filter { line ->
                                                         val box = line.boundingBox ?: return@filter false
-                                                        roiInImage.contains(box.exactCenterX(), box.exactCenterY())
+                                                        expandedRoi.contains(box.exactCenterX(), box.exactCenterY())
                                                     }
-                                                    .joinToString("\n") { it.text }
+                                                val maxLineH = matchingLines.maxOfOrNull { it.boundingBox?.height() ?: 0 } ?: 0
+                                                // Prioritize visually larger price text over fine print (weights, SKUs)
+                                                val orderedLines = if (maxLineH > 0) {
+                                                    matchingLines.sortedByDescending { line ->
+                                                        val h = line.boundingBox?.height() ?: 0
+                                                        when {
+                                                            h >= maxLineH * 0.72f -> 2
+                                                            h >= maxLineH * 0.48f -> 1
+                                                            else -> 0
+                                                        }
+                                                    }
+                                                } else {
+                                                    matchingLines
+                                                }
+                                                orderedLines.joinToString("\n") { it.text }
                                             } else {
                                                 visionText.text
                                             }
 
                                             val extracted = PriceScannerParser.extractPrices(textInsideBox)
                                             if (!isPausedState) {
-                                                detectedPrices = extracted
-                                                selectedPrice = extracted.firstOrNull()
+                                                val state = stabilizer.onFrame(extracted, System.currentTimeMillis())
+                                                detectedPrices = state.detectedPrices
+                                                selectedPrice = state.selectedPrice
+                                                isUserPinned = state.isUserPinned
                                             }
                                         }
                                         .addOnFailureListener { e ->
@@ -547,7 +602,7 @@ fun PriceScannerDialog(
                     }
                 }
 
-                // Center Targeting Reticle (positioned in the upper-middle camera area)
+                // Center Targeting Reticle (positioned in the upper-middle camera area; tap to autofocus)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -558,16 +613,29 @@ fun PriceScannerDialog(
                         .onGloballyPositioned { coords ->
                             reticleBounds = coords.boundsInRoot()
                         }
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable {
+                            triggerReticleFocus()
+                        }
                         .border(
                             width = 2.dp,
-                            color = if (selectedPrice != null) emerald else Color(0xCCFFFFFF),
+                            color = when {
+                                isUserPinned -> Color(0xFFF59E0B)
+                                selectedPrice != null -> emerald
+                                else -> Color(0xCCFFFFFF)
+                            },
                             shape = RoundedCornerShape(18.dp)
                         ),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Text(
-                        text = if (isPaused) "Lectura pausada" else "Enfoca el precio aquí",
-                        color = Color.White,
+                        text = when {
+                            isPaused -> "Lectura pausada"
+                            isUserPinned -> "Precio fijado • Toca otro o reanuda"
+                            selectedPrice != null -> "Precio detectado • Toca para enfocar"
+                            else -> "Enfoca el precio aquí"
+                        },
+                        color = if (isUserPinned) Color(0xFFFBBF24) else Color.White,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
@@ -612,7 +680,7 @@ fun PriceScannerDialog(
                         )
                         rates.forEach { (key, label, rateVal) ->
                             val selected = activeRateKey == key
-                            val decimals = if (key == "USD_BCV" || key == "EUR_BCV") "%.4f" else "%.2f"
+                            val decimals = if (key == "USD_BCV" || key == "EUR_BCV") 4 else 2
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -638,7 +706,7 @@ fun PriceScannerDialog(
                                         color = if (selected) emeraldLight else Color.White
                                     )
                                     Text(
-                                        text = if (rateVal != null) "Bs. ${String.format(Locale.US, decimals, rateVal)}" else "--",
+                                        text = if (rateVal != null) "Bs. ${VeNumberFormat.formatRate(rateVal, decimals)}" else "--",
                                         fontSize = 9.5.sp,
                                         color = Color(0xFF94A3B8)
                                     )
@@ -647,7 +715,7 @@ fun PriceScannerDialog(
                         }
                     }
 
-                    // Detected Prices Strip (only prices inside the reticle)
+                    // Detected Prices Strip (only prices inside the reticle; tapping pins the choice)
                     val currencySymbol = activeRateInfo?.symbol ?: "$"
                     if (detectedPrices.isNotEmpty()) {
                         Row(
@@ -657,23 +725,37 @@ fun PriceScannerDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             detectedPrices.take(6).forEach { candidate ->
-                                val isSelected = selectedPrice == candidate
+                                val isSelected = selectedPrice?.amount == candidate.amount &&
+                                    selectedPrice?.currencyHint == candidate.currencyHint
                                 val chipLabel = when (candidate.currencyHint) {
-                                    CurrencyHint.VES -> "Bs. ${String.format(Locale.US, "%,.2f", candidate.amount)}"
-                                    CurrencyHint.EUR -> "€ ${String.format(Locale.US, "%,.2f", candidate.amount)}"
-                                    CurrencyHint.USD -> "$ ${String.format(Locale.US, "%,.2f", candidate.amount)}"
+                                    CurrencyHint.VES -> "Bs. ${VeNumberFormat.formatMoney(candidate.amount)}"
+                                    CurrencyHint.EUR -> "€ ${VeNumberFormat.formatMoney(candidate.amount)}"
+                                    CurrencyHint.USD -> "$ ${VeNumberFormat.formatMoney(candidate.amount)}"
                                     CurrencyHint.UNKNOWN -> {
                                         val sym = if (effectiveIsVes) "Bs." else currencySymbol
-                                        "$sym ${String.format(Locale.US, "%,.2f", candidate.amount)}"
+                                        "$sym ${VeNumberFormat.formatMoney(candidate.amount)}"
                                     }
                                 }
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(10.dp))
-                                        .background(if (isSelected) emerald else Color(0xFF1E1E24))
+                                        .background(
+                                            when {
+                                                isSelected && isUserPinned -> Color(0xFFF59E0B)
+                                                isSelected -> emerald
+                                                else -> Color(0xFF1E1E24)
+                                            }
+                                        )
                                         .clickable {
-                                            selectedPrice = candidate
-                                            manualIsVesOverride = null
+                                            if (isSelected && isUserPinned) {
+                                                stabilizer.clearPin()
+                                                isUserPinned = false
+                                            } else {
+                                                stabilizer.pinPrice(candidate)
+                                                selectedPrice = candidate
+                                                isUserPinned = true
+                                                manualIsVesOverride = null
+                                            }
                                         }
                                         .padding(horizontal = 10.dp, vertical = 5.dp)
                                 ) {
@@ -716,13 +798,24 @@ fun PriceScannerDialog(
                                 if (effectiveIsVes) current.amount / rateValue else current.amount * rateValue
                             } else 0.0
 
+                            val detectedStr = if (effectiveIsVes) {
+                                "Bs. ${VeNumberFormat.formatMoney(current.amount)}"
+                            } else {
+                                "$currencySymbol ${VeNumberFormat.formatMoney(current.amount)}"
+                            }
+                            val convertedStr = if (effectiveIsVes) {
+                                "$currencySymbol ${VeNumberFormat.formatMoney(converted)}"
+                            } else {
+                                "Bs. ${VeNumberFormat.formatMoney(converted)}"
+                            }
+
                             // Row 1: Detected Input + Swap Button
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                                     Text(
                                         text = if (effectiveIsVes) "Detectado (Bolívares)" else "Detectado (Divisa)",
                                         fontSize = 10.sp,
@@ -730,15 +823,12 @@ fun PriceScannerDialog(
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
-                                        text = if (effectiveIsVes) {
-                                            "Bs. ${String.format(Locale.US, "%,.2f", current.amount)}"
-                                        } else {
-                                            "$currencySymbol ${String.format(Locale.US, "%,.2f", current.amount)}"
-                                        },
-                                        fontSize = 17.sp,
+                                        text = detectedStr,
+                                        fontSize = if (detectedStr.length > 15) 14.5.sp else 17.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White,
                                         maxLines = 1,
+                                        softWrap = false,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
@@ -782,18 +872,21 @@ fun PriceScannerDialog(
                                     text = if (effectiveIsVes) "Equivalente" else "Total en Bs.",
                                     fontSize = 11.sp,
                                     color = emeraldLight,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(end = 8.dp)
                                 )
+                                val convertedFontSize = when {
+                                    convertedStr.length <= 14 -> 20.sp
+                                    convertedStr.length <= 18 -> 17.sp
+                                    else -> 14.5.sp
+                                }
                                 Text(
-                                    text = if (effectiveIsVes) {
-                                        "$currencySymbol ${String.format(Locale.US, "%,.2f", converted)}"
-                                    } else {
-                                        "Bs. ${String.format(Locale.US, "%,.2f", converted)}"
-                                    },
-                                    fontSize = 20.sp,
+                                    text = convertedStr,
+                                    fontSize = convertedFontSize,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = emeraldLight,
                                     maxLines = 1,
+                                    softWrap = false,
                                     overflow = TextOverflow.Ellipsis,
                                     textAlign = TextAlign.End
                                 )
@@ -807,7 +900,19 @@ fun PriceScannerDialog(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { isPaused = !isPaused },
+                            onClick = {
+                                if (isUserPinned && !isPaused) {
+                                    stabilizer.clearPin()
+                                    isUserPinned = false
+                                } else {
+                                    val nextPaused = !isPaused
+                                    isPaused = nextPaused
+                                    if (!nextPaused) {
+                                        stabilizer.clearPin()
+                                        isUserPinned = false
+                                    }
+                                }
+                            },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(14.dp),
                             border = BorderStroke(1.dp, Color(0x33FFFFFF)),
@@ -815,13 +920,17 @@ fun PriceScannerDialog(
                             contentPadding = PaddingValues(vertical = 12.dp)
                         ) {
                             Icon(
-                                imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                                imageVector = if (isPaused || isUserPinned) Icons.Default.PlayArrow else Icons.Default.Pause,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isPaused) "Reanudar" else "Pausar",
+                                text = when {
+                                    isPaused -> "Reanudar"
+                                    isUserPinned -> "Reanudar"
+                                    else -> "Pausar"
+                                },
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )

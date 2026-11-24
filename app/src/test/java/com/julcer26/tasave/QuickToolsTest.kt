@@ -154,11 +154,11 @@ class QuickToolsTest {
         )
 
         val summary = PersistentRateNotificationManager.formatPersistentRates(bundle)
-        assertTrue(summary.title.contains("44.12"))
-        assertTrue(summary.compactLine.contains("USD 44.12"))
-        assertTrue(summary.compactLine.contains("EUR 48.57"))
-        assertTrue(summary.compactLine.contains("USDT 49.85"))
-        assertTrue(summary.bigText.contains("BCV Mañana (2026-11-23): Bs. 44.6500"))
+        assertTrue(summary.title.contains("44,12"))
+        assertTrue(summary.compactLine.contains("USD 44,12"))
+        assertTrue(summary.compactLine.contains("EUR 48,57"))
+        assertTrue(summary.compactLine.contains("USDT 49,85"))
+        assertTrue(summary.bigText.contains("BCV Mañana (2026-11-23): Bs. 44,6500"))
         assertTrue(summary.copyClipboardText.contains("Tasas del día"))
     }
 
@@ -199,9 +199,9 @@ class QuickToolsTest {
         )
 
         assertTrue(quote.contains("*Bodegón Central • Presupuesto / Pedido*"))
-        assertTrue(quote.contains("1. 3x Harina PAN: \$6.00 (Bs. 270.00)"))
-        assertTrue(quote.contains("IVA (16%): \$1.60"))
-        assertTrue(quote.contains("*Total a pagar: \$11.60 • Bs. 522.00*"))
+        assertTrue(quote.contains("1. 3x Harina PAN: \$6,00 (Bs. 270,00)"))
+        assertTrue(quote.contains("IVA (16%): \$1,60"))
+        assertTrue(quote.contains("*Total a pagar: \$11,60 • Bs. 522,00*"))
         assertTrue(quote.contains("DATOS PAGO MÓVIL • Tienda"))
         assertTrue(quote.contains("0134 - Banesco"))
     }

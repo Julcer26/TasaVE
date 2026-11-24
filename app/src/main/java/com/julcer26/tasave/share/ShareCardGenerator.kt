@@ -18,6 +18,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.julcer26.tasave.R
+import com.julcer26.tasave.ui.VeNumberFormat
 import com.julcer26.tasave.ultra.CartItem
 import com.julcer26.tasave.ultra.CartSummary
 import com.julcer26.tasave.ultra.PaymentMethodProfile
@@ -199,6 +200,10 @@ object ShareCardGenerator {
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             }
 
+            val maxContentTextW = (width - 296).toFloat()
+            fitTextSize(valueBigPaint, inputDisplay, maxContentTextW, minSize = 28f)
+            fitTextSize(outputBigPaint, outputDisplay, maxContentTextW, minSize = 30f)
+
             canvas.drawText(inputLabel.uppercase(Locale.getDefault()), 148f, 386f, smallLabelPaint)
             canvas.drawText(inputDisplay, 148f, 452f, valueBigPaint)
 
@@ -350,7 +355,7 @@ object ShareCardGenerator {
                 }
             }.getOrNull()
 
-            val rateFmt = if (rateLabel.contains("USDT", ignoreCase = true)) "%.2f" else "%.4f"
+            val rateDecimals = if (rateLabel.contains("USDT", ignoreCase = true)) 2 else 4
             val pillLabel = if (hasTotal) "RESUMEN DE COBRO" else "DATOS DE COBRO"
             try {
                 drawCenteredBrandHeader(
@@ -363,7 +368,7 @@ object ShareCardGenerator {
                     pillText = pillLabel,
                     pillTextColor = emeraldLight,
                     pillBgColor = Color.parseColor("#2410B981"),
-                    subtitle = "$rateLabel: Bs. ${String.format(Locale.US, rateFmt, rateValue)}",
+                    subtitle = "$rateLabel: Bs. ${VeNumberFormat.formatRate(rateValue, rateDecimals)}",
                     customBrandName = customBrandName,
                     customBrandLogo = customLogoBitmap
                 )
@@ -398,17 +403,23 @@ object ShareCardGenerator {
                     typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 }
 
+                val maxSummaryW = (width - 296).toFloat()
+                val totalText = "$${VeNumberFormat.formatMoney(totalUsd)}  •  Bs. ${VeNumberFormat.formatMoney(totalVes)}"
+                fitTextSize(totalPaint, totalText, maxSummaryW, minSize = 24f)
+
                 canvas.drawText("TOTAL DE LA CUENTA", 148f, currentY + 60f, labelPaint)
                 canvas.drawText(
-                    "$${String.format(Locale.US, "%,.2f", totalUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", totalVes)}",
+                    totalText,
                     148f,
                     currentY + 118f,
                     totalPaint
                 )
 
                 if (paidUsd > 0.0 || paidVes > 0.0) {
+                    val paidText = "Abonado: $${VeNumberFormat.formatMoney(paidUsd)} + Bs. ${VeNumberFormat.formatMoney(paidVes)}"
+                    fitTextSize(subtitlePaint, paidText, maxSummaryW, minSize = 20f)
                     canvas.drawText(
-                        "Abonado: $${String.format(Locale.US, "%,.2f", paidUsd)} + Bs. ${String.format(Locale.US, "%,.2f", paidVes)}",
+                        paidText,
                         148f,
                         currentY + 174f,
                         subtitlePaint
@@ -421,9 +432,11 @@ object ShareCardGenerator {
                 }
                 canvas.drawLine(148f, currentY + 212f, width - 148f, currentY + 212f, divPaint)
 
+                val statusLine = "$${VeNumberFormat.formatMoney(statusUsd)}  /  Bs. ${VeNumberFormat.formatMoney(statusVes)}"
+                fitTextSize(highlightPaint, statusLine, maxSummaryW, minSize = 26f)
                 canvas.drawText(statusTitle.uppercase(Locale.getDefault()), 148f, currentY + 266f, labelPaint)
                 canvas.drawText(
-                    "$${String.format(Locale.US, "%,.2f", statusUsd)}  /  Bs. ${String.format(Locale.US, "%,.2f", statusVes)}",
+                    statusLine,
                     148f,
                     currentY + 338f,
                     highlightPaint
@@ -479,8 +492,8 @@ object ShareCardGenerator {
                 if (hasTotal) {
                     val headerName = customBrandName?.trim()?.takeIf { it.isNotBlank() } ?: "Tasa VE"
                     appendLine("*$headerName • Resumen de Cobro*")
-                    appendLine("Total: $${String.format(Locale.US, "%.2f", totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", totalVes)}")
-                    appendLine("Tasa ($rateLabel): Bs. ${String.format(Locale.US, rateFmt, rateValue)}")
+                    appendLine("Total: $${VeNumberFormat.formatMoney(totalUsd)} • Bs. ${VeNumberFormat.formatMoney(totalVes)}")
+                    appendLine("Tasa ($rateLabel): Bs. ${VeNumberFormat.formatRate(rateValue, rateDecimals)}")
                 }
                 if (profileLines.isNotEmpty()) {
                     if (isNotEmpty()) appendLine()
@@ -517,22 +530,22 @@ object ShareCardGenerator {
                 val lineUsd = item.unitPriceUsd * item.quantity
                 val lineVes = lineUsd * usdRate
                 appendLine(
-                    "${idx + 1}. ${item.quantity}x ${item.name}: $${String.format(Locale.US, "%,.2f", lineUsd)} (Bs. ${String.format(Locale.US, "%,.2f", lineVes)})"
+                    "${idx + 1}. ${item.quantity}x ${item.name}: $${VeNumberFormat.formatMoney(lineUsd)} (Bs. ${VeNumberFormat.formatMoney(lineVes)})"
                 )
             }
             appendLine()
             if (applyIva || applyIgtf) {
-                appendLine("Subtotal: $${String.format(Locale.US, "%,.2f", summary.subtotalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.subtotalUsd * usdRate)}")
+                appendLine("Subtotal: $${VeNumberFormat.formatMoney(summary.subtotalUsd)} • Bs. ${VeNumberFormat.formatMoney(summary.subtotalUsd * usdRate)}")
                 if (applyIva) {
-                    appendLine("IVA (16%): $${String.format(Locale.US, "%,.2f", summary.ivaUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.ivaUsd * usdRate)}")
+                    appendLine("IVA (16%): $${VeNumberFormat.formatMoney(summary.ivaUsd)} • Bs. ${VeNumberFormat.formatMoney(summary.ivaUsd * usdRate)}")
                 }
                 if (applyIgtf) {
-                    appendLine("IGTF (3%): $${String.format(Locale.US, "%,.2f", summary.igtfUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.igtfUsd * usdRate)}")
+                    appendLine("IGTF (3%): $${VeNumberFormat.formatMoney(summary.igtfUsd)} • Bs. ${VeNumberFormat.formatMoney(summary.igtfUsd * usdRate)}")
                 }
             }
-            appendLine("*Total a pagar: $${String.format(Locale.US, "%,.2f", summary.totalUsd)} • Bs. ${String.format(Locale.US, "%,.2f", summary.totalVes)}*")
+            appendLine("*Total a pagar: $${VeNumberFormat.formatMoney(summary.totalUsd)} • Bs. ${VeNumberFormat.formatMoney(summary.totalVes)}*")
             if (usdRate > 0.0) {
-                appendLine("Tasa (Dólar BCV): Bs. ${String.format(Locale.US, "%.4f", usdRate)}")
+                appendLine("Tasa (Dólar BCV): Bs. ${VeNumberFormat.formatRate(usdRate, 4)}")
             }
             if (profileLines.isNotEmpty()) {
                 appendLine()
@@ -611,7 +624,7 @@ object ShareCardGenerator {
             }.getOrNull()
 
             val totalUnits = items.sumOf { it.quantity }
-            val subtitleText = "Dólar BCV: Bs. ${String.format(Locale.US, "%.4f", usdRate)} • $totalUnits art."
+            val subtitleText = "Dólar BCV: Bs. ${VeNumberFormat.formatRate(usdRate, 4)} • $totalUnits art."
             try {
                 drawCenteredBrandHeader(
                     context = context,
@@ -665,7 +678,7 @@ object ShareCardGenerator {
                 if (title.length > 26) {
                     title = title.take(25).trimEnd() + "…"
                 }
-                val rightPrice = "$${String.format(Locale.US, "%,.2f", lineUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", lineVes)}"
+                val rightPrice = "$${VeNumberFormat.formatMoney(lineUsd)}  •  Bs. ${VeNumberFormat.formatMoney(lineVes)}"
                 canvas.drawText(title, 148f, rowY, itemNamePaint)
                 canvas.drawText(rightPrice, width - 148f, rowY, itemPricePaint)
             }
@@ -677,7 +690,7 @@ object ShareCardGenerator {
                 val rowY = currentY + 108f + visibleItems.size * 62f
                 canvas.drawText("+$hiddenCount producto(s) más", 148f, rowY, sectionLabelPaint)
                 canvas.drawText(
-                    "$${String.format(Locale.US, "%,.2f", hiddenUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", hiddenVes)}",
+                    "$${VeNumberFormat.formatMoney(hiddenUsd)}  •  Bs. ${VeNumberFormat.formatMoney(hiddenVes)}",
                     width - 148f,
                     rowY,
                     itemPricePaint
@@ -705,7 +718,7 @@ object ShareCardGenerator {
             if (applyIva || applyIgtf) {
                 canvas.drawText("Subtotal", 148f, rowCursorY, subTextPaint)
                 canvas.drawText(
-                    "$${String.format(Locale.US, "%,.2f", summary.subtotalUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.subtotalUsd * usdRate)}",
+                    "$${VeNumberFormat.formatMoney(summary.subtotalUsd)}  •  Bs. ${VeNumberFormat.formatMoney(summary.subtotalUsd * usdRate)}",
                     width - 148f,
                     rowCursorY,
                     subValPaint
@@ -714,7 +727,7 @@ object ShareCardGenerator {
                 if (applyIva) {
                     canvas.drawText("IVA (16%)", 148f, rowCursorY, subTextPaint)
                     canvas.drawText(
-                        "$${String.format(Locale.US, "%,.2f", summary.ivaUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.ivaUsd * usdRate)}",
+                        "$${VeNumberFormat.formatMoney(summary.ivaUsd)}  •  Bs. ${VeNumberFormat.formatMoney(summary.ivaUsd * usdRate)}",
                         width - 148f,
                         rowCursorY,
                         subValPaint
@@ -724,7 +737,7 @@ object ShareCardGenerator {
                 if (applyIgtf) {
                     canvas.drawText("IGTF (3%)", 148f, rowCursorY, subTextPaint)
                     canvas.drawText(
-                        "$${String.format(Locale.US, "%,.2f", summary.igtfUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.igtfUsd * usdRate)}",
+                        "$${VeNumberFormat.formatMoney(summary.igtfUsd)}  •  Bs. ${VeNumberFormat.formatMoney(summary.igtfUsd * usdRate)}",
                         width - 148f,
                         rowCursorY,
                         subValPaint
@@ -746,14 +759,16 @@ object ShareCardGenerator {
                 textSize = 48f
                 typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             }
+            val grandTotalLine = "$${VeNumberFormat.formatMoney(summary.totalUsd)}  •  Bs. ${VeNumberFormat.formatMoney(summary.totalVes)}"
+            fitTextSize(bigTotalPaint, grandTotalLine, (width - 296).toFloat(), minSize = 26f)
             canvas.drawText(
-                "$${String.format(Locale.US, "%,.2f", summary.totalUsd)}  •  Bs. ${String.format(Locale.US, "%,.2f", summary.totalVes)}",
+                grandTotalLine,
                 148f,
                 rowCursorY + 62f,
                 bigTotalPaint
             )
             canvas.drawText(
-                "Equivalente: € ${String.format(Locale.US, "%,.2f", summary.totalEur)}  •  USDT ${String.format(Locale.US, "%,.2f", summary.totalUsdt)}",
+                "Equivalente: € ${VeNumberFormat.formatMoney(summary.totalEur)}  •  USDT ${VeNumberFormat.formatMoney(summary.totalUsdt)}",
                 148f,
                 rowCursorY + 108f,
                 subTextPaint
@@ -980,6 +995,14 @@ object ShareCardGenerator {
             textAlign = Paint.Align.CENTER
         }
         canvas.drawText(subtitle, width / 2f, 292f, subPaint)
+    }
+
+    private fun fitTextSize(paint: Paint, text: String, maxWidth: Float, minSize: Float) {
+        var currentSize = paint.textSize
+        while (paint.measureText(text) > maxWidth && currentSize > minSize) {
+            currentSize -= 2f
+            paint.textSize = currentSize
+        }
     }
 
     private fun buildProfileLines(profile: PaymentMethodProfile?): List<String> {

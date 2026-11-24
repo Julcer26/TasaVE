@@ -309,20 +309,18 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
 
-        val dotCount = input.count { it == '.' }
-        val commaCount = input.count { it == ',' }
-        if (dotCount + commaCount <= 1 && input.all { it.isDigit() || it == '.' || it == ',' }) {
-            foreignAmount = input
+        val sanitized = VeNumberFormat.sanitizeEditableInput(
+            newRaw = input,
+            previousRaw = foreignAmount
+        ) ?: return
 
-            val sanitized = input.replace(",", ".")
-            val value = sanitized.toDoubleOrNull() ?: 0.0
-            val rate = getSelectedRateValue()
-            vesAmount = if (rate > 0) {
-                val calculated = value * rate
-                String.format(Locale.US, "%.2f", calculated)
-            } else {
-                ""
-            }
+        foreignAmount = sanitized
+        val value = VeNumberFormat.parseFlexibleDouble(sanitized) ?: 0.0
+        val rate = getSelectedRateValue()
+        vesAmount = if (rate > 0) {
+            VeNumberFormat.toCanonicalFixed(value * rate, decimals = 2)
+        } else {
+            ""
         }
     }
 
@@ -333,20 +331,18 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
 
-        val dotCount = input.count { it == '.' }
-        val commaCount = input.count { it == ',' }
-        if (dotCount + commaCount <= 1 && input.all { it.isDigit() || it == '.' || it == ',' }) {
-            vesAmount = input
+        val sanitized = VeNumberFormat.sanitizeEditableInput(
+            newRaw = input,
+            previousRaw = vesAmount
+        ) ?: return
 
-            val sanitized = input.replace(",", ".")
-            val value = sanitized.toDoubleOrNull() ?: 0.0
-            val rate = getSelectedRateValue()
-            foreignAmount = if (rate > 0) {
-                val calculated = value / rate
-                String.format(Locale.US, "%.2f", calculated)
-            } else {
-                ""
-            }
+        vesAmount = sanitized
+        val value = VeNumberFormat.parseFlexibleDouble(sanitized) ?: 0.0
+        val rate = getSelectedRateValue()
+        foreignAmount = if (rate > 0) {
+            VeNumberFormat.toCanonicalFixed(value / rate, decimals = 2)
+        } else {
+            ""
         }
     }
 
@@ -358,14 +354,14 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
         if (isVesAsInput) {
             val value = parseDouble(vesAmount)
             foreignAmount = if (value != null) {
-                String.format(Locale.US, "%.2f", value / rate)
+                VeNumberFormat.toCanonicalFixed(value / rate, decimals = 2)
             } else {
                 ""
             }
         } else {
             val value = parseDouble(foreignAmount)
             vesAmount = if (value != null) {
-                String.format(Locale.US, "%.2f", value * rate)
+                VeNumberFormat.toCanonicalFixed(value * rate, decimals = 2)
             } else {
                 ""
             }
@@ -387,10 +383,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
             selectedRateKey = targetRateKey
         }
         isVesAsInput = isVes
-        val formattedInput = String.format(Locale.US, "%.2f", amount)
+        val formattedInput = VeNumberFormat.toCanonicalFixed(amount, decimals = 2)
         if (isVes) {
+            vesAmount = ""
             updateVesAmount(formattedInput)
         } else {
+            foreignAmount = ""
             updateForeignAmount(formattedInput)
         }
         if (!isUltraUser.value) {
@@ -622,12 +620,12 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
 
         if (item.currencyFrom == "Bs.") {
             isVesAsInput = true
-            vesAmount = String.format(Locale.US, "%.2f", item.amountFrom)
-            foreignAmount = String.format(Locale.US, "%.2f", item.amountTo)
+            vesAmount = VeNumberFormat.toCanonicalFixed(item.amountFrom, decimals = 2)
+            foreignAmount = VeNumberFormat.toCanonicalFixed(item.amountTo, decimals = 2)
         } else {
             isVesAsInput = false
-            foreignAmount = String.format(Locale.US, "%.2f", item.amountFrom)
-            vesAmount = String.format(Locale.US, "%.2f", item.amountTo)
+            foreignAmount = VeNumberFormat.toCanonicalFixed(item.amountFrom, decimals = 2)
+            vesAmount = VeNumberFormat.toCanonicalFixed(item.amountTo, decimals = 2)
         }
     }
 
@@ -653,7 +651,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private fun parseDouble(valueStr: String): Double? {
-        return valueStr.replace(",", ".").toDoubleOrNull()
+        return VeNumberFormat.parseFlexibleDouble(valueStr)
     }
 
     private fun recalculateVES() {
@@ -663,7 +661,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                 val rate = getSelectedRateValue()
                 if (rate > 0) {
                     val calculated = vVal / rate
-                    foreignAmount = String.format(Locale.US, "%.2f", calculated)
+                    foreignAmount = VeNumberFormat.toCanonicalFixed(calculated, decimals = 2)
                 }
             } else {
                 foreignAmount = ""
@@ -674,7 +672,7 @@ class TasaVeViewModel(application: Application) : AndroidViewModel(application) 
                 val rate = getSelectedRateValue()
                 if (rate > 0) {
                     val calculated = fVal * rate
-                    vesAmount = String.format(Locale.US, "%.2f", calculated)
+                    vesAmount = VeNumberFormat.toCanonicalFixed(calculated, decimals = 2)
                 }
             } else {
                 vesAmount = ""

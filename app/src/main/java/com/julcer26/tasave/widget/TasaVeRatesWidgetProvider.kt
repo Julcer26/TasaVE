@@ -13,6 +13,7 @@ import com.julcer26.tasave.MainActivity
 import com.julcer26.tasave.R
 import com.julcer26.tasave.data.LocalStorageHelper
 import com.julcer26.tasave.data.TasaVeRepository
+import com.julcer26.tasave.ui.VeNumberFormat
 import com.julcer26.tasave.ultra.PaymentMethodProfile
 import com.julcer26.tasave.ultra.PaymentMethodType
 import com.julcer26.tasave.ultra.UltraMath
@@ -63,15 +64,16 @@ object WidgetCalcMath {
     ): Pair<String, String> {
         val safeInput = input.trim().ifEmpty { "0" }
         val amount = safeInput.toDoubleOrNull() ?: 0.0
-        val leftLabel = if (isVesInput) "Bs. $safeInput" else "$foreignSymbol $safeInput"
+        val formattedInput = VeNumberFormat.formatCanonicalString(safeInput)
+        val leftLabel = if (isVesInput) "Bs. $formattedInput" else "$foreignSymbol $formattedInput"
         val rightLabel = if (rate <= 0.0) {
             if (isVesInput) "$foreignSymbol --" else "Bs. --"
         } else if (isVesInput) {
             val converted = amount / rate
-            "$foreignSymbol ${String.format(Locale.US, "%,.2f", converted)}"
+            "$foreignSymbol ${VeNumberFormat.formatMoney(converted)}"
         } else {
             val converted = amount * rate
-            "Bs. ${String.format(Locale.US, "%,.2f", converted)}"
+            "Bs. ${VeNumberFormat.formatMoney(converted)}"
         }
         return leftLabel to rightLabel
     }
@@ -183,26 +185,26 @@ class TasaVeRatesWidgetProvider : AppWidgetProvider() {
             val nextUsd = bundle.nextUsdBcv
             val nextDateIso = bundle.nextBcvDateIso
             val headerMeta = if (!isExpandedHeight && nextUsd != null) {
-                "Mañ: ${String.format(Locale.US, "%.2f", nextUsd.rate)} • ${usd.dateUpdated}"
+                "Mañ: ${VeNumberFormat.formatRate(nextUsd.rate, 2)} • ${usd.dateUpdated}"
             } else {
                 usd.dateUpdated
             }
             val footerText = if (nextUsd != null && nextDateIso != null) {
                 val shortDate = TasaVeRepository.formatIsoShortDate(nextDateIso)
-                "BCV Mañana ($shortDate): Bs. ${String.format(Locale.US, "%.4f", nextUsd.rate)} • Toca para abrir"
+                "BCV Mañana ($shortDate): Bs. ${VeNumberFormat.formatRate(nextUsd.rate, 4)} • Toca para abrir"
             } else {
                 "Toca para abrir calculadora, escáner y cobros"
             }
 
             val views = RemoteViews(context.packageName, R.layout.widget_tasa_ve_rates).apply {
                 setOnClickPendingIntent(R.id.widget_root, pendingIntent)
-                setTextViewText(R.id.widget_usd_value, String.format(Locale.US, "%.4f", usd.rate))
-                setTextViewText(R.id.widget_eur_value, String.format(Locale.US, "%.4f", eur.rate))
-                setTextViewText(R.id.widget_usdt_value, String.format(Locale.US, "%.2f", usdt.rate))
+                setTextViewText(R.id.widget_usd_value, VeNumberFormat.formatRate(usd.rate, 4))
+                setTextViewText(R.id.widget_eur_value, VeNumberFormat.formatRate(eur.rate, 4))
+                setTextViewText(R.id.widget_usdt_value, VeNumberFormat.formatRate(usdt.rate, 2))
                 setTextViewText(R.id.widget_updated, headerMeta)
                 setTextViewText(
                     R.id.widget_spread,
-                    "Brecha ${String.format(Locale.US, "%.1f", spread)}%"
+                    "Brecha ${VeNumberFormat.formatPercent(spread, 1)}%"
                 )
                 setTextViewText(R.id.widget_footer_note, footerText)
                 setViewVisibility(
