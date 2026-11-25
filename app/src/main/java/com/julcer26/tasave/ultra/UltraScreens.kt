@@ -475,7 +475,7 @@ fun CartTab(
                     contentColor = Color.Black
                 )
             ) {
-                Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Escanear al carrito", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
             }
@@ -2158,6 +2158,9 @@ fun CheckoutTab(
 
         // Multi-Profile Pago Móvil, Bank Accounts, Zelle & Binance Pay Section
         val profileLimitReached = !isUltraUser && !UltraMath.canAddPaymentProfile(paymentProfiles.size, isUltraUser)
+        val storageHelper = remember(context) { com.julcer26.tasave.data.LocalStorageHelper(context) }
+        var hideSensitiveData by remember { mutableStateOf(storageHelper.isHideSensitiveData()) }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2184,39 +2187,76 @@ fun CheckoutTab(
                         color = textPrimary
                     )
                     Text(
-                        text = "Pago Móvil, Bancos, Zelle o Binance • Toca para incluir",
+                        text = if (hideSensitiveData) {
+                            "Datos sensibles ocultos • Toca el ojito para mostrar"
+                        } else {
+                            "Pago Móvil, Bancos, Zelle o Binance • Toca para incluir"
+                        },
                         fontSize = 10.5.sp,
-                        color = textSecondary
+                        color = if (hideSensitiveData) AmberUltra else textSecondary
                     )
                 }
-                FilledTonalButton(
-                    onClick = {
-                        if (profileLimitReached) {
-                            Toast.makeText(
-                                context,
-                                "Gratis permite 1 perfil. Ultra desbloquea perfiles ilimitados.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            onOpenPlans()
-                        } else {
-                            editingProfile = null
-                            showProfileDialog = true
-                        }
-                    },
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    shape = RoundedCornerShape(14.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = if (profileLimitReached) Icons.Default.Lock else Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (profileLimitReached) "Ultra ∞" else "Nueva",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (hideSensitiveData) Color(0x29F59E0B)
+                                else if (isDark) Color(0x1AFFFFFF) else Color(0x140F172A)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = if (hideSensitiveData) Color(0x88F59E0B) else borderCol,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                val next = !hideSensitiveData
+                                hideSensitiveData = next
+                                storageHelper.setHideSensitiveData(next)
+                                com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.updateAll(context)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (hideSensitiveData) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (hideSensitiveData) "Mostrar datos sensibles" else "Ocultar datos sensibles",
+                            tint = if (hideSensitiveData) AmberUltra else textSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            if (profileLimitReached) {
+                                Toast.makeText(
+                                    context,
+                                    "Gratis permite 1 perfil. Ultra desbloquea perfiles ilimitados.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                onOpenPlans()
+                            } else {
+                                editingProfile = null
+                                showProfileDialog = true
+                            }
+                        },
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (profileLimitReached) Icons.Default.Lock else Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (profileLimitReached) "Ultra ∞" else "Nueva",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
@@ -2256,7 +2296,7 @@ fun CheckoutTab(
                             PaymentMethodType.ZELLE -> "ZELLE"
                             PaymentMethodType.BINANCE -> "BINANCE PAY"
                         }
-                        val sub = when (profile.type) {
+                        val rawSub = when (profile.type) {
                             PaymentMethodType.PAGO_MOVIL ->
                                 "${profile.formattedBank()} • ${profile.formattedDoc()} • ${profile.formattedPhone()}"
                             PaymentMethodType.BANK_ACCOUNT ->
@@ -2271,6 +2311,23 @@ fun CheckoutTab(
                                     .filter { it.isNotBlank() }
                                     .joinToString(" • ")
                                     .ifBlank { "Binance Pay" }
+                        }
+                        val sub = if (hideSensitiveData) {
+                            when (profile.type) {
+                                PaymentMethodType.PAGO_MOVIL -> {
+                                    val docTail = profile.formattedDoc().takeLast(3)
+                                    val phoneTail = profile.formattedPhone().takeLast(3)
+                                    "${profile.formattedBank()} • ••••$docTail • ••••$phoneTail"
+                                }
+                                PaymentMethodType.BANK_ACCOUNT -> {
+                                    val accTail = profile.accountNumber.takeLast(4)
+                                    "${profile.formattedBank()} • •••• •••• $accTail"
+                                }
+                                PaymentMethodType.ZELLE -> "•••••• • Cuenta Zelle protegida"
+                                PaymentMethodType.BINANCE -> "•••••• • Binance Pay protegido"
+                            }
+                        } else {
+                            rawSub
                         }
 
                         Row(

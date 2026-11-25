@@ -118,39 +118,42 @@
             <TextView
                 android:id="@+id/ultra_tab_btn_rates"
                 android:layout_width="wrap_content"
-                android:layout_height="24dp"
-                android:layout_marginEnd="4dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="5dp"
                 android:background="@drawable/widget_tab_normal"
                 android:gravity="center"
-                android:paddingHorizontal="7dp"
+                android:minWidth="50dp"
+                android:paddingHorizontal="10dp"
                 android:text="Tasas"
                 android:textColor="#CBD5E1"
-                android:textSize="9.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/ultra_tab_btn_calc"
                 android:layout_width="wrap_content"
-                android:layout_height="24dp"
-                android:layout_marginEnd="4dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="5dp"
                 android:background="@drawable/widget_tab_selected"
                 android:gravity="center"
-                android:paddingHorizontal="7dp"
+                android:minWidth="50dp"
+                android:paddingHorizontal="10dp"
                 android:text="Calc."
                 android:textColor="#34D399"
-                android:textSize="9.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/ultra_tab_btn_pay"
                 android:layout_width="wrap_content"
-                android:layout_height="24dp"
+                android:layout_height="34dp"
                 android:background="@drawable/widget_tab_normal"
                 android:gravity="center"
-                android:paddingHorizontal="7dp"
+                android:minWidth="52dp"
+                android:paddingHorizontal="10dp"
                 android:text="Cobro"
                 android:textColor="#CBD5E1"
-                android:textSize="9.5sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -325,42 +328,45 @@
                 <TextView
                     android:id="@+id/ultra_rate_usd"
                     android:layout_width="0dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="5dp"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/widget_card_selected"
                     android:gravity="center"
                     android:maxLines="1"
+                    android:paddingHorizontal="4dp"
                     android:text="USD --"
                     android:textColor="#34D399"
-                    android:textSize="10sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/ultra_rate_eur"
                     android:layout_width="0dp"
-                    android:layout_height="24dp"
-                    android:layout_marginEnd="5dp"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:background="@drawable/widget_card_normal"
                     android:gravity="center"
                     android:maxLines="1"
+                    android:paddingHorizontal="4dp"
                     android:text="EUR --"
                     android:textColor="#CBD5E1"
-                    android:textSize="10sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/ultra_rate_usdt"
                     android:layout_width="0dp"
-                    android:layout_height="24dp"
+                    android:layout_height="34dp"
                     android:layout_weight="1"
                     android:background="@drawable/widget_card_normal"
                     android:gravity="center"
                     android:maxLines="1"
+                    android:paddingHorizontal="4dp"
                     android:text="USDT --"
                     android:textColor="#CBD5E1"
-                    android:textSize="10sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -661,13 +667,13 @@
 
                 <TextView
                     android:id="@+id/ultra_pay_prev"
-                    android:layout_width="28dp"
-                    android:layout_height="26dp"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
                     android:background="@drawable/widget_key_bg"
                     android:gravity="center"
                     android:text="‹"
                     android:textColor="#CBD5E1"
-                    android:textSize="14sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -681,18 +687,18 @@
                     android:maxLines="1"
                     android:text="COBRO EXPRESS"
                     android:textColor="#34D399"
-                    android:textSize="11.5sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/ultra_pay_next"
-                    android:layout_width="28dp"
-                    android:layout_height="26dp"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
                     android:background="@drawable/widget_key_bg"
                     android:gravity="center"
                     android:text="›"
                     android:textColor="#CBD5E1"
-                    android:textSize="14sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
             </LinearLayout>
 

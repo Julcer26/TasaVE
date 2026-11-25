@@ -87,6 +87,7 @@ class LocalStorageHelper(context: Context) {
         private const val KEY_COP_DATE = "cop_date"
         private const val KEY_ANALYTICS_ENABLED = "analytics_enabled"
         private const val KEY_PERSISTENT_RATE_NOTIF_ENABLED = "persistent_rate_notif_enabled"
+        private const val KEY_HIDE_SENSITIVE_DATA = "hide_sensitive_data"
 
         const val MAX_FREE_SCANS_PER_DAY = 3
 
@@ -646,5 +647,12 @@ class LocalStorageHelper(context: Context) {
 
     fun setPersistentRateNotifEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_PERSISTENT_RATE_NOTIF_ENABLED, enabled).apply()
+    }
+
+    fun isHideSensitiveData(): Boolean =
+        prefs.getBoolean(KEY_HIDE_SENSITIVE_DATA, false)
+
+    fun setHideSensitiveData(hidden: Boolean) {
+        prefs.edit().putBoolean(KEY_HIDE_SENSITIVE_DATA, hidden).apply()
     }
 }

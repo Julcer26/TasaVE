@@ -369,7 +369,7 @@ fun TasaVeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CameraAlt,
+                            imageVector = Icons.Default.QrCodeScanner,
                             contentDescription = "Escanear precio",
                             tint = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
                             modifier = Modifier.size(18.dp)
@@ -2687,7 +2687,7 @@ fun SleekSettingsDialog(
 
                     LegalMenuRow(
                         icon = Icons.Default.PrivacyTip,
-                        title = "Política de Privacidad",
+                        title = "Privacidad y Protección de Datos",
                         subtitle = null,
                         isDark = isDark,
                         onClick = { legalDialogTab = 0 }
@@ -3196,8 +3196,8 @@ private fun LegalCenterDialog(
                 "Tasa VE NO recopila ni almacena en servidores propios cuentas, contraseñas, correos ni ubicación GPS. El historial de conversiones, carrito de compras, preferencias de IVA/IGTF y perfiles opcionales de cobro (Pago Móvil, Cuentas Bancarias, Zelle o Binance Pay) se guardan únicamente en tu dispositivo. De forma adicional, usamos Google Firebase Analytics para registrar eventos anónimos y agregados de navegación (por ejemplo, qué pestaña o herramienta de Útiles se abre), SIN incluir jamás montos, tasas escritas, nombres, cédulas, teléfonos ni datos bancarios.",
             "3. Uso de la información" to
                 "Los datos locales se usan exclusivamente para calcular conversiones (incluyendo COP de frontera), totales de carrito, IVA/IGTF, vuelto en pagos mixtos, herramientas de Útiles (¿Con qué pago? y Dividir cuenta), Calendario SUDEBAN, notificación fija opcional de tasas, acceso desde Barra Rápida, widgets de inicio y tarjetas visuales PNG temporales en caché (shared_cards).",
-            "4. Seguridad de los datos" to
-                "Todas las consultas de red y la telemetría anónima usan cifrado HTTPS (SSL/TLS). El escáner OCR, el conversor flotante y la notificación fija se ejecutan localmente en el teléfono. Además, los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos del respaldo automático en la nube de Android. Puedes borrar tus datos locales en cualquier momento desde la app o los ajustes de Android.",
+            "4. Protección de datos y privacidad visual" to
+                "Todas las consultas de red y la telemetría anónima usan cifrado HTTPS (SSL/TLS). El escáner OCR, el conversor flotante y la notificación fija se ejecutan localmente en el teléfono. Tus perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay nunca se envían a servidores externos, están excluidos del respaldo automático en la nube de Android y puedes ocultarlos en pantalla en cualquier momento usando el botón de privacidad (ojito) en Cobros y en el Widget Ultra. También puedes editar o eliminar tus datos locales en 1 toque cuando desees.",
             "5. Publicidad, anuncios bonificados y suscripción Ultra" to
                 "El Plan Gratuito incluye el conversor multi-tasa (BCV, Euro, USDT y COP), BCV Mañana, Calendario SUDEBAN, botón en Barra Rápida para abrir la app, Útiles (¿Con qué pago? y Dividir cuenta), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos diarios (con anuncio bonificado opcional para +5 escaneos o 12 h sin banners). Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año en Google Play) elimina todos los anuncios y desbloquea Notificación fija con tasas y Pago Móvil, conversor flotante en Barra Rápida con Pago Móvil, Escáner OCR ilimitado, Carrito ilimitado + IVA/IGTF, perfiles ilimitados, marca personalizada en Tarjeta PNG y Widget Calculadora y Cobros Ultra.",
             "6. Permisos del sistema" to

@@ -166,7 +166,7 @@ fun PriceScannerDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CameraAlt,
+                            imageVector = Icons.Default.QrCodeScanner,
                             contentDescription = null,
                             tint = emeraldLight,
                             modifier = Modifier.size(34.dp)
@@ -263,7 +263,7 @@ fun PriceScannerDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CameraAlt,
+                            imageVector = Icons.Default.QrCodeScanner,
                             contentDescription = null,
                             tint = emeraldLight,
                             modifier = Modifier.size(34.dp)

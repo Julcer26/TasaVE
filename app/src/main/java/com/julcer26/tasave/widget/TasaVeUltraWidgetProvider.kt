@@ -375,7 +375,12 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                     totalCount = profiles.size
                 )
                 setTextViewText(R.id.ultra_pay_title, profileData.title)
-                setTextViewText(R.id.ultra_pay_details, profileData.displayLines)
+                val visiblePayDetails = if (storage.isHideSensitiveData() && profiles.isNotEmpty()) {
+                    "Datos ocultos por privacidad 🔒\nToca «Copiar datos» para copiarlos o desbloquea el ojito en Cobros."
+                } else {
+                    profileData.displayLines
+                }
+                setTextViewText(R.id.ultra_pay_details, visiblePayDetails)
                 setViewVisibility(R.id.ultra_pay_prev, if (profiles.size > 1) View.VISIBLE else View.GONE)
                 setViewVisibility(R.id.ultra_pay_next, if (profiles.size > 1) View.VISIBLE else View.GONE)
                 setOnClickPendingIntent(R.id.ultra_pay_prev, actionBroadcast(context, 520, ACTION_PAY_PREV))
