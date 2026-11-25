@@ -10,20 +10,42 @@
     COP: { label: "🇨🇴 COP", symbol: "COP", rate: 916.6477 / 4320.0, tomorrow: 921.4820 / 4320.0, decimals: 4 }
   };
 
-  // Theme Toggle
+  // Theme Toggle (synced with <meta name="color-scheme"> and cross-tab storage)
   const root = document.documentElement;
+  const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]');
   const themeBtn = document.getElementById("theme-toggle");
-  const savedTheme = localStorage.getItem("tasave_web_theme");
-  if (savedTheme === "light" || savedTheme === "dark") {
-    root.setAttribute("data-theme", savedTheme);
+
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") {
+      root.setAttribute("data-theme", theme);
+      if (colorSchemeMeta) colorSchemeMeta.content = theme;
+    } else {
+      root.setAttribute("data-theme", "dark");
+      if (colorSchemeMeta) colorSchemeMeta.content = "light dark";
+    }
   }
+
+  let savedTheme = null;
+  try {
+    savedTheme = localStorage.getItem("tasave_web_theme");
+  } catch (_) {}
+  applyTheme(savedTheme);
+
   if (themeBtn) {
     themeBtn.addEventListener("click", () => {
       const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
-      root.setAttribute("data-theme", next);
-      localStorage.setItem("tasave_web_theme", next);
+      applyTheme(next);
+      try {
+        localStorage.setItem("tasave_web_theme", next);
+      } catch (_) {}
     });
   }
+
+  window.addEventListener("storage", (event) => {
+    if (event.key === "tasave_web_theme") {
+      applyTheme(event.newValue);
+    }
+  });
 
   // Mobile Menu
   const menuBtn = document.getElementById("mobile-menu-btn");
@@ -52,9 +74,9 @@
     toastTimer = setTimeout(() => toastEl.classList.remove("is-visible"), 2400);
   }
 
-  // Formatters
+  // Formatters (Venezuelan banking format: 13.797,34)
   const fmtMoney = (n, d = 2) =>
-    Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+    Number(n || 0).toLocaleString("es-VE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
   // ---------------- Interactive Simulator State ----------------
   const TAB_ORDER = ["converter", "scanner", "cart", "utiles", "checkout"];

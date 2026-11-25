@@ -6,6 +6,18 @@
   <title>Tasa VE — Calculadora BCV, USDT, Escáner OCR, Carrito y Cobros en Venezuela</title>
   <meta name="description" content="Calcula Dólar y Euro BCV exactos, BCV Mañana, USDT, Peso Colombiano COP, Calendario SUDEBAN, escáner OCR, carrito con IVA/IGTF y tarjetas de cobro por WhatsApp.">
   <link rel="canonical" href="https://tasave.net/">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("tasave_web_theme");
+        var scheme = saved === "light" || saved === "dark" ? saved : "dark";
+        var meta = document.querySelector('meta[name="color-scheme"]');
+        if (meta) meta.content = saved === "light" || saved === "dark" ? saved : "light dark";
+        document.documentElement.setAttribute("data-theme", scheme);
+      } catch (e) {}
+    })();
+  </script>
   <meta name="theme-color" content="#080A0F">
 
   <!-- Open Graph & Social Meta -->
@@ -156,7 +168,7 @@
                     <svg viewBox="0 0 22 12" width="18" height="10" fill="none"><rect x="0.75" y="1.25" width="17.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.3"/><rect x="2.6" y="3" width="13.8" height="6" rx="1.2" fill="currentColor"/><rect x="19.5" y="4" width="1.8" height="4" rx="0.8" fill="currentColor"/></svg>
                   </span>
                 </div>
-                <img src="assets/screens/screen_conversor.webp" alt="Captura real del conversor multi-tasa de Tasa VE con Dólar BCV, Euro BCV y USDT" width="560" height="1169">
+                <img src="assets/screens/screen_conversor.webp" alt="Captura real del conversor multi-tasa de Tasa VE con Dólar BCV, Euro BCV y USDT" width="560" height="1169" fetchpriority="high">
                 <div class="device-homebar" aria-hidden="true"><span></span></div>
               </div>
             </div>
@@ -307,7 +319,7 @@
     </section>
 
     <!-- INTERACTIVE DEMO SIMULATOR -->
-    <section id="demo" class="section section-muted">
+    <section id="demo" class="section section-muted section-deferred">
       <div class="container">
         <header class="section-header">
           <h2>Pruébala ahora mismo en el simulador interactivo</h2>
@@ -390,7 +402,7 @@
     </section>
 
     <!-- PLANS -->
-    <section id="planes" class="section">
+    <section id="planes" class="section section-deferred">
       <div class="container">
         <header class="section-header">
           <h2>Gratis para todos, Ultra para quienes buscan cero límites</h2>
@@ -462,7 +474,7 @@
     </section>
 
     <!-- DOWNLOAD OFFICIAL GOOGLE PLAY BAND -->
-    <section id="descargar" class="section section-muted">
+    <section id="descargar" class="section section-muted section-deferred">
       <div class="container">
         <div class="play-download-banner">
           <div class="play-download-copy">
@@ -470,7 +482,7 @@
             <p>Instalación oficial verificada por Google Play Protect, actualizaciones automáticas y gestión segura de tu suscripción Ultra opcional desde tu cuenta Google.</p>
             <div class="hero-cta-row" style="margin-bottom:0;">
               <a href="https://play.google.com/store/apps/details?id=com.julcer26.tasave" target="_blank" rel="noopener noreferrer" class="gplay-link gplay-hero" aria-label="Descargar Tasa VE en Google Play">
-                <img src="assets/google-play-badge-es.png" alt="Disponible en Google Play" width="188" height="56">
+                <img src="assets/google-play-badge-es.png" alt="Disponible en Google Play" width="188" height="56" loading="lazy">
               </a>
             </div>
           </div>
@@ -490,7 +502,7 @@
     </section>
 
     <!-- SOCIAL & COMMUNITY -->
-    <section id="comunidad" class="section">
+    <section id="comunidad" class="section section-deferred">
       <div class="container">
         <header class="section-header">
           <h2>Comunidad oficial @tasa.ve</h2>
@@ -544,7 +556,7 @@
     </section>
 
     <!-- DEDICATED LEGAL & TRANSPARENCY ZONE -->
-    <section id="legal" class="section section-muted">
+    <section id="legal" class="section section-muted section-deferred">
       <div class="container">
         <header class="section-header">
           <h2>Centro Legal y Privacidad</h2>
@@ -639,7 +651,7 @@
     </section>
 
     <!-- FAQ -->
-    <section id="faq" class="section">
+    <section id="faq" class="section section-deferred">
       <div class="container">
         <header class="section-header">
           <h2>Preguntas frecuentes</h2>
@@ -671,7 +683,7 @@
     <div class="container footer-columns">
       <div class="footer-brand-col">
         <a href="#inicio" class="brand-lockup">
-          <img src="assets/app_icon_512x512.png" alt="Logo Tasa VE" class="brand-icon" width="34" height="34">
+          <img src="assets/app_icon_512x512.png" alt="Logo Tasa VE" class="brand-icon" width="34" height="34" loading="lazy">
           <span>Tasa VE</span>
         </a>
         <p class="footer-disclaimer">

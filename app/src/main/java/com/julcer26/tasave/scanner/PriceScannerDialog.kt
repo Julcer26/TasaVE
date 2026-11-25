@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.RectF
 import android.util.Log
+import android.util.Size as AndroidSize
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -13,6 +14,8 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
@@ -32,15 +35,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +63,8 @@ import com.julcer26.tasave.data.RateInfo
 import com.julcer26.tasave.ui.VeNumberFormat
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
 @OptIn(ExperimentalGetImage::class)
@@ -303,13 +304,17 @@ fun PriceScannerDialog(
                     }
                 }
             } else {
-                // Active CameraX Preview + ML Kit OCR (strictly inside reticle)
+                // Active CameraX Preview + ML Kit OCR (strictly inside reticle, off-main-thread pipeline)
                 val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+                val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
                 val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
                 var cameraRef by remember { mutableStateOf<Camera?>(null) }
                 var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
                 var cameraProviderRef by remember { mutableStateOf<ProcessCameraProvider?>(null) }
-                val lastAnalyzedAt = remember { mutableLongStateOf(0L) }
+                val lastAnalyzedAt = remember { AtomicLong(0L) }
+                val isProcessingFrame = remember { AtomicBoolean(false) }
+                val isDisposed = remember { AtomicBoolean(false) }
+                val lastEmittedStateRef = remember { java.util.concurrent.atomic.AtomicReference<StabilizedScanState?>(null) }
                 val isPausedState by rememberUpdatedState(isPaused)
                 val previewBoundsState by rememberUpdatedState(previewBounds)
                 val reticleBoundsState by rememberUpdatedState(reticleBounds)
@@ -341,11 +346,12 @@ fun PriceScannerDialog(
 
                 DisposableEffect(Unit) {
                     onDispose {
+                        isDisposed.set(true)
                         try {
                             cameraProviderRef?.unbindAll()
                         } catch (_: Exception) {
                         }
-                        textRecognizer.close()
+                        runCatching { textRecognizer.close() }
                         cameraExecutor.shutdown()
                     }
                 }
@@ -360,15 +366,18 @@ fun PriceScannerDialog(
                     modifier = Modifier
                         .fillMaxSize()
                         .onGloballyPositioned { coords ->
-                            previewBounds = coords.boundsInRoot()
+                            val b = coords.boundsInRoot()
+                            if (previewBounds != b) previewBounds = b
                         },
                     factory = { ctx ->
                         val previewView = PreviewView(ctx).apply {
+                            implementationMode = PreviewView.ImplementationMode.PERFORMANCE
                             scaleType = PreviewView.ScaleType.FILL_CENTER
                         }
                         previewViewRef = previewView
                         val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                         cameraProviderFuture.addListener({
+                            if (isDisposed.get()) return@addListener
                             try {
                                 val cameraProvider = cameraProviderFuture.get()
                                 cameraProviderRef = cameraProvider
@@ -377,24 +386,40 @@ fun PriceScannerDialog(
                                     it.surfaceProvider = previewView.surfaceProvider
                                 }
 
+                                // Cap analysis stream to crisp 720p so ML Kit OCR stays fast (~60-90ms) without lag
+                                val analysisResolution = ResolutionSelector.Builder()
+                                    .setResolutionStrategy(
+                                        ResolutionStrategy(
+                                            AndroidSize(1280, 720),
+                                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER
+                                        )
+                                    )
+                                    .build()
+
                                 val imageAnalysis = ImageAnalysis.Builder()
+                                    .setResolutionSelector(analysisResolution)
                                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                     .build()
 
                                 imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
                                     val now = System.currentTimeMillis()
-                                    if (isPausedState || now - lastAnalyzedAt.longValue < 280L) {
+                                    if (isDisposed.get() ||
+                                        isPausedState ||
+                                        now - lastAnalyzedAt.get() < 200L ||
+                                        !isProcessingFrame.compareAndSet(false, true)
+                                    ) {
                                         imageProxy.close()
                                         return@setAnalyzer
                                     }
 
                                     val mediaImage = imageProxy.image
                                     if (mediaImage == null) {
+                                        isProcessingFrame.set(false)
                                         imageProxy.close()
                                         return@setAnalyzer
                                     }
 
-                                    lastAnalyzedAt.longValue = now
+                                    lastAnalyzedAt.set(now)
                                     val rotation = imageProxy.imageInfo.rotationDegrees
                                     val rotatedImgW = if (rotation == 90 || rotation == 270) {
                                         imageProxy.height.toFloat()
@@ -417,7 +442,8 @@ fun PriceScannerDialog(
                                     val image = InputImage.fromMediaImage(mediaImage, rotation)
 
                                     textRecognizer.process(image)
-                                        .addOnSuccessListener { visionText ->
+                                        .addOnSuccessListener(cameraExecutor) { visionText ->
+                                            if (isDisposed.get() || isPausedState) return@addOnSuccessListener
                                             val textInsideBox = if (roiInImage != null) {
                                                 val padX = roiInImage.width() * 0.06f
                                                 val padY = roiInImage.height() * 0.08f
@@ -453,17 +479,23 @@ fun PriceScannerDialog(
                                             }
 
                                             val extracted = PriceScannerParser.extractPrices(textInsideBox)
-                                            if (!isPausedState) {
-                                                val state = stabilizer.onFrame(extracted, System.currentTimeMillis())
-                                                detectedPrices = state.detectedPrices
-                                                selectedPrice = state.selectedPrice
-                                                isUserPinned = state.isUserPinned
+                                            val state = stabilizer.onFrame(extracted, System.currentTimeMillis())
+                                            // Only push to Compose main thread when the stabilized result actually changes
+                                            if (lastEmittedStateRef.getAndSet(state) != state) {
+                                                mainExecutor.execute {
+                                                    if (!isDisposed.get() && !isPausedState) {
+                                                        detectedPrices = state.detectedPrices
+                                                        selectedPrice = state.selectedPrice
+                                                        isUserPinned = state.isUserPinned
+                                                    }
+                                                }
                                             }
                                         }
-                                        .addOnFailureListener { e ->
+                                        .addOnFailureListener(cameraExecutor) { e ->
                                             Log.w("PriceScanner", "ML Kit error: ${e.message}")
                                         }
-                                        .addOnCompleteListener {
+                                        .addOnCompleteListener(cameraExecutor) {
+                                            isProcessingFrame.set(false)
                                             imageProxy.close()
                                         }
                                 }
@@ -480,31 +512,26 @@ fun PriceScannerDialog(
                             } catch (e: Exception) {
                                 Log.e("PriceScanner", "Camera bind failed", e)
                             }
-                        }, ContextCompat.getMainExecutor(ctx))
+                        }, mainExecutor)
 
                         previewView
                     }
                 )
 
-                // Dark Scrim with Transparent Cutout matching the Reticle
+                // Lightweight 4-band dark scrim around the Reticle (zero offscreen GPU FBO / BlendMode.Clear stutter)
                 val pBounds = previewBounds
                 val rBounds = reticleBounds
                 if (pBounds != null && rBounds != null) {
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                    ) {
-                        drawRect(color = Color(0x77000000))
-                        val left = rBounds.left - pBounds.left
-                        val top = rBounds.top - pBounds.top
-                        drawRoundRect(
-                            color = Color.Transparent,
-                            topLeft = Offset(left, top),
-                            size = Size(rBounds.width, rBounds.height),
-                            cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx()),
-                            blendMode = BlendMode.Clear
-                        )
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val scrim = Color(0x77000000)
+                        val left = (rBounds.left - pBounds.left).coerceIn(0f, size.width)
+                        val top = (rBounds.top - pBounds.top).coerceIn(0f, size.height)
+                        val right = (left + rBounds.width).coerceIn(left, size.width)
+                        val bottom = (top + rBounds.height).coerceIn(top, size.height)
+                        if (top > 0f) drawRect(color = scrim, topLeft = Offset.Zero, size = Size(size.width, top))
+                        if (bottom < size.height) drawRect(color = scrim, topLeft = Offset(0f, bottom), size = Size(size.width, size.height - bottom))
+                        if (left > 0f) drawRect(color = scrim, topLeft = Offset(0f, top), size = Size(left, bottom - top))
+                        if (right < size.width) drawRect(color = scrim, topLeft = Offset(right, top), size = Size(size.width - right, bottom - top))
                     }
                 }
 
@@ -611,7 +638,8 @@ fun PriceScannerDialog(
                         .width(270.dp)
                         .height(110.dp)
                         .onGloballyPositioned { coords ->
-                            reticleBounds = coords.boundsInRoot()
+                            val b = coords.boundsInRoot()
+                            if (reticleBounds != b) reticleBounds = b
                         }
                         .clip(RoundedCornerShape(18.dp))
                         .clickable {

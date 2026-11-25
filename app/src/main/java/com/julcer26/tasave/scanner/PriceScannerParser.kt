@@ -30,9 +30,9 @@ data class StabilizedScanState(
  * across adjacent frames, and preserves user-tapped price chips until unlocked.
  */
 class PriceScannerStabilizer(
-    private val windowMs: Long = 1_800L,
-    private val emptyHoldMs: Long = 1_450L,
-    private val maxRecentFrames: Int = 6
+    private val windowMs: Long = 1_150L,
+    private val emptyHoldMs: Long = 680L,
+    private val maxRecentFrames: Int = 5
 ) {
     private data class FrameEntry(
         val timestampMs: Long,
@@ -46,8 +46,9 @@ class PriceScannerStabilizer(
     private var userPinnedPrice: DetectedPrice? = null
 
     val isPinned: Boolean
-        get() = userPinnedPrice != null
+        @Synchronized get() = userPinnedPrice != null
 
+    @Synchronized
     fun pinPrice(price: DetectedPrice?) {
         userPinnedPrice = price
         if (price != null) {
@@ -55,10 +56,12 @@ class PriceScannerStabilizer(
         }
     }
 
+    @Synchronized
     fun clearPin() {
         userPinnedPrice = null
     }
 
+    @Synchronized
     fun reset() {
         recentFrames.clear()
         lastStablePrices = emptyList()
@@ -67,6 +70,7 @@ class PriceScannerStabilizer(
         userPinnedPrice = null
     }
 
+    @Synchronized
     fun onFrame(extracted: List<DetectedPrice>, nowMs: Long): StabilizedScanState {
         while (recentFrames.isNotEmpty() && nowMs - recentFrames.first().timestampMs > windowMs) {
             recentFrames.removeFirst()
@@ -192,9 +196,10 @@ class PriceScannerStabilizer(
                 }
             }
             else -> {
-                // Previous primary left the reticle; switch once new price is confirmed (>= 2 frames),
-                // while holding previous primary for 1 transitional frame to prevent 1-frame jumps.
-                if (topCandidate != null && topOccurrences >= 2) {
+                // Previous primary left the reticle; switch immediately on a high-confidence tagged price
+                // (e.g. "$12.50" or "Bs. 450,00") or once any new price is confirmed (>= 2 frames),
+                // preventing both single-frame glitches and sluggishness when moving between shelf tags.
+                if (topCandidate != null && (topOccurrences >= 2 || topCandidate.confidence >= 4)) {
                     topCandidate
                 } else {
                     prevPrimary

@@ -4,6 +4,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: light dark;
   --bg: #0A0A0B;
   --bg-elevated: #111114;
   --surface: #141418;
@@ -27,6 +28,18 @@
   --radius-xl: 32px;
   --header-height: 72px;
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
+  }
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
+}
+
+.section-deferred {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 720px;
 }
 
 [data-theme="light"] {
