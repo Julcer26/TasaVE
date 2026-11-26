@@ -375,7 +375,7 @@
     stageEl.innerHTML = `
       <div class="sim-topbar">
         <span class="sim-brand">Tasa VE</span>
-        <span class="sim-badge ${state.tomorrowBcv ? "amber" : ""}">${state.tomorrowBcv ? "BCV Mañana" : "SUDEBAN • BCV"}</span>
+        <span class="sim-badge ${state.tomorrowBcv ? "amber" : ""}">${state.tomorrowBcv ? "BCV Mañana" : "BCV Oficial"}</span>
       </div>
       <div class="sim-pill-row" role="group" aria-label="Seleccionar moneda">
         ${Object.keys(RATES).map((k) => `
@@ -428,7 +428,7 @@
     const bs = sample.usd * rate;
     stageEl.innerHTML = `
       <div class="sim-topbar">
-        <span class="sim-brand">Escáner OCR 123</span>
+        <span class="sim-brand">Escáner de precios</span>
         <span class="sim-badge">100% en dispositivo</span>
       </div>
       <div class="ocr-viewfinder">
