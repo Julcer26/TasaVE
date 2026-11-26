@@ -38,7 +38,7 @@
 ## 3. Qué Está Implementado y Validado en `feat/v1.2-ultra`
 
 ### Pestaña 1 — Conversor (`TasaVeScreen.kt`)
-- Barra superior limpia: Logo, badge de plan, **Calendario SUDEBAN** (con punto indicador si hay feriado próximo), **Escáner Cámara OCR**, **Refrescar** y **Configuración**. *(El ícono de reloj/historial fue eliminado del TopBar porque el botón `Ver historial` ya está dentro de la tarjeta de Calculadora Inteligente).*
+- Barra superior limpia: Logo, badge de plan, **Calendario Bancario** (con punto indicador si hay feriado próximo), **Escáner Cámara OCR**, **Refrescar** y **Configuración**. *(El ícono de reloj/historial fue eliminado del TopBar porque el botón `Ver historial` ya está dentro de la tarjeta de Calculadora Inteligente).*
 - Chips de tasas: **BCV Hoy**, **BCV Mañana (fecha)**, **🇨🇴 COP (Peso Colombiano)**, y tarjetas en vivo **USD BCV**, **EUR BCV**, **USDT Binance**.
 - Calculadora bidireccional (Divisa ⇄ Bs.), **Guardar cálculo**, **Ver historial** y **Compartir Tarjeta PNG** de cálculo.
 - **Sin autocopiado molesto** al cambiar de moneda.

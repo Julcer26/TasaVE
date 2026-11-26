@@ -19,7 +19,7 @@
 ## Características Principales
 
 - **Conversor Multi-Tasa en Tiempo Real:** Dólar BCV y Euro BCV exactos, vista anticipada de **BCV Mañana**, USDT paralelo, **Peso Colombiano (COP) de frontera** con TRM en vivo y Modo Offline con caché local.
-- **Calendario Bancario SUDEBAN y Tasas Históricas:** Botón rápido en barra superior con feriados bancarios 2025–2027, consulta de tasa por día y cálculo rápido integrado.
+- **Calendario Bancario y Tasas Históricas:** Botón rápido en barra superior con feriados bancarios 2025–2027, consulta de tasa por día y cálculo rápido integrado.
 - **Accesos Rápidos (Sin abrir la app):** Botón nativo en la **Barra Rápida** de Android (`TileService`), **notificación fija opcional** en Ultra con copiado rápido y **Conversor Flotante** con detección del portapapeles y Pago Móvil en 1 toque.
 - **Widgets en Pantalla de Inicio:** Widget gratuito **Tasas en Vivo** (BCV Hoy/Mañana y Brecha) y widget **Ultra Calculadora y Cobros** (tasas + accesos directos, calculadora rápida en pantalla y Cobro Express con copia directa).
 - **Escáner de Precios por Cámara (OCR Local):** Lee etiquetas y habladores directamente en el dispositivo con ML Kit (sin subir fotos a servidores).

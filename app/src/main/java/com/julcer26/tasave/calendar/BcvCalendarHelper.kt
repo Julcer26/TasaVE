@@ -26,14 +26,14 @@ data class DayRateLookup(
 )
 
 /**
- * Helper for Venezuelan SUDEBAN bank holidays and historical daily rate lookup (minSdk 24 safe).
+ * Helper for Venezuelan bank holidays and historical daily rate lookup (minSdk 24 safe).
  */
 object BcvCalendarHelper {
 
     private val caracasTz: TimeZone = TimeZone.getTimeZone("America/Caracas")
 
-    // Fixed & movable SUDEBAN bank holidays (2025–2027)
-    private val SUDEBAN_HOLIDAYS: Map<String, String> = mapOf(
+    // Fixed & movable bank holidays in Venezuela (2025–2027)
+    private val BANK_HOLIDAYS: Map<String, String> = mapOf(
         // 2025
         "2025-01-01" to "Año Nuevo (Feriado nacional)",
         "2025-01-06" to "Día de Reyes (Lunes bancario)",
@@ -84,7 +84,7 @@ object BcvCalendarHelper {
         "2026-10-26" to "Dr. José Gregorio Hernández (Lunes bancario)",
         "2026-11-02" to "Día de los Fieles Difuntos (Lunes bancario)",
         "2026-11-16" to "Virgen de Chiquinquirá (Lunes bancario)",
-        "2026-11-23" to "Lunes bancario SUDEBAN",
+        "2026-11-23" to "Lunes bancario",
         "2026-12-07" to "Inmaculada Concepción (Lunes bancario)",
         "2026-12-24" to "Nochebuena (Feriado bancario)",
         "2026-12-25" to "Navidad",
@@ -125,14 +125,14 @@ object BcvCalendarHelper {
         return "$mName $year"
     }
 
-    fun holidayNameFor(isoDate: String): String? = SUDEBAN_HOLIDAYS[isoDate]
+    fun holidayNameFor(isoDate: String): String? = BANK_HOLIDAYS[isoDate]
 
     fun hasUpcomingBankHolidaySoon(nowCal: Calendar = todayCaracasCalendar()): Boolean {
         val probe = nowCal.clone() as Calendar
         for (offset in 0..3) {
             if (offset > 0) probe.add(Calendar.DAY_OF_MONTH, 1)
             val iso = formatIsoDate(probe)
-            if (SUDEBAN_HOLIDAYS.containsKey(iso)) return true
+            if (BANK_HOLIDAYS.containsKey(iso)) return true
         }
         return false
     }
@@ -157,7 +157,7 @@ object BcvCalendarHelper {
             val iso = formatIsoDate(cal)
             val dow = cal.get(Calendar.DAY_OF_WEEK)
             val isWeekend = dow == Calendar.SATURDAY || dow == Calendar.SUNDAY
-            val holiday = SUDEBAN_HOLIDAYS[iso]
+            val holiday = BANK_HOLIDAYS[iso]
             val summary = when {
                 holiday != null -> "$holiday • Rige tasa hábil previa"
                 isWeekend -> "Fin de semana • Rige tasa del viernes"

@@ -323,7 +323,7 @@ fun TasaVeScreen(
                 },
                 actions = {
                     val hasUpcomingHoliday = remember { BcvCalendarHelper.hasUpcomingBankHolidaySoon() }
-                    // SUDEBAN Bank Calendar & Daily Historical Rate Lookup
+                    // Bank Calendar & Daily Historical Rate Lookup
                     Box(
                         modifier = Modifier
                             .padding(end = 4.dp)
@@ -3187,7 +3187,7 @@ private fun LegalCenterDialog(
             "1. Responsable y alcance" to
                 "Tasa VE es una aplicación independiente de conversión y cálculo financiero orientada principalmente a usuarios en Venezuela. Esta Política de Privacidad aplica a la aplicación oficial Tasa VE en Google Play y a su sitio web informativo https://tasave.net.",
             "2. Fuentes de cotizaciones y caché sin conexión (offline)" to
-                "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM y series históricas) provienen de APIs públicas de terceros (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no controla su disponibilidad, continuidad ni exactitud, y no está afiliada al BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad bancaria o pasarela alguna. Las últimas tasas se almacenan localmente para operar sin conexión y alimentar los widgets.",
+                "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM y series históricas) provienen de APIs públicas de terceros (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no controla su disponibilidad, continuidad ni exactitud, y no está afiliada al BCV, SENIAT, Zelle, Binance ni entidad bancaria o pasarela alguna. Las últimas tasas se almacenan localmente para operar sin conexión y alimentar los widgets.",
             "3. Datos almacenados localmente (sin cuentas)" to
                 "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de IVA/IGTF, perfiles opcionales de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos, logotipo propio y tarjetas PNG temporales (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar la exactitud de los datos que compartas con terceros.",
             "4. Reportes voluntarios, sugerencias y soporte técnico" to
@@ -3565,7 +3565,7 @@ private fun BcvCalendarDialog(
                             color = textPrimary
                         )
                         Text(
-                            text = "Toca cualquier día para ver feriados SUDEBAN y tasa",
+                            text = "Toca cualquier día para ver feriados bancarios y tasa",
                             fontSize = 10.5.sp,
                             color = textSecondary
                         )

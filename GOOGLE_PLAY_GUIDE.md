@@ -194,7 +194,7 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
    - *Estrategia de difusión:* El flujo del **Conversor Flotante** y los trucos de **Útiles** se muestran en videos verticales cortos para Reels, TikTok (`@tasa.ve`) y piezas con **Google Omni / Google Vids**, manteniendo la app limpia y sin tarjetas largas de instrucciones.
 4. **Textos para la Ficha:**
    - **Título de la app (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
-   - **Descripción breve (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros.`
+   - **Descripción breve (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario bancario, útiles y cobros.`
    - **Descripción completa:**
      ```
      Tasa VE es la calculadora financiera todo-en-uno para tu día a día en Venezuela.
@@ -203,7 +203,7 @@ Prepara los siguientes recursos gráficos para la ficha de la tienda:
 
      Características principales:
      • Conversor bidireccional exacto (BCV Hoy/Mañana, Euro, USDT y COP frontera).
-     • Calendario Bancario SUDEBAN: identifica lunes bancarios, feriados y tasas históricas por día.
+     • Calendario Bancario: identifica lunes bancarios, feriados y tasas históricas por día.
      • Accesos Rápidos: botón en Barra Rápida, notificación fija silenciosa de tasas y Conversor Flotante con Pago Móvil en 1 toque (Ultra).
      • Pestaña Útiles: ¿Con qué pago? (USDT vs Efectivo/$ con descuento libre) y Dividir cuenta en 5 monedas.
      • Carrito inteligente con escáner de cámara OCR local e IVA/IGTF referencial.

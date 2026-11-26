@@ -74,7 +74,7 @@ jobs:
           TAG="v1.2.0-ultra-test"
           ASSET="TasaVE-v1.2-ultra-test.apk"
           TITLE="Tasa VE v1.2.0 - Prueba Ultra"
-          NOTES="APK de prueba para Tasa VE v1.2 Ultra (BCV Hoy/Mañana, COP, Calendario SUDEBAN, Barra Rápida, Notificación fija, Conversor flotante, Útiles, Carrito con Tarjeta PNG, Cobros y Firebase Analytics)."
+          NOTES="APK de prueba para Tasa VE v1.2 Ultra (BCV Hoy/Mañana, COP, Calendario Bancario, Barra Rápida, Notificación fija, Conversor flotante, Útiles, Carrito con Tarjeta PNG, Cobros y Firebase Analytics)."
         else
           TAG="v1.1.0-scanner-test"
           ASSET="TasaVE-scanner-test.apk"

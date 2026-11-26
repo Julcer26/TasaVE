@@ -9,7 +9,7 @@ La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuario
 
 ## 1. Origen y actualización de los datos
 - **Fuentes públicas de referencia:** Las cotizaciones mostradas en la aplicación (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM y series históricas para el Calendario Bancario) se obtienen mediante consultas automatizadas a APIs públicas (`ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com` y `open.er-api.com`), las cuales reflejan valores informativos del Banco Central de Venezuela (BCV), TRM Colombia y promedios de mercado.
-- **Sin afiliación oficial:** Tasa VE es una herramienta independiente de cálculo matemático. **No está afiliada, autorizada, patrocinada ni vinculada** con el Banco Central de Venezuela (BCV), el SENIAT, la SUDEBAN, el Banco de la República de Colombia ni ninguna institución bancaria, billetera digital o casa de cambio.
+- **Sin afiliación oficial:** Tasa VE es una herramienta independiente de cálculo matemático. **No está afiliada, autorizada, patrocinada ni vinculada** con el Banco Central de Venezuela (BCV), el SENIAT, el Banco de la República de Colombia ni ninguna institución bancaria, billetera digital o casa de cambio.
 - **Caché local:** Para permitir el funcionamiento sin conexión (*Modo Offline*) y actualizar el Widget de pantalla de inicio, la aplicación almacena localmente las últimas tasas consultadas junto con un historial técnico de variaciones.
 
 ---
@@ -20,7 +20,7 @@ La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuario
 **Tasa VE NO recopila, no solicita ni almacena en servidores propios** cuentas de usuario, contraseñas, correos electrónicos, ubicaciones GPS ni datos personales de identidad. No se requiere registro para utilizar la aplicación.
 
 ### B. Estadísticas anónimas de uso (Google Firebase Analytics)
-Para conocer de forma agregada qué herramientas se usan más (por ejemplo, si los usuarios abren más el Conversor, COP de frontera, el Calendario SUDEBAN o las calculadoras de **Útiles**) y priorizar mejoras reales, la aplicación integra **Google Firebase Analytics** bajo un esquema estrictamente anónimo:
+Para conocer de forma agregada qué herramientas se usan más (por ejemplo, si los usuarios abren más el Conversor, COP de frontera, el Calendario Bancario o las calculadoras de **Útiles**) y priorizar mejoras reales, la aplicación integra **Google Firebase Analytics** bajo un esquema estrictamente anónimo:
 - **Qué registramos:** Únicamente nombres genéricos de eventos de navegación (`tasave_tab_opened`, `tasave_util_opened`, `tasave_rate_selected`, `tasave_calendar_opened`, `tasave_calendar_day_selected`, `tasave_scanner_opened`, `tasave_action`).
 - **Qué NUNCA registramos ni enviamos:** Nunca enviamos montos convertidos, totales de carrito, tasas personalizadas, nombres de clientes, cédulas/RIF, teléfonos, correos, cuentas bancarias, fotografías ni perfiles de Pago Móvil/Zelle/Binance.
 
@@ -38,7 +38,7 @@ Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guar
 
 ## 3. Uso de la información
 La información procesada local y técnicamente se utiliza exclusivamente para:
-1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario SUDEBAN, calcular herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
+1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario Bancario, calcular herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
 2. Formatear resúmenes y tarjetas visuales PNG de cobro o cálculo que el usuario **elige explícitamente** copiar al portapapeles o compartir mediante otras aplicaciones (como WhatsApp).
 3. Actualizar el Widget de pantalla de inicio, mantener la **notificación fija opcional de tasas (Ultra)** y abrir el **Conversor Flotante** desde la **Barra Rápida** o la notificación fija.
 4. Medir de manera agregada y anónima qué pantallas se usan más, mostrar publicidad no invasiva en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
@@ -60,7 +60,7 @@ La información procesada local y técnicamente se utiliza exclusivamente para:
 ---
 
 ## 6. Publicidad, anuncios bonificados y suscripción Ultra
-- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario SUDEBAN, **botón en Barra Rápida** para abrir la app, las herramientas de **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
+- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario, **botón en Barra Rápida** para abrir la app, las herramientas de **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
 - **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **Notificación fija opcional de tasas con copia rápida y Pago Móvil**, **conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil desde la Barra Rápida o notificación fija**, **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **logo propio en Tarjetas PNG** y **Widget Calculadora y Cobros Ultra**.
 - **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*.
 - **Seguridad de pagos:** Todas las transacciones son procesadas exclusivamente por **Google Play Billing**; el desarrollador nunca accede a tarjetas, cuentas ni credenciales financieras.

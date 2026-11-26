@@ -3674,7 +3674,7 @@ fun PlansComparisonDialog(
 
                     val rows = listOf(
                         listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
-                        listOf("BCV Mañana + Calendario SUDEBAN", "✓", "✓"),
+                        listOf("BCV Mañana + Calendario Bancario", "✓", "✓"),
                         listOf("Útiles (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
                         listOf("Pago Mixto + Tarjeta PNG (Cobro y Carrito)", "✓", "✓"),
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),

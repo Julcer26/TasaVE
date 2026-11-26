@@ -13,7 +13,7 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 | Nivel | Versión | Color Identidad | Precio Sugerido (Google Play) | Público Objetivo | Qué Incluye |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario SUDEBAN**, pestaña **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto + Tarjeta PNG (Cobros y Carrito), **Widget Tasas en Vivo**, **botón en Barra Rápida**, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
+| **Gratis** | v1.2 | Neutro (Oscuro / Claro) | \$0 USD (AdMob equilibrado) | Uso ocasional / consulta rápida | Conversor BCV exacto, BCV Hoy/Mañana, USDT paralelo, **Peso Colombiano (COP) de frontera**, **Calendario Bancario**, pestaña **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto + Tarjeta PNG (Cobros y Carrito), **Widget Tasas en Vivo**, **botón en Barra Rápida**, hasta 5 productos en carrito, 1 perfil de cobro y 3 escaneos OCR/día (+5 o pase 12h sin anuncios vía video bonificado). |
 | **Tasa VE Ultra** | v1.2 *(pasa a Verde en v1.3)* | **Verde Esmeralda (`#10B981`)** | **\$0.99 / mes** o **\$7.99 / año** | Usuario diario, compradores frecuentes, freelancers | **0 publicidad**, **Notificación fija silenciosa de tasas** (con copiar tasas, calc. rápida y Pago Móvil), **Conversor flotante desde Barra Rápida/Notificación con multi-tasa + Pago Móvil**, escáner OCR ∞, carrito ∞ + IVA/IGTF simple, perfiles de cobro ∞, **logo propio en Tarjeta PNG**, y **Widget Calculadora y Cobro Express**. |
 | **Tasa VE Business** | v1.3 (Fase 2) | **Ámbar / Dorado (`#F59E0B`)** | **\$2.99 – \$3.99 / mes** o **\$24.99 – \$29.99 / año** *(7 días gratis)* | Bodegas, comercios, tiendas Instagram, delivery, servicios | **Todo Ultra incluido** + **Panel Business dedicado** (Catálogo rápido, PDF Nota de Entrega + IGTF Mixto Real, Cierre de Caja Diario, Fiados indexados y Reposición por Brecha). |
 
@@ -60,8 +60,8 @@ Para evitar confusión entre planes y no sobrecargar la interfaz principal para 
 
 ### 3.1 ASO (Posicionamiento en Google Play Store)
 - **Título (máx. 30 caracteres):** `Tasa VE: Dólar BCV y Cobros`
-- **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario SUDEBAN, útiles y cobros.`
-- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `peso colombiano bolivar`, `feriados bancarios sudeban`, `dividir cuenta bolivar`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
+- **Descripción corta (máx. 80 caracteres):** `Tasa BCV hoy/mañana, USDT, COP frontera, calendario bancario, útiles y cobros.`
+- **Palabras clave prioritarias (Venezuela):** `tasa bcv hoy`, `dolar bcv`, `calculadora bolivar dolar`, `peso colombiano bolivar`, `feriados bancarios venezuela`, `dividir cuenta bolivar`, `usdt paralelo`, `pago movil`, `vuelto mixto`.
 - **Activos visuales recomendados (6 capturas en orden de impacto):**
   1. Conversor en vivo (BCV Hoy / Mañana + Euro BCV + USDT + chip `🇨🇴 COP` + Calendario + Cámara OCR).
   2. **Conversor Flotante** sobre WhatsApp desde Barra Rápida / Notificación fija con Pago Móvil en 1 toque.
@@ -84,7 +84,7 @@ Cada vez que un usuario comparte una **Tarjeta PNG**, un resumen de **Cobro / Pa
   1. **"Calcula montos de WhatsApp sin salir del chat" (Conversor Flotante Ultra):** copias el precio en WhatsApp, bajas la Barra Rápida o tocas *"Calc. rápida"* en la notificación fija → ventana flotante compacta detecta el monto y te deja copiar el resultado + tu Pago Móvil en 1 toque.
   3. **"¿Cambio USDT o pago en efectivo con descuento?"**: abre *Útiles > ¿Con qué pago?*, mete un descuento libre en % o \$ y demuestra en 5 segundos cuánto ahorras en dólares reales.
   4. **"Divide la cuenta con tus amigos en USD, EUR, Bs., USDT o COP"**: abre *Útiles > Dividir cuenta* y manda el monto por persona al grupo de WhatsApp.
-  5. **"¿Mañana es lunes bancario o a cuánto amanece el BCV?"**: abre el **Calendario SUDEBAN** desde la barra superior + *BCV Hoy vs Mañana*.
+  5. **"¿Mañana es lunes bancario o a cuánto amanece el BCV?"**: abre el **Calendario Bancario** desde la barra superior + *BCV Hoy vs Mañana*.
   6. **"Cobra o convierte pesos en la frontera sin perderte"**: activa el chip **`🇨🇴 COP`** y convierte directo pesos ⇄ bolívares.
   7. **"No pierdas dinero con el vuelto en Pago Móvil"**: muestra *Pago Mixto* calculando \$20 en efectivo + resto en Bs. + *Tarjeta PNG* con logo propio (Ultra).
   8. **"Escanea precios en el súper sin sacar la cuenta a mano"**: apunta la cámara al hablador y suma al carrito inteligente.

@@ -13,8 +13,8 @@ import java.util.TimeZone
 class BcvCalendarHelperTest {
 
     @Test
-    fun sudebanHolidays_detectsBankHolidayAndUpcomingAlertWindow() {
-        assertEquals("Lunes bancario SUDEBAN", BcvCalendarHelper.holidayNameFor("2026-11-23"))
+    fun bankHolidays_detectsBankHolidayAndUpcomingAlertWindow() {
+        assertEquals("Lunes bancario", BcvCalendarHelper.holidayNameFor("2026-11-23"))
         assertNull(BcvCalendarHelper.holidayNameFor("2026-11-24"))
 
         val tz = TimeZone.getTimeZone("America/Caracas")
@@ -44,7 +44,7 @@ class BcvCalendarHelperTest {
         assertNotNull(nov23)
         assertTrue(nov23!!.isBankHoliday)
         assertFalse(nov23.isWeekend)
-        assertTrue(nov23.statusSummary.contains("Lunes bancario SUDEBAN"))
+        assertTrue(nov23.statusSummary.contains("Lunes bancario"))
 
         val nov22 = nonNullDays.firstOrNull { it.isoDate == "2026-11-22" }
         assertNotNull(nov22)
