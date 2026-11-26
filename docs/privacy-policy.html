@@ -274,7 +274,7 @@
                         <td>No aplica (sin registro ni rastreo GPS).</td>
                     </tr>
                     <tr>
-                        <td><strong>Historial, carrito y perfiles de cobro</strong></td>
+                        <td><strong>Historial, carrito y perfiles de pago</strong></td>
                         <td>Conversiones, carrito, IVA/IGTF, perfiles (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos y logo propio.</td>
                         <td>Almacenamiento 100% local en el dispositivo (excluido del respaldo automático en la nube).</td>
                     </tr>
@@ -329,7 +329,7 @@
         <p>Tasa VE no requiere registro ni crea perfiles de cuenta en servidores propios. Los datos operativos se guardan en el almacenamiento privado de la aplicación en Android (bases de datos locales como SQLite/Room y preferencias locales):</p>
         <ul>
             <li><strong>Historial y carrito:</strong> Cálculos guardados, ítems del carrito, cantidades, precios unitarios y parámetros referenciales configurados (como porcentajes de IVA o IGTF).</li>
-            <li><strong>Perfiles de cobro y plantillas:</strong> Los datos que ingreses opcionalmente para agilizar cobros o plantillas (como Pago Móvil, datos bancarios, Zelle o Binance Pay) se guardan localmente en el dispositivo, <strong>no se envían a servidores propios de Tasa VE</strong> y están excluidos de copias de seguridad automáticas en la nube de Android. Eres responsable de verificar la exactitud de los datos que compartas con terceros.</li>
+            <li><strong>Perfiles de pago y plantillas:</strong> Los datos que ingreses opcionalmente para agilizar cálculos o plantillas de pago (como Pago Móvil, datos bancarios, Zelle o Binance Pay) se guardan localmente en el dispositivo, <strong>no se envían a servidores propios de Tasa VE</strong> y están excluidos de copias de seguridad automáticas en la nube de Android. Eres responsable de verificar la exactitud de los datos que compartas con terceros.</li>
             <li><strong>Logotipo propio y tarjetas PNG:</strong> Las imágenes o logotipos que cargues opcionalmente y las tarjetas visuales generadas al compartir se gestionan localmente y se entregan mediante mecanismos seguros del sistema (<code>FileProvider</code>) solo cuando decides compartirlas.</li>
         </ul>
 
@@ -380,8 +380,8 @@
         <h2 id="t2">2. Exactitud referencial de tasas y cálculos</h2>
         <p>Las tasas de cambio, conversiones multimoneda, estimaciones de impuestos o retenciones (como IVA o IGTF), calendarios o utilidades informativas tienen fines <strong>estrictamente orientativos e informativos</strong>. Las tasas publicadas pueden diferir de las cotizaciones oficiales vigentes, del mercado o de las aplicadas efectivamente por bancos y comercios al momento de liquidar una operación. No constituyen asesoría financiera, contable, fiscal ni legal.</p>
 
-        <h2 id="t3">3. Herramientas de cobro, pagos mixtos y tarjetas PNG</h2>
-        <p>Las plantillas de texto para cobros (incluyendo el formato limpio para bancos), registros de abonos o pagos mixtos y las imágenes/tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
+        <h2 id="t3">3. Plantillas de pago, pagos mixtos y tarjetas PNG</h2>
+        <p>Las plantillas de texto para datos de pago (incluyendo el formato limpio para autocompletar en bancos), registros de abonos o pagos mixtos y las imágenes/tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
 
         <h2 id="t4">4. Plan gratuito, suscripción Ultra, cancelación y reembolsos</h2>
         <ul>

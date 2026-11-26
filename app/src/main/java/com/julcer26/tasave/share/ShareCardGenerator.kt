@@ -357,7 +357,7 @@ object ShareCardGenerator {
             }.getOrNull()
 
             val rateDecimals = if (rateLabel.contains("USDT", ignoreCase = true)) 2 else 4
-            val pillLabel = if (hasTotal) "RESUMEN DE COBRO" else "DATOS DE COBRO"
+            val pillLabel = if (hasTotal) "RESUMEN DE PAGO" else "DATOS DE PAGO"
             try {
                 drawCenteredBrandHeader(
                     context = context,
@@ -497,7 +497,7 @@ object ShareCardGenerator {
             val fallbackCaption = buildString {
                 if (hasTotal) {
                     val headerName = customBrandName?.trim()?.takeIf { it.isNotBlank() } ?: "Tasa VE"
-                    appendLine("*$headerName • Resumen de Cobro*")
+                    appendLine("*$headerName • Resumen de Pago*")
                     appendLine("Total: $${VeNumberFormat.formatMoney(totalUsd)} • Bs. ${VeNumberFormat.formatMoney(totalVes)}")
                     appendLine("Tasa ($rateLabel): Bs. ${VeNumberFormat.formatRate(rateValue, rateDecimals)}")
                 }
@@ -515,7 +515,7 @@ object ShareCardGenerator {
                 captionText?.takeIf { it.isNotBlank() } ?: fallbackCaption
             )
         }.onFailure {
-            Toast.makeText(context, "No se pudo compartir la tarjeta de cobro", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "No se pudo compartir la tarjeta", Toast.LENGTH_SHORT).show()
         }
     }
 

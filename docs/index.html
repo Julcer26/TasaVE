@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tasa VE — Calculadora de Conversión Financiera BCV, Euro, USDT y COP para Venezuela</title>
-  <meta name="description" content="Consulta en vivo el Dólar BCV hoy y mañana, Euro BCV, USDT y Pesos Colombianos (COP). Escáner de precios OCR, carrito con IVA e IGTF, abonos multimoneda, autopegado bancario y tarjetas PNG en Android.">
+  <meta name="description" content="Consulta en vivo el Dólar BCV (hoy y próximo día hábil), Euro BCV, USDT y Pesos Colombianos (COP). Escáner de precios OCR, carrito con IVA e IGTF, historial en calendario, pagos mixtos y tarjetas PNG para autocompletar en tu banco.">
   <link rel="canonical" href="https://tasave.net/">
   <meta name="color-scheme" content="light dark">
   <script>
@@ -25,11 +25,11 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://tasave.net/">
   <meta property="og:title" content="Tasa VE — Tu calculadora de conversión financiera para Venezuela">
-  <meta property="og:description" content="Dólar y Euro BCV exactos, BCV Mañana, USDT, COP de frontera, Escáner de precios OCR, Carrito IVA e IGTF, Abonos multimoneda y Tarjetas PNG.">
+  <meta property="og:description" content="Dólar y Euro BCV exactos (incluyendo BCV Mañana), USDT, COP, escáner de precios, carrito con IVA e IGTF, historial de tasas y tarjetas PNG para autocompletar en tu banco.">
   <meta property="og:image" content="https://tasave.net/assets/feature_graphic_1024x500.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Tasa VE — Calculadora BCV, Escáner OCR y Cobros">
-  <meta name="twitter:description" content="Tasas BCV, Euro, USDT y COP en vivo, modo offline, carrito inteligente y autopegado bancario de Pago Móvil.">
+  <meta name="twitter:title" content="Tasa VE — Calculadora BCV, Escáner de Precios y Pagos Mixtos">
+  <meta name="twitter:description" content="Tasas BCV, Euro, USDT y COP en vivo, modo offline, carrito con IVA e IGTF y autocompletado bancario de Pago Móvil.">
   <meta name="twitter:image" content="https://tasave.net/assets/feature_graphic_1024x500.png">
 
   <!-- Google Search & Device Favicons -->
@@ -42,7 +42,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261126c">
+  <link rel="stylesheet" href="styles.css?v=20261126d">
 
   <!-- JSON-LD Structured Data (SoftwareApplication + WebSite + FAQPage for Rich SEO) -->
   <script type="application/ld+json">
@@ -57,7 +57,7 @@
         "url": "https://tasave.net/",
         "downloadUrl": "https://play.google.com/store/apps/details?id=com.julcer26.tasave",
         "image": "https://tasave.net/assets/app_icon_512x512.png",
-        "description": "Calculadora de conversión financiera para Venezuela con Dólar y Euro BCV exactos, BCV Mañana, USDT, Peso Colombiano COP, Calendario Bancario, Escáner de precios OCR, Carrito con IVA e IGTF, abonos multimoneda y Tarjetas PNG de Pago Móvil.",
+        "description": "Calculadora de conversión financiera para Venezuela con Dólar y Euro BCV exactos, consulta de BCV Mañana, USDT, Peso Colombiano COP, Calendario Bancario con historial de tasas, escáner de precios OCR, carrito con IVA e IGTF, abonos multimoneda y Tarjetas PNG listas para autocompletar en tu banco.",
         "offers": [
           { "@type": "Offer", "name": "Plan Gratuito", "price": "0", "priceCurrency": "USD" },
           { "@type": "Offer", "name": "Tasa VE Ultra Mensual", "price": "0.99", "priceCurrency": "USD" },
@@ -90,15 +90,15 @@
             "name": "¿Cómo funciona Tasa VE cuando no tengo conexión a internet?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Tasa VE guarda localmente las últimas tasas consultadas (USD BCV, EUR BCV, USDT, COP y BCV Mañana). Sin señal siguen funcionando el conversor, el historial, el carrito, Útiles, el calendario bancario, Cobros con Tarjeta PNG y el Escáner OCR."
+              "text": "Tasa VE guarda en tu teléfono las últimas tasas consultadas (USD BCV, EUR BCV, USDT, COP y la referencia BCV Mañana). Sin señal siguen funcionando el conversor, el historial, el carrito, Útiles, el calendario bancario, los cálculos de pagos mixtos con Tarjeta PNG y el escáner de precios."
             }
           },
           {
             "@type": "Question",
-            "name": "¿Cómo funciona el autopegado bancario de Pago Móvil?",
+            "name": "¿Cómo funciona el autocompletado bancario de Pago Móvil?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Al copiar datos de Pago Móvil o enviar una Tarjeta PNG, Tasa VE genera un bloque limpio de 4 líneas (banco, cédula, teléfono y monto exacto en bolívares) compatible con el autopegado de apps bancarias venezolanas como BDV, Banesco, Mercantil y Bancamiga."
+              "text": "Al copiar tus datos de Pago Móvil o enviar una Tarjeta PNG, Tasa VE genera un bloque limpio de 4 líneas (banco, cédula, teléfono y monto exacto en bolívares) compatible con el autocompletado de apps bancarias venezolanas como BDV, Banesco, Mercantil y Bancamiga."
             }
           },
           {
@@ -106,7 +106,7 @@
             "name": "¿Dónde se guardan mis datos de Pago Móvil, cuentas bancarias o Zelle?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Se almacenan únicamente en el espacio privado de tu dispositivo Android, excluidos del respaldo automático en la nube. Además puedes ocultarlos en pantalla con el botón de privacidad (ojito) tanto en la app como en el Widget Ultra."
+              "text": "Tus datos nunca salen de tu teléfono: se guardan únicamente en el almacenamiento privado de tu dispositivo Android, sin cuentas ni servidores propios y excluidos del respaldo en la nube. Además puedes ocultarlos en pantalla con el botón de privacidad (ojito) tanto en la app como en el Widget Ultra."
             }
           },
           {
@@ -202,14 +202,18 @@
   </header>
 
   <main id="inicio">
-    <!-- EDITORIAL FINTECH HERO WITH LIVE CONVERTER -->
+    <!-- EDITORIAL FINTECH HERO WITH WELCOME + LIVE CONVERTER -->
     <section class="hero">
       <div class="hero-grid-bg" aria-hidden="true"></div>
       <div class="container hero-layout">
         <div class="hero-left">
+          <div class="welcome-eyebrow">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span>Bienvenido a Tasa VE · Calculadora gratuita para Android</span>
+          </div>
           <h1>Tu calculadora de conversión financiera para Venezuela</h1>
           <p class="hero-lead">
-            Cotizaciones BCV exactas, BCV Mañana, USDT y COP en un solo lugar. Escanea precios con la cámara, arma tu carrito con IVA e IGTF y cobra con tarjetas PNG listas para autopegar en tu banco.
+            Convierte al instante entre bolívares, dólares y euros BCV (incluyendo BCV Mañana), USDT y pesos colombianos. Escanea precios con tu cámara, arma tu carrito con IVA e IGTF, consulta el historial de tasas en el calendario y comparte tarjetas PNG listas para autocompletar en tu banco.
           </p>
 
           <!-- LIVE INSTANT CONVERTER WIDGET RIGHT IN THE HERO -->
@@ -244,7 +248,7 @@
 
             <div class="hero-calc-foot">
               <span class="mono" id="hero-rate-caption">Tasa aplicada: cargando…</span>
-              <span class="hero-calc-note">Modo offline y BCV Mañana en la app Android</span>
+              <span class="hero-calc-note">Modo offline y BCV Mañana disponibles en la app Android</span>
             </div>
           </div>
 
@@ -253,14 +257,14 @@
               <img src="assets/google-play-badge-es.png" alt="Disponible en Google Play" width="184" height="54">
             </a>
             <a href="#demo" class="btn btn-secondary">
-              Explorar los 5 módulos
+              Probar simulador interactivo
             </a>
           </div>
 
           <div class="hero-facts">
             <span>Sin cuentas ni registro</span>
             <span>Funciona sin internet</span>
-            <span>Datos bancarios 100% locales</span>
+            <span>Tus datos nunca salen de tu teléfono</span>
           </div>
         </div>
 
@@ -283,10 +287,38 @@
 
             <div class="hero-screen-dock" role="tablist" aria-label="Vistas reales de Tasa VE">
               <button type="button" class="dock-btn is-active" data-hero-screen="assets/screens/screen_conversor.webp" data-hero-alt="Pantalla real del conversor multitasa de Tasa VE">Conversor</button>
-              <button type="button" class="dock-btn" data-hero-screen="assets/screens/screen_cobros.webp" data-hero-alt="Pantalla real de Cobros y Pago Mixto en Tasa VE">Cobros</button>
+              <button type="button" class="dock-btn" data-hero-screen="assets/screens/screen_cobros.webp" data-hero-alt="Pantalla real de Pagos Mixtos y Abonos en Tasa VE">Pagos</button>
               <button type="button" class="dock-btn" data-hero-screen="assets/screens/screen_flotante.webp" data-hero-alt="Conversor Flotante real de Tasa VE sobre WhatsApp">Flotante</button>
-              <button type="button" class="dock-btn" data-hero-screen="assets/screens/screen_tarjeta.webp" data-hero-alt="Tarjeta visual PNG de cobro generada por Tasa VE">Tarjeta PNG</button>
+              <button type="button" class="dock-btn" data-hero-screen="assets/screens/screen_tarjeta.webp" data-hero-alt="Tarjeta visual PNG de resumen generada por Tasa VE">Tarjeta PNG</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK OVERVIEW STRIP: WHAT TASA VE DOES IN 4 PILLARS -->
+    <section class="overview-band" aria-label="Qué puedes hacer con Tasa VE">
+      <div class="container">
+        <div class="overview-grid">
+          <div class="overview-item">
+            <span class="ov-num mono">01</span>
+            <h3>Convierte con precisión</h3>
+            <p>Tasas BCV exactas, referencia BCV Mañana, USDT y COP en un toque, incluso cuando no tienes señal.</p>
+          </div>
+          <div class="overview-item">
+            <span class="ov-num mono">02</span>
+            <h3>Compra sin sorpresas</h3>
+            <p>Escanea precios con tu cámara y arma tu carrito con cálculo automático de IVA (16%) e IGTF (3%).</p>
+          </div>
+          <div class="overview-item">
+            <span class="ov-num mono">03</span>
+            <h3>Decide y divide cuentas</h3>
+            <p>Compara si te rinde más cambiar USDT o pagar en efectivo y reparte cuentas grupales en 5 monedas.</p>
+          </div>
+          <div class="overview-item">
+            <span class="ov-num mono">04</span>
+            <h3>Calcula pagos y comparte</h3>
+            <p>Calcula abonos mixtos y vueltos, y envía tarjetas PNG con 4 líneas listas para autocompletar en tu banco.</p>
           </div>
         </div>
       </div>
@@ -296,20 +328,20 @@
     <section id="funciones" class="section">
       <div class="container">
         <header class="section-intro">
-          <h2>Construida para cómo se compra y se cobra en Venezuela</h2>
-          <p>Capturas reales de la aplicación. Cada herramienta te ahorra pasos en el supermercado, en WhatsApp y en la app de tu banco.</p>
+          <h2>Diseñada para tus cálculos diarios en Venezuela</h2>
+          <p>Capturas reales de la aplicación. Tasa VE solo calcula y organiza tus montos — nunca procesa pagos ni guarda tus datos fuera de tu teléfono.</p>
         </header>
 
         <div class="bento-grid">
-          <!-- Card 1 (Wide 7 cols): Cobros + Abonos Multimoneda + Autopegado Bancario -->
+          <!-- Card 1 (Wide 7 cols): Pagos Mixtos + Abonos Multimoneda + Autocompletado Bancario -->
           <article class="bento-card span-7">
             <div class="bento-split">
               <div class="bento-copy">
-                <h3>Cobros sin errores: abonos multimoneda, Tarjeta PNG y autopegado bancario</h3>
-                <p>Combina abonos en USD, Bs., EUR, USDT o COP, oculta datos sensibles con el botón de privacidad (ojito) y comparte una Tarjeta PNG con el logo de tu negocio acompañada de 4 líneas limpias listas para pegar en BDV, Banesco, Mercantil o Bancamiga.</p>
+                <h3>Pagos mixtos sin errores: abonos multimoneda, Tarjeta PNG y autocompletado bancario</h3>
+                <p>Calcula abonos combinados en USD, Bs., EUR, USDT o COP, oculta tus datos en pantalla con el botón de privacidad (ojito) y comparte una Tarjeta PNG con tu logo acompañada de 4 líneas limpias listas para autocompletar en BDV, Banesco, Mercantil o Bancamiga.</p>
                 <div class="bento-switcher" data-spotlight-group="bento-pay">
-                  <button type="button" class="mini-pill is-active" data-src="assets/screens/screen_cobros.webp" data-alt="Módulo Cobros y Pago Mixto real de Tasa VE">Cobros</button>
-                  <button type="button" class="mini-pill" data-src="assets/screens/screen_tarjeta.webp" data-alt="Tarjeta visual PNG de cobro generada por Tasa VE">Tarjeta PNG</button>
+                  <button type="button" class="mini-pill is-active" data-src="assets/screens/screen_cobros.webp" data-alt="Módulo de Pagos Mixtos y Abonos real de Tasa VE">Pagos mixtos</button>
+                  <button type="button" class="mini-pill" data-src="assets/screens/screen_tarjeta.webp" data-alt="Tarjeta visual PNG de resumen generada por Tasa VE">Tarjeta PNG</button>
                   <button type="button" class="mini-pill" data-src="assets/screens/screen_flotante.webp" data-alt="Conversor Flotante sobre WhatsApp en Tasa VE">Flotante</button>
                 </div>
               </div>
@@ -324,19 +356,19 @@
                         <svg viewBox="0 0 22 12" width="15" height="8" fill="none"><rect x="0.75" y="1.25" width="17.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.3"/><rect x="2.6" y="3" width="13.8" height="6" rx="1.2" fill="currentColor"/><rect x="19.5" y="4" width="1.8" height="4" rx="0.8" fill="currentColor"/></svg>
                       </span>
                     </div>
-                    <img id="bento-pay-img" src="assets/screens/screen_cobros.webp" alt="Módulo Cobros y Pago Mixto real de Tasa VE" width="560" height="1169" loading="lazy">
+                    <img id="bento-pay-img" src="assets/screens/screen_cobros.webp" alt="Módulo de Pagos Mixtos y Abonos real de Tasa VE" width="560" height="1169" loading="lazy">
                   </div>
                 </div>
               </div>
             </div>
           </article>
 
-          <!-- Card 2 (Tall 5 cols): BCV Mañana + Calendario Bancario -->
+          <!-- Card 2 (Tall 5 cols): Calendario Bancario e Historial de Tasas BCV -->
           <article class="bento-card span-5">
             <div class="bento-stack">
               <div class="bento-copy">
-                <h3>BCV Mañana y Calendario Bancario</h3>
-                <p>Anticipa el cierre oficial del próximo día hábil sin redondeos y consulta feriados bancarios e históricos diarios directo en el conversor.</p>
+                <h3>Calendario Bancario e historial de tasas BCV</h3>
+                <p>Consulta los feriados bancarios del año y toca cualquier fecha del calendario para revisar el historial de tasas BCV y USDT de ese día y llevarlo directo al conversor. También puedes consultar la tasa oficial del próximo día hábil (BCV Mañana) sin redondeos.</p>
               </div>
               <div class="bento-device is-short">
                 <div class="bento-device-frame">
@@ -349,7 +381,7 @@
                         <svg viewBox="0 0 22 12" width="15" height="8" fill="none"><rect x="0.75" y="1.25" width="17.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.3"/><rect x="2.6" y="3" width="13.8" height="6" rx="1.2" fill="currentColor"/><rect x="19.5" y="4" width="1.8" height="4" rx="0.8" fill="currentColor"/></svg>
                       </span>
                     </div>
-                    <img src="assets/screens/screen_calendario.webp" alt="Calendario Bancario real de Tasa VE" width="560" height="1169" loading="lazy">
+                    <img src="assets/screens/screen_calendario.webp" alt="Calendario Bancario e historial de tasas BCV en Tasa VE" width="560" height="1169" loading="lazy">
                   </div>
                 </div>
               </div>
@@ -386,9 +418,9 @@
             <div class="bento-split">
               <div class="bento-copy">
                 <h3>Escáner de precios y carrito con IVA e IGTF</h3>
-                <p>Apunta la cámara a etiquetas del supermercado para leer precios localmente en el dispositivo sin subir fotos. Suma productos al carrito, calcula IVA (16%) e IGTF (3%) y conoce exactamente cuánto pagarás antes de llegar a caja.</p>
+                <p>Apunta la cámara a etiquetas del supermercado para leer precios directamente en tu teléfono sin subir fotos. Suma productos al carrito, calcula IVA (16%) e IGTF (3%) y conoce exactamente cuánto pagarás antes de llegar a caja.</p>
                 <ul class="clean-bullets">
-                  <li>Lectura óptica local 100% en el teléfono, incluso sin internet.</li>
+                  <li>Lectura óptica directamente en tu dispositivo, incluso sin internet.</li>
                   <li>Total simultáneo en USD, bolívares, euros y USDT.</li>
                   <li>Widget de pantalla de inicio con ojito de privacidad y calculadora rápida.</li>
                 </ul>
@@ -415,11 +447,11 @@
     </section>
 
     <!-- FULL INTERACTIVE 5-MODULE SIMULATOR -->
-    <section id="demo" class="section section-tinted section-deferred">
+    <section id="demo" class="section section-tinted">
       <div class="container">
         <header class="section-intro">
           <h2>Pruébala antes de descargar</h2>
-          <p>Simulador conectado a las cotizaciones del día. Cambia monedas, escanea precios, calcula IVA e IGTF o copia un Pago Móvil en formato limpio de banco.</p>
+          <p>Simulador conectado a las cotizaciones del día. Cambia monedas, escanea precios, calcula IVA e IGTF o copia un Pago Móvil listo para autocompletar en tu banco.</p>
         </header>
 
         <div class="demo-layout">
@@ -435,33 +467,37 @@
             <div class="demo-tab-list" role="tablist" aria-label="Módulos interactivos de Tasa VE">
               <button type="button" class="demo-tab-btn is-active" role="tab" aria-selected="true" data-tab="converter">
                 <span class="demo-num mono">01</span>
+                <span class="demo-short-label">Conversor</span>
                 <span class="demo-tab-copy">
-                  <strong>Conversor multitasa, BCV Mañana y COP</strong>
-                  <span>USD, EUR, USDT, COP de frontera y equivalencias exactas.</span>
+                  <strong>Conversor multitasa BCV, USDT y COP</strong>
+                  <span>USD y EUR BCV exactos, referencia BCV Mañana, USDT y COP de frontera.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
 
               <button type="button" class="demo-tab-btn" role="tab" aria-selected="false" data-tab="scanner">
                 <span class="demo-num mono">02</span>
+                <span class="demo-short-label">Escáner</span>
                 <span class="demo-tab-copy">
                   <strong>Escáner de precios con cámara</strong>
-                  <span>Lee precios impresos localmente sin enviar fotografías.</span>
+                  <span>Lee precios impresos directamente en tu equipo sin enviar fotografías.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
 
               <button type="button" class="demo-tab-btn" role="tab" aria-selected="false" data-tab="cart">
                 <span class="demo-num mono">03</span>
+                <span class="demo-short-label">Carrito</span>
                 <span class="demo-tab-copy">
                   <strong>Carrito de compras con IVA e IGTF</strong>
-                  <span>Controla totales en bolívares y divisas antes de pagar.</span>
+                  <span>Controla totales en bolívares y divisas antes de pasar por caja.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
               </button>
 
               <button type="button" class="demo-tab-btn" role="tab" aria-selected="false" data-tab="utiles">
                 <span class="demo-num mono">04</span>
+                <span class="demo-short-label">Útiles</span>
                 <span class="demo-tab-copy">
                   <strong>Útiles: ¿Con qué pago? y Dividir cuenta</strong>
                   <span>Ahorro exacto entre USDT y efectivo, además de cuentas grupales.</span>
@@ -471,8 +507,9 @@
 
               <button type="button" class="demo-tab-btn" role="tab" aria-selected="false" data-tab="checkout">
                 <span class="demo-num mono">05</span>
+                <span class="demo-short-label">Pagos</span>
                 <span class="demo-tab-copy">
-                  <strong>Cobros, autopegado bancario y Tarjeta PNG</strong>
+                  <strong>Pagos mixtos, autocompletado y Tarjeta PNG</strong>
                   <span>Abonos multimoneda, ojito de privacidad y bloque limpio de 4 líneas.</span>
                 </span>
                 <span class="demo-progress" aria-hidden="true"></span>
@@ -481,6 +518,14 @@
           </div>
 
           <div class="phone-stage" aria-live="polite">
+            <div class="sim-phone-statusbar" aria-hidden="true">
+              <span>9:41</span>
+              <span class="camera-hole"></span>
+              <span class="sb-icons">
+                <svg viewBox="0 0 16 12" width="11" height="8" fill="currentColor"><rect x="0" y="8" width="2.5" height="4" rx="0.6"/><rect x="4" y="5.5" width="2.5" height="6.5" rx="0.6"/><rect x="8" y="3" width="2.5" height="9" rx="0.6"/><rect x="12" y="0.5" width="2.5" height="11.5" rx="0.6"/></svg>
+                <svg viewBox="0 0 22 12" width="16" height="8" fill="none"><rect x="0.75" y="1.25" width="17.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.3"/><rect x="2.6" y="3" width="13.8" height="6" rx="1.2" fill="currentColor"/><rect x="19.5" y="4" width="1.8" height="4" rx="0.8" fill="currentColor"/></svg>
+              </span>
+            </div>
             <div id="phone-screen-stage" class="phone-screen"></div>
           </div>
         </div>
@@ -488,7 +533,7 @@
     </section>
 
     <!-- PLANS WITH BILLING PERIOD SWITCHER -->
-    <section id="planes" class="section section-deferred">
+    <section id="planes" class="section">
       <div class="container">
         <div class="plans-head-row">
           <header class="section-intro" style="margin-bottom:0;">
@@ -513,14 +558,14 @@
             <div class="plan-body">
               <p class="plan-section-lead">Incluye gratis:</p>
               <ul class="plan-list">
-                <li>Conversor USD y EUR BCV exacto, BCV Mañana, USDT y COP</li>
-                <li>Calendario Bancario, ¿Con qué pago? y Dividir cuenta</li>
-                <li>Cobros con abonos multimoneda, autopegado bancario y Tarjeta PNG</li>
+                <li>Conversor USD y EUR BCV exacto (con referencia BCV Mañana), USDT y COP</li>
+                <li>Calendario Bancario con historial de tasas, ¿Con qué pago? y Dividir cuenta</li>
+                <li>Pagos mixtos con abonos multimoneda, autocompletado bancario y Tarjeta PNG</li>
                 <li>Widget Tasas en Vivo y acceso rápido desde la Barra Rápida</li>
               </ul>
               <div class="plan-limits-box">
                 <strong>Límites del plan gratuito</strong>
-                <span>Hasta 5 productos en carrito, 1 perfil de cobro, 3 escaneos OCR al día y anuncios controlados.</span>
+                <span>Hasta 5 productos en carrito, 1 perfil de pago, 3 escaneos OCR al día y anuncios controlados.</span>
               </div>
             </div>
             <a href="https://play.google.com/store/apps/details?id=com.julcer26.tasave" target="_blank" rel="noopener noreferrer" class="btn btn-secondary plan-cta">
@@ -536,17 +581,17 @@
                 <span class="mono" id="ultra-price-val">$7.99</span>
                 <small id="ultra-price-period">/ año (equivale a $0.67/mes)</small>
               </p>
-              <p class="plan-sub">Para comercios, freelancers y usuarios exigentes que buscan velocidad máxima y cero anuncios.</p>
+              <p class="plan-sub">Para emprendedores, comercios y usuarios exigentes que buscan velocidad máxima y cero anuncios.</p>
             </div>
             <div class="plan-body">
               <p class="plan-ultra-lead">Todo lo del Plan Gratuito, más:</p>
               <ul class="plan-list">
                 <li><strong>Cero publicidad</strong> en toda la aplicación, para siempre <span class="perk-tag">Exclusivo</span></li>
-                <li><strong>Escáner de precios, carrito y perfiles de cobro</strong> sin topes diarios <span class="perk-tag">Ilimitado</span></li>
+                <li><strong>Escáner de precios, carrito y perfiles de pago</strong> sin topes diarios <span class="perk-tag">Ilimitado</span></li>
                 <li><strong>Conversor flotante</strong> sobre WhatsApp y cualquier otra app <span class="perk-tag">Exclusivo</span></li>
                 <li><strong>Notificación fija</strong> con tasas en vivo y copiado de Pago Móvil en 1 toque <span class="perk-tag">Exclusivo</span></li>
-                <li><strong>Widget Calculadora y Cobro Express</strong> directo en tu pantalla de inicio <span class="perk-tag">Exclusivo</span></li>
-                <li><strong>Logo y nombre de tu negocio</strong> en cada Tarjeta PNG de cobro <span class="perk-tag">Exclusivo</span></li>
+                <li><strong>Widget Calculadora y Pagos</strong> directo en tu pantalla de inicio <span class="perk-tag">Exclusivo</span></li>
+                <li><strong>Logo y nombre de tu negocio</strong> en cada Tarjeta PNG <span class="perk-tag">Exclusivo</span></li>
               </ul>
             </div>
             <a href="https://play.google.com/store/apps/details?id=com.julcer26.tasave" target="_blank" rel="noopener noreferrer" class="btn btn-ultra plan-cta">
@@ -558,27 +603,27 @@
     </section>
 
     <!-- FAQ ACCORDION (SEO + CONVERSION) -->
-    <section id="faq" class="section section-tinted section-deferred">
+    <section id="faq" class="section section-tinted">
       <div class="container faq-layout">
         <header class="section-intro">
           <h2>Preguntas frecuentes</h2>
-          <p>Respuestas claras sobre el modo offline, la seguridad de tus datos bancarios, el autopegado y la suscripción.</p>
+          <p>Respuestas claras sobre el modo offline, la privacidad de tus datos, el autocompletado bancario y la suscripción.</p>
         </header>
 
         <div class="faq-accordion">
           <details class="faq-row" open>
             <summary>¿Qué pasa si uso Tasa VE sin conexión a internet?</summary>
-            <p>La app sigue funcionando en <strong>modo offline</strong> usando las últimas tasas guardadas localmente (USD BCV, EUR BCV, USDT, COP y BCV Mañana). Puedes convertir, usar el carrito, Útiles, Cobros, Tarjeta PNG y el Escáner OCR sin señal. Además, los banners gratuitos se ocultan limpiamente cuando no hay conexión.</p>
+            <p>La app sigue funcionando en <strong>modo offline</strong> usando las últimas tasas guardadas en tu teléfono (USD BCV, EUR BCV, USDT, COP y la referencia BCV Mañana). Puedes convertir, usar el carrito, Útiles, Pagos mixtos, Tarjeta PNG y el escáner de precios sin señal. Además, los banners gratuitos se ocultan limpiamente cuando no hay conexión.</p>
           </details>
 
           <details class="faq-row">
-            <summary>¿Cómo funciona el autopegado bancario de Pago Móvil?</summary>
-            <p>Al tocar <em>Copiar datos</em> o enviar una <strong>Tarjeta PNG</strong> por WhatsApp, la imagen muestra tu logo y todo el desglose, mientras que el texto copiable envía únicamente 4 líneas limpias (código de banco, cédula, teléfono y monto exacto en Bs.) para que bancos como BDV, Banesco, Mercantil o Bancamiga autorrellenen los campos al pegar.</p>
+            <summary>¿Cómo funciona el autocompletado bancario de Pago Móvil?</summary>
+            <p>Al tocar <em>Copiar datos</em> o enviar una <strong>Tarjeta PNG</strong> por WhatsApp, la imagen muestra tu logo y el desglose del cálculo, mientras que el texto copiable envía únicamente 4 líneas limpias (código de banco, cédula, teléfono y monto exacto en Bs.) para que bancos como BDV, Banesco, Mercantil o Bancamiga autocompleten los campos al pegar.</p>
           </details>
 
           <details class="faq-row">
             <summary>¿Dónde se guardan mis datos de Pago Móvil, cuentas bancarias o Zelle?</summary>
-            <p>Viven 100% en el almacenamiento privado de tu teléfono Android, sin cuentas ni servidores propios, y excluidos del respaldo automático en la nube. También cuentas con un botón de privacidad visual (<strong>ojito</strong>) en Cobros y en el Widget Ultra para ocultarlos al instante.</p>
+            <p>Tus datos nunca salen de tu teléfono: viven exclusivamente en el almacenamiento privado de tu equipo Android, sin cuentas ni servidores propios, y excluidos del respaldo automático en la nube. También cuentas con un botón de privacidad visual (<strong>ojito</strong>) en Pagos y en el Widget Ultra para ocultarlos al instante.</p>
           </details>
 
           <details class="faq-row">
@@ -595,7 +640,7 @@
     </section>
 
     <!-- COMMUNITY & DOWNLOAD BAND -->
-    <section id="comunidad" class="section section-deferred">
+    <section id="comunidad" class="section">
       <div class="container">
         <div class="cta-showcase">
           <div class="cta-copy">
@@ -646,8 +691,8 @@
       </div>
     </section>
 
-    <!-- LEGAL & TRANSPARENCY SECTION (100% SYNCED WITH APPROVED 14 REFINEMENTS) -->
-    <section id="legal" class="section section-tinted section-deferred">
+    <!-- LEGAL & TRANSPARENCY SECTION (100% SYNCED WITH APPROVED REFINEMENTS) -->
+    <section id="legal" class="section section-tinted">
       <div class="container">
         <header class="section-intro">
           <h2>Privacidad y Términos de Uso</h2>
@@ -671,8 +716,8 @@
             <div class="hub-panel is-active" data-legal-panel="privacy">
               <div class="legal-grid">
                 <article class="legal-card">
-                  <h4>100% local y sin registro</h4>
-                  <p>Tasa VE no solicita cuentas, contraseñas ni GPS. Tu historial, carrito, abonos y perfiles de cobro (Pago Móvil, Cuentas, Zelle y Binance) viven solo en tu teléfono, excluidos del respaldo en la nube, con botón de privacidad visual (ojito).</p>
+                  <h4>Solo en tu dispositivo y sin registro</h4>
+                  <p>Tasa VE no solicita cuentas, contraseñas ni GPS. Tu historial, carrito, abonos y perfiles de pago (Pago Móvil, Cuentas, Zelle y Binance) viven únicamente en tu teléfono, excluidos del respaldo en la nube, con botón de privacidad visual (ojito).</p>
                 </article>
                 <article class="legal-card">
                   <h4>Analítica anónima y reportes voluntarios</h4>
@@ -715,7 +760,7 @@
                 <article class="legal-card">
                   <h4>Permisos y widgets en Android</h4>
                   <ul class="compact-list">
-                    <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner OCR local.</li>
+                    <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner OCR en tu dispositivo.</li>
                     <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para la barra fija de tasas (Ultra).</li>
                     <li><strong>Widgets y Barra Rápida:</strong> Sin permisos invasivos; solo operan si los activas y usan el portapapeles al pulsar copiar.</li>
                     <li><strong>Internet y Facturación:</strong> Cotizaciones públicas, analítica anónima, anuncios y Google Play Billing.</li>
@@ -727,7 +772,7 @@
                     <li><strong>Google Firebase Analytics:</strong> Métricas anónimas agregadas de navegación (sin montos).</li>
                     <li><strong>Google Mobile Ads (AdMob):</strong> Publicidad controlada en el plan gratuito.</li>
                     <li><strong>Google Play Billing:</strong> Gestión segura de suscripciones Ultra y cancelación desde Google Play.</li>
-                    <li><strong>Google ML Kit:</strong> Reconocimiento óptico local en el dispositivo sin subir imágenes.</li>
+                    <li><strong>Google ML Kit:</strong> Reconocimiento óptico directamente en el dispositivo sin subir imágenes.</li>
                   </ul>
                 </article>
               </div>
@@ -793,6 +838,6 @@
   </div>
 
   <div id="web-toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=20261126c"></script>
+  <script src="app.js?v=20261126d"></script>
 </body>
 </html>

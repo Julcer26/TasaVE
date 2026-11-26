@@ -104,10 +104,10 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                 val data = WidgetCalcMath.formatProfileForWidget(profile, idx, profiles.size)
                 if (data.copyText.isNotBlank()) {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.setPrimaryClip(ClipData.newPlainText("Cobro Tasa VE", data.copyText))
-                    Toast.makeText(context, "Datos de cobro copiados", Toast.LENGTH_SHORT).show()
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Datos de Pago Tasa VE", data.copyText))
+                    Toast.makeText(context, "Datos de pago copiados", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Agrega primero un método de cobro en la app", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Agrega primero tus datos de pago en la app", Toast.LENGTH_SHORT).show()
                 }
                 handled = false
             }
@@ -370,7 +370,7 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.ultra_key_swap, actionBroadcast(context, 514, ACTION_SWAP))
                 setOnClickPendingIntent(R.id.ultra_key_open, launchActivityIntent(context, 515, LAUNCH_CONVERTER))
 
-                // Panel 3: Cobro Express
+                // Panel 3: Datos de Pago Rápido
                 val profiles = storage.getPaymentProfiles()
                 val idx = storage.resolveActivePaymentProfileIndex(profiles)
                 val profileData = WidgetCalcMath.formatProfileForWidget(

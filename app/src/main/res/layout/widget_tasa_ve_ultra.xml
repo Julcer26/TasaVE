@@ -89,7 +89,7 @@
         android:orientation="vertical"
         android:visibility="visible">
 
-        <!-- Header + 1-Tap Tab Pills (Tasas | Calc. | Cobro) -->
+        <!-- Header + 1-Tap Tab Pills (Tasas | Calc. | Pagos) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -151,7 +151,7 @@
                 android:gravity="center"
                 android:minWidth="52dp"
                 android:paddingHorizontal="10dp"
-                android:text="Cobro"
+                android:text="Pagos"
                 android:textColor="#CBD5E1"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -649,7 +649,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- TAB 3: COBRO EXPRESS (Perfil Pago Móvil / Zelle / Binance + Copiar en 1 toque) -->
+        <!-- TAB 3: DATOS DE PAGO (Perfil Pago Móvil / Zelle / Binance + Copiar en 1 toque) -->
         <LinearLayout
             android:id="@+id/ultra_panel_pay"
             android:layout_width="match_parent"
@@ -685,7 +685,7 @@
                     android:ellipsize="end"
                     android:gravity="center"
                     android:maxLines="1"
-                    android:text="COBRO EXPRESS"
+                    android:text="DATOS DE PAGO"
                     android:textColor="#34D399"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -729,7 +729,7 @@
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="3dp"
                     android:maxLines="5"
-                    android:text="Configura tu Pago Móvil, Zelle o Binance en la pestaña Cobros."
+                    android:text="Configura tu Pago Móvil, Zelle o Binance en la pestaña Pagos."
                     android:textColor="#E2E8F0"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -760,7 +760,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/widget_key_accent"
                     android:gravity="center"
-                    android:text="Cobros ↗"
+                    android:text="Pagos ↗"
                     android:textColor="#34D399"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />

@@ -46,7 +46,7 @@ object FeedbackReporter {
         "Escáner OCR",
         "Carrito",
         "Útiles / Widgets",
-        "Cobros / Tarjeta",
+        "Pagos / Tarjeta",
         "Otro"
     )
 

@@ -222,7 +222,7 @@ class QuickCalcActivity : ComponentActivity() {
                 if (profiles.isEmpty()) {
                     Toast.makeText(
                         this,
-                        "Guarda primero tu Pago Móvil en la pestaña Cobros",
+                        "Guarda primero tu Pago Móvil en la pestaña Pagos",
                         Toast.LENGTH_SHORT
                     ).show()
                     openMainApp()
@@ -314,7 +314,7 @@ class QuickCalcActivity : ComponentActivity() {
                             copyToClipboard("Conversión Tasa VE", conversionLine)
                             Toast.makeText(
                                 this,
-                                "Conversión copiada. Añade un Pago Móvil en Cobros.",
+                                "Conversión copiada. Añade un Pago Móvil en Pagos.",
                                 Toast.LENGTH_SHORT
                             ).show()
                             closeOverlay()
@@ -328,7 +328,7 @@ class QuickCalcActivity : ComponentActivity() {
                                 profiles.size
                             )
                             val combined = "$conversionLine\n\n${display.copyText}"
-                            copyToClipboard("Cobro Tasa VE", combined)
+                            copyToClipboard("Datos de Pago Tasa VE", combined)
                             Toast.makeText(
                                 this,
                                 "Monto + ${display.title} copiado",

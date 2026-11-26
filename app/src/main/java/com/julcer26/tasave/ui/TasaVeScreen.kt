@@ -2389,7 +2389,7 @@ fun SleekSettingsDialog(
                             text = if (isUltraUser) {
                                 "Tienes acceso total: cero anuncios, escáner ilimitado, Carrito ∞ + IVA/IGTF, barra fija, conversor flotante, Widget y perfiles ilimitados."
                             } else {
-                                "Elimina toda la publicidad y desbloquea escáner ilimitado, carrito ilimitado + IVA/IGTF, barra fija, conversor flotante, Widget y perfiles de cobro ilimitados."
+                                "Elimina toda la publicidad y desbloquea escáner ilimitado, carrito ilimitado + IVA/IGTF, barra fija, conversor flotante, Widget y perfiles de pago ilimitados."
                             },
                             fontSize = 11.5.sp,
                             color = textSecondary,
@@ -3189,7 +3189,7 @@ private fun LegalCenterDialog(
             "2. Fuentes de cotizaciones y caché sin conexión (offline)" to
                 "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM y series históricas) provienen de APIs públicas de terceros (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no controla su disponibilidad, continuidad ni exactitud, y no está afiliada al BCV, SENIAT, Zelle, Binance ni entidad bancaria o pasarela alguna. Las últimas tasas se almacenan localmente para operar sin conexión y alimentar los widgets.",
             "3. Datos almacenados localmente (sin cuentas)" to
-                "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de IVA/IGTF, perfiles opcionales de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos, logotipo propio y tarjetas PNG temporales (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar la exactitud de los datos que compartas con terceros.",
+                "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de IVA/IGTF, perfiles opcionales de pago (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos, logotipo propio y tarjetas PNG temporales (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar la exactitud de los datos que compartas con terceros.",
             "4. Reportes voluntarios, sugerencias y soporte técnico" to
                 "Cuando decides enviar un reporte de error, consulta o sugerencia desde la app o a soporte@tasave.net, se procesa tu mensaje, el módulo indicado, el contacto opcional si decides suministrarlo y datos técnicos básicos del entorno (versión de la app, tipo de plan, fabricante/modelo del equipo y versión de Android). Esta información se utiliza exclusivamente para diagnosticar fallos, mejorar la estabilidad, responderte y mantenerse como referencia e historial técnico interno de soporte y evolución de la aplicación, salvo que solicites su eliminación expresa escribiendo a soporte@tasave.net.",
             "5. Analítica, publicidad, facturación y servicios de terceros" to
@@ -3209,7 +3209,7 @@ private fun LegalCenterDialog(
                 "Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. TASA VE NO ES UNA ENTIDAD BANCARIA, CASA DE CAMBIO, MERCADO DE DIVISAS, PROCESADOR DE PAGOS, BILLETERA ELECTRÓNICA, ASESORA FINANCIERA, NI ADMINISTRADORA TRIBUTARIA, Y TAMPOCO EJECUTA TRANSFERENCIAS, LIQUIDACIONES O COBROS POR CUENTA DE LOS USUARIOS.",
             "2. Exactitud referencial de tasas y cálculos" to
                 "Las tasas, conversiones multimoneda, estimaciones de IVA/IGTF, calendarios y utilidades tienen fines estrictamente orientativos e informativos. Pueden diferir de las cotizaciones vigentes o aplicadas por bancos y comercios, y no constituyen asesoría financiera, contable, fiscal ni legal.",
-            "3. Herramientas de cobro, pagos mixtos y tarjetas PNG" to
+            "3. Plantillas de pago, pagos mixtos y tarjetas PNG" to
                 "Las plantillas de texto (incluyendo formato limpio para bancos), abonos multimoneda y tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica titularidad de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.",
             "4. Plan gratuito, suscripción Ultra, cancelación y reembolsos" to
                 "El Plan Gratuito incluye funciones base con publicidad de Google AdMob. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año, o equivalente local en Google Play) se renueva automáticamente salvo cancelación al menos 24 horas antes siguiendo: Google Play Store > Foto de perfil > Pagos y suscripciones > Suscripciones > Tasa VE > Cancelar suscripción (y confirmar en pantalla). Puedes restaurar compras desde la app; los reembolsos se rigen por las políticas vigentes de Google Play.",

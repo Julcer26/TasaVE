@@ -60,7 +60,7 @@
             android:background="@drawable/widget_tab_normal"
             android:gravity="center"
             android:paddingHorizontal="7dp"
-            android:text="Cobro"
+            android:text="Pagos"
             android:textColor="#CBD5E1"
             android:textSize="9.5sp"
             android:textStyle="bold" />

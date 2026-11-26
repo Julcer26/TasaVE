@@ -24,7 +24,7 @@ object QuickAmountParser {
         RegexOption.IGNORE_CASE
     )
     private val ignoredMetadataRegex = Regex(
-        "(\\*?pago\\s+m[oó]vil\\*?|datos\\s+pago\\s+m[oó]vil|cuenta\\s+bancaria|datos\\s+zelle|datos\\s+binance|ci/rif\\s*:|tasas\\s+del\\s+d[ií]a\\s*•\\s*tasa\\s+ve|resumen\\s+de\\s+cobro|presupuesto\\s*/\\s*pedido|\\(usd\\s+bcv|\\(eur\\s+bcv|\\(usdt\\s+binance|\\(cop\\s+bcv)",
+        "(\\*?pago\\s+m[oó]vil\\*?|datos\\s+pago\\s+m[oó]vil|cuenta\\s+bancaria|datos\\s+zelle|datos\\s+binance|ci/rif\\s*:|tasas\\s+del\\s+d[ií]a\\s*•\\s*tasa\\s+ve|resumen\\s+de\\s+(cobro|pago)|presupuesto\\s*/\\s*pedido|\\(usd\\s+bcv|\\(eur\\s+bcv|\\(usdt\\s+binance|\\(cop\\s+bcv)",
         RegexOption.IGNORE_CASE
     )
     private val vesHintRegex = Regex("(\\d\\s*bs\\b|\\bbs\\.?\\s*\\d|\\bbs\\b|\\bves\\b|bol[ií]var)", RegexOption.IGNORE_CASE)

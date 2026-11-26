@@ -85,8 +85,8 @@ object WidgetCalcMath {
     ): WidgetPaymentCardData {
         if (profile == null) {
             return WidgetPaymentCardData(
-                title = "COBRO EXPRESS",
-                displayLines = "Agrega tu Pago Móvil, Cuenta, Zelle o Binance en la pestaña Cobros.",
+                title = "DATOS DE PAGO",
+                displayLines = "Agrega tu Pago Móvil, Cuenta, Zelle o Binance en la pestaña Pagos.",
                 copyText = ""
             )
         }
@@ -195,7 +195,7 @@ class TasaVeRatesWidgetProvider : AppWidgetProvider() {
                 val shortDate = TasaVeRepository.formatIsoShortDate(nextDateIso)
                 "BCV Mañana ($shortDate): Bs. ${VeNumberFormat.formatRate(nextUsd.rate, 4)} • Toca para abrir"
             } else {
-                "Toca para abrir calculadora, escáner y cobros"
+                "Toca para abrir calculadora, escáner y pagos"
             }
 
             val views = RemoteViews(context.packageName, R.layout.widget_tasa_ve_rates).apply {

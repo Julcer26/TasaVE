@@ -278,6 +278,27 @@ button, input { font-family: inherit; }
 .hero-left, .hero-right, .bento-card, .bento-split > *, .demo-layout > *, .faq-layout > *, .cta-showcase > * {
   min-width: 0;
 }
+.welcome-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--emerald-hi);
+  box-shadow: 0 0 0 4px var(--emerald-soft);
+  flex-shrink: 0;
+}
 .hero h1 {
   font-family: var(--font-display);
   font-size: clamp(2.15rem, 4.4vw, 3.45rem);
@@ -523,6 +544,52 @@ button, input { font-family: inherit; }
 }
 .dock-btn.is-active { background: var(--surface-2); color: var(--ink); box-shadow: var(--top-sheen); }
 
+/* ---------- 4-Pillar Quick Overview Band ---------- */
+.overview-band {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-tinted);
+  padding: 36px 0;
+}
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+.overview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.ov-num {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--emerald-hi);
+  letter-spacing: 0.04em;
+}
+.overview-item h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.overview-item p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-secondary);
+  line-height: 1.55;
+}
+@media (min-width: 640px) {
+  .overview-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .overview-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
 /* ---------- Sections ---------- */
 .section { padding: 76px 0; }
 .section-tinted {
@@ -685,32 +752,60 @@ button, input { font-family: inherit; }
   object-position: top;
 }
 
-/* ---------- Interactive Simulator ---------- */
-.demo-layout { display: grid; gap: 28px; align-items: start; }
-.demo-controls-panel { display: flex; flex-direction: column; gap: 12px; }
+/* ---------- Interactive Simulator (Mobile-First Horizontal Switcher + Realistic Phone) ---------- */
+.demo-layout { display: grid; gap: 20px; align-items: start; }
+.demo-controls-panel { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .demo-autoplay-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px;
 }
-.autoplay-status strong { display: block; font-size: 0.9rem; }
-.autoplay-status span { font-size: 0.8rem; color: var(--ink-muted); }
-.demo-tab-list { display: flex; flex-direction: column; gap: 8px; }
+.autoplay-status strong { display: block; font-size: 0.88rem; }
+.autoplay-status span { font-size: 0.78rem; color: var(--ink-muted); }
+
+/* Mobile: sleek wrap pill grid directly above the phone (all 5 modules visible at once) */
+.demo-tab-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 7px;
+}
 .demo-tab-btn {
-  width: 100%; text-align: left; padding: 14px 16px; border-radius: 14px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--ink);
-  cursor: pointer; display: flex; align-items: flex-start; gap: 14px;
-  position: relative; overflow: hidden;
+  flex: 1 1 auto;
+  justify-content: center;
+  text-align: left;
+  padding: 8px 11px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  position: relative;
+  overflow: hidden;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .demo-tab-btn:hover { background: var(--surface-2); }
-.demo-tab-btn.is-active { background: var(--surface-2); border-color: var(--border-strong); box-shadow: var(--top-sheen); }
+.demo-tab-btn.is-active {
+  background: var(--surface-2);
+  border-color: var(--emerald);
+  box-shadow: var(--top-sheen);
+}
 .demo-num {
-  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
   background: var(--bg-tinted); border: 1px solid var(--border);
-  color: var(--ink-muted); font-size: 0.8rem; font-weight: 700;
+  color: var(--ink-muted); font-size: 0.72rem; font-weight: 700;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .demo-tab-btn.is-active .demo-num { background: var(--emerald); border-color: var(--emerald); color: #03150E; }
+.demo-short-label {
+  display: inline;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.demo-tab-copy { display: none; }
 .demo-tab-copy strong { display: block; font-size: 0.94rem; margin-bottom: 2px; font-weight: 700; }
 .demo-tab-copy span { display: block; font-size: 0.83rem; color: var(--ink-secondary); }
 .demo-progress {
@@ -719,14 +814,33 @@ button, input { font-family: inherit; }
 }
 
 .phone-stage {
-  background: var(--surface); border: 1px solid var(--border-strong);
-  border-radius: 30px; padding: 12px; box-shadow: var(--shadow-lg);
-  max-width: 440px; width: 100%; margin-inline: auto;
+  background: linear-gradient(155deg, #3B4454 0%, #151B27 42%, #293244 100%);
+  border-radius: 34px;
+  padding: 9px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  max-width: 410px;
+  width: 100%;
+  margin-inline: auto;
+}
+.sim-phone-statusbar {
+  background: #0A0D14;
+  border-radius: 26px 26px 0 0;
+  padding: 10px 18px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 .phone-screen {
-  background: #0A0D14; color: #F4F6FA; border-radius: 22px; padding: 18px;
-  min-height: 510px; display: flex; flex-direction: column; gap: 12px;
+  background: #0A0D14; color: #F4F6FA; border-radius: 0 0 26px 26px; padding: 14px 16px 18px;
+  min-height: 460px; display: flex; flex-direction: column; gap: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 0;
 }
 .sim-topbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -1192,6 +1306,13 @@ button, input { font-family: inherit; }
   .bento-card.span-5 { grid-column: span 5; }
   .bento-split { grid-template-columns: 1.15fr 0.85fr; align-items: end; }
   .demo-layout { grid-template-columns: 1.05fr 0.95fr; gap: 40px; }
+  .demo-tab-list { flex-direction: column; flex-wrap: nowrap; }
+  .demo-tab-btn { width: 100%; justify-content: flex-start; padding: 14px 16px; border-radius: 14px; align-items: flex-start; gap: 14px; }
+  .demo-tab-btn.is-active { border-color: var(--border-strong); }
+  .demo-num { width: 34px; height: 34px; border-radius: 9px; font-size: 0.8rem; }
+  .demo-short-label { display: none; }
+  .demo-tab-copy { display: block; }
+  .phone-screen { min-height: 495px; padding: 16px 18px 20px; }
   .faq-layout { grid-template-columns: 0.78fr 1.22fr; gap: 48px; }
   .cta-showcase { grid-template-columns: 1.15fr 0.85fr; padding: 44px; }
 }

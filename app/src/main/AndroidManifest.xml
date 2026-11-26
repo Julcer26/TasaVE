@@ -81,7 +81,7 @@
         <receiver
             android:name=".widget.TasaVeUltraWidgetProvider"
             android:exported="true"
-            android:label="Tasa VE Ultra • Calculadora y Cobros">
+            android:label="Tasa VE Ultra • Calculadora y Pagos">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

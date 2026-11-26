@@ -1787,7 +1787,7 @@ fun MarketTab(
             }
         }
 
-        // Home Screen Widgets Card (Tasas Gratis + Calculadora y Cobro Express Ultra)
+        // Home Screen Widgets Card (Tasas Gratis + Calculadora y Datos de Pago Ultra)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1809,7 +1809,7 @@ fun MarketTab(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Widgets de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
                     Text(
-                        text = "Tasas en Vivo gratis para todos • Calculadora y Cobro Express en Ultra.",
+                        text = "Tasas en Vivo gratis para todos • Calculadora y Datos Rápidos en Ultra.",
                         fontSize = 11.sp,
                         color = textSecondary
                     )
@@ -1854,7 +1854,7 @@ fun MarketTab(
                             if (manager.isRequestPinAppWidgetSupported) {
                                 manager.requestPinAppWidget(provider, null, null)
                             } else {
-                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Cobros.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Pagos.", Toast.LENGTH_LONG).show()
                             }
                         } else {
                             Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
@@ -1868,7 +1868,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.Widgets, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Fijar Widget Calculadora y Cobros (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Fijar Widget Calculadora y Pagos (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             } else {
                 Button(
@@ -1881,7 +1881,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Desbloquear Widget Calc. + Cobro ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Text("Desbloquear Widget Calc. + Pagos ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
                 }
             }
         }
@@ -1890,7 +1890,7 @@ fun MarketTab(
 }
 
 // =========================================================================
-// TAB 4: COBROS (PAGO MIXTO, MÚLTIPLES MÉTODOS, TARJETA PNG Y WHATSAPP)
+// TAB 4: PAGOS (PAGO MIXTO, MÚLTIPLES MÉTODOS, TARJETA PNG Y WHATSAPP)
 // =========================================================================
 @Composable
 fun CheckoutTab(
@@ -1994,7 +1994,7 @@ fun CheckoutTab(
         buildString {
             if (result.totalUsd > 0.005) {
                 val brandHeader = if (isUltraUser && customBrandName.isNotBlank()) customBrandName.trim() else "Tasa VE"
-                appendLine("*$brandHeader • Resumen de Cobro*")
+                appendLine("*$brandHeader • Resumen de Pago*")
                 appendLine("Total: $${VeNumberFormat.formatMoney(result.totalUsd)} • Bs. ${VeNumberFormat.formatMoney(result.totalVes)}")
                 appendLine("Tasa ($rateLabel): Bs. ${VeNumberFormat.formatRate(activeRate, rateDecimals)}")
                 if (paidSummaryText.isNotBlank()) {
@@ -2346,9 +2346,9 @@ fun CheckoutTab(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (isUltraUser) {
-                            "Mis Métodos de Cobro (${paymentProfiles.size})"
+                            "Mis Datos de Pago (${paymentProfiles.size})"
                         } else {
-                            "Mis Métodos de Cobro (${paymentProfiles.size}/${UltraMath.FREE_PAYMENT_PROFILES_MAX} gratis)"
+                            "Mis Datos de Pago (${paymentProfiles.size}/${UltraMath.FREE_PAYMENT_PROFILES_MAX} gratis)"
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -2728,7 +2728,7 @@ fun CheckoutTab(
                 onClick = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val textToCopy = bankAutoPasteText.ifBlank { shareSummaryText }
-                    clipboard.setPrimaryClip(ClipData.newPlainText("Cobro Tasa VE", textToCopy))
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Datos de Pago Tasa VE", textToCopy))
                     Toast.makeText(
                         context,
                         if (bankAutoPasteText.isNotBlank()) "Datos listos para pegar en el banco" else "Resumen copiado",
@@ -2795,7 +2795,7 @@ fun CheckoutTab(
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, shareSummaryText)
                 }
-                context.startActivity(Intent.createChooser(sendIntent, "Enviar cobro por WhatsApp"))
+                context.startActivity(Intent.createChooser(sendIntent, "Enviar resumen por WhatsApp"))
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -2844,7 +2844,7 @@ fun CheckoutTab(
                 val saved = onSaveProfile(profile)
                 showProfileDialog = false
                 if (saved) {
-                    Toast.makeText(context, "Método de cobro guardado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Datos de pago guardados", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(
                         context,
@@ -2903,7 +2903,7 @@ private fun CustomBrandDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Marca en Tarjeta de Cobro",
+                            text = "Marca en Tarjeta PNG",
                             fontSize = 15.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = textPrimary
@@ -3137,7 +3137,7 @@ private fun PaymentProfileEditorDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (initial == null) "Nuevo Método de Cobro" else "Editar Método de Cobro",
+                        text = if (initial == null) "Nuevos Datos de Pago" else "Editar Datos de Pago",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = textPrimary
@@ -3676,13 +3676,13 @@ fun PlansComparisonDialog(
                         listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
                         listOf("BCV Mañana + Calendario Bancario", "✓", "✓"),
                         listOf("Útiles (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
-                        listOf("Pago Mixto + Tarjeta PNG (Cobro y Carrito)", "✓", "✓"),
+                        listOf("Pago Mixto + Tarjeta PNG (Pagos y Carrito)", "✓", "✓"),
                         listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Widget Tasas en Vivo", "✓", "✓"),
-                        listOf("Widget Calculadora y Cobros", "—", "✓"),
+                        listOf("Widget Calculadora y Pagos", "—", "✓"),
                         listOf("Barra fija y Conversor flotante", "—", "✓"),
                         listOf("Logo propio en Tarjeta PNG", "—", "✓")
                     )
