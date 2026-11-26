@@ -580,21 +580,21 @@
             <div class="hub-panel is-active" data-legal-panel="privacy">
               <div class="legal-grid">
                 <article class="legal-card">
-                  <h4>Sin cuentas ni servidores propios</h4>
-                  <p>Tasa VE no solicita registro, contraseñas ni ubicación GPS. Tu historial, carrito y perfiles de cobro (Pago Móvil, Cuentas Bancarias, Zelle y Binance Pay) viven únicamente en el almacenamiento privado de tu teléfono y se excluyen del respaldo en la nube.</p>
+                  <h4>100% local y sin registro</h4>
+                  <p>Tasa VE no solicita cuentas, contraseñas ni GPS. Tu historial, carrito, abonos y perfiles de cobro (Pago Móvil, Cuentas, Zelle y Binance) viven solo en tu teléfono, excluidos del respaldo en la nube, con botón de privacidad visual (ojito).</p>
                 </article>
                 <article class="legal-card">
-                  <h4>Estadísticas anónimas agregadas</h4>
-                  <p>Utilizamos Google Firebase Analytics únicamente para medir de forma anónima qué pantallas o herramientas se abren más y mejorar la app. <strong>Nunca</strong> se envían montos, tasas escritas, nombres, cédulas, teléfonos ni datos bancarios.</p>
+                  <h4>Analítica anónima y reportes voluntarios</h4>
+                  <p>Firebase Analytics solo mide navegación agregada sin montos ni datos bancarios. Al enviar voluntariamente un reporte o sugerencia, se adjunta únicamente diagnóstico técnico básico (versión de app y modelo/Android) para soporte.</p>
                 </article>
                 <article class="legal-card">
-                  <h4>OCR y Tarjetas PNG 100% locales</h4>
-                  <p>El escáner de cámara analiza los números directamente en tu dispositivo con Google ML Kit sin guardar ni subir fotografías. Las tarjetas PNG se generan en caché temporal privado (<code>shared_cards/</code>).</p>
+                  <h4>Control total y eliminación</h4>
+                  <p>El escáner OCR y las tarjetas PNG operan localmente sin subir fotos. Puedes borrar tus datos locales en 1 toque o solicitar la eliminación de reportes de soporte escribiendo a <a href="mailto:soporte@tasave.net" class="inline-link">soporte@tasave.net</a>.</p>
                 </article>
               </div>
               <div class="legal-footer-bar">
-                <span>Última actualización legal: 23 de noviembre de 2026</span>
-                <a href="privacy-policy.html" class="btn btn-secondary btn-sm">Leer Política de Privacidad completa</a>
+                <span>Última actualización legal: 26 de noviembre de 2026</span>
+                <a href="privacy-policy.html#privacidad" class="btn btn-secondary btn-sm">Leer Política de Privacidad completa</a>
               </div>
             </div>
 
@@ -605,17 +605,17 @@
                   <p>Tasa VE es una calculadora matemática e informativa. <strong>No</strong> es banco, casa de cambio, billetera ni autoridad tributaria, y no está afiliada al BCV, SENIAT, SUDEBAN, Zelle ni Binance.</p>
                 </article>
                 <article class="legal-card">
-                  <h4>Fuentes públicas y uso referencial</h4>
-                  <p>Las cotizaciones se consultan de APIs públicas (<code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code>). Los cálculos de IVA/IGTF, calendario SUDEBAN y plantillas de cobro son estrictamente referenciales.</p>
+                  <h4>Uso referencial y limitación</h4>
+                  <p>Las tasas provienen de APIs públicas (<code>dolarapi.com</code>, <code>dolarvzla.com</code> y <code>open.er-api.com</code>). Los cálculos fiscales, abonos multimoneda, autopegado bancario y tarjetas PNG son referenciales y no intermedian pagos.</p>
                 </article>
                 <article class="legal-card">
-                  <h4>Suscripción Tasa VE Ultra</h4>
-                  <p>Las suscripciones ($0.99/mes o $7.99/año) se procesan exclusivamente mediante Google Play Billing y se renuevan automáticamente salvo cancelación al menos 24 h antes desde Google Play Store &gt; Suscripciones.</p>
+                  <h4>Suscripción Ultra y propiedad intelectual</h4>
+                  <p>Tasa VE Ultra ($0.99/mes o $7.99/año) se gestiona vía Google Play Billing con cancelación libre en cualquier momento. Conservas plena titularidad sobre el logotipo comercial que cargues localmente en tus tarjetas.</p>
                 </article>
               </div>
               <div class="legal-footer-bar">
                 <span>Contacto legal y soporte: <a href="mailto:soporte@tasave.net" class="inline-link">soporte@tasave.net</a></span>
-                <a href="privacy-policy.html" class="btn btn-secondary btn-sm">Ver documento web completo</a>
+                <a href="privacy-policy.html#terminos" class="btn btn-secondary btn-sm">Leer Términos de Uso completos</a>
               </div>
             </div>
 
@@ -624,25 +624,25 @@
                 <article class="legal-card">
                   <h4>Permisos solicitados en Android</h4>
                   <ul class="compact-list">
-                    <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner OCR.</li>
+                    <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner OCR local.</li>
                     <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para la barra fija de tasas (Ultra).</li>
                     <li><strong>Barra Rápida:</strong> Integración estándar del sistema activada solo al tocar el botón.</li>
-                    <li><strong>Internet y Facturación:</strong> Cotizaciones públicas, métricas anónimas, anuncios y Google Play Billing.</li>
+                    <li><strong>Internet y Facturación:</strong> Cotizaciones públicas, analítica anónima, anuncios y Google Play Billing.</li>
                   </ul>
                 </article>
                 <article class="legal-card">
                   <h4>SDKs certificados de terceros</h4>
                   <ul class="compact-list">
-                    <li><strong>Google Firebase Analytics:</strong> Métricas anónimas agregadas de navegación.</li>
-                    <li><strong>Google Mobile Ads (AdMob):</strong> Publicidad no invasiva en el plan gratuito.</li>
-                    <li><strong>Google Play Billing:</strong> Gestión segura de suscripciones Ultra.</li>
-                    <li><strong>Google ML Kit:</strong> Reconocimiento de texto local en el dispositivo.</li>
+                    <li><strong>Google Firebase Analytics:</strong> Métricas anónimas agregadas de navegación (sin montos).</li>
+                    <li><strong>Google Mobile Ads (AdMob):</strong> Publicidad controlada en el plan gratuito.</li>
+                    <li><strong>Google Play Billing:</strong> Gestión segura de suscripciones Ultra y restauración.</li>
+                    <li><strong>Google ML Kit:</strong> Reconocimiento óptico local en el dispositivo sin subir imágenes.</li>
                   </ul>
                 </article>
               </div>
               <div class="legal-footer-bar">
                 <span>Cumplimiento Google Play Data Safety verificado</span>
-                <a href="privacy-policy.html" class="btn btn-secondary btn-sm">Leer Política Completa</a>
+                <a href="privacy-policy.html" class="btn btn-secondary btn-sm">Ver Centro Legal Completo</a>
               </div>
             </div>
           </div>

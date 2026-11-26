@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Privacidad y Términos - Tasa VE</title>
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Política de Privacidad, Seguridad de Datos y Términos de Uso oficiales de Tasa VE — Calculadora de conversión financiera para Venezuela.">
+    <title>Política de Privacidad y Términos de Uso — Tasa VE</title>
     <link rel="icon" type="image/png" href="assets/app_icon_512x512.png">
     <style>
         :root {
-            --bg-color: #0A0A0B;
-            --card-bg: #141418;
-            --toc-bg: #1B1B21;
+            --bg-color: #070A10;
+            --card-bg: #111622;
+            --surface-bg: #171E2E;
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
             --accent-green: #10B981;
+            --accent-green-soft: rgba(16, 185, 129, 0.14);
             --accent-gold: #F59E0B;
             --border-color: rgba(148, 163, 184, 0.18);
         }
@@ -20,101 +23,152 @@
             :root {
                 --bg-color: #F8FAFC;
                 --card-bg: #FFFFFF;
-                --toc-bg: #F1F5F9;
+                --surface-bg: #F1F5F9;
                 --text-primary: #0F172A;
                 --text-secondary: #475569;
+                --accent-green: #059669;
+                --accent-green-soft: rgba(5, 150, 105, 0.10);
+                --accent-gold: #B45309;
                 --border-color: #E2E8F0;
             }
         }
-        html {
-            scroll-behavior: smooth;
-        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            line-height: 1.65;
+            line-height: 1.68;
             margin: 0;
-            padding: 20px;
+            padding: 20px 16px 40px;
         }
         .container {
-            max-width: 840px;
+            max-width: 880px;
             margin: 0 auto;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 32px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+            border-radius: 22px;
+            padding: 36px;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+        }
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .back-link {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: var(--accent-green);
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .part-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .part-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .part-pill:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .badge {
+            display: inline-block;
+            background: var(--accent-green-soft);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.34);
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
         h1 {
-            color: var(--accent-green);
-            margin-top: 4px;
-            margin-bottom: 8px;
-            font-size: 26px;
+            color: var(--text-primary);
+            margin: 4px 0 8px;
+            font-size: clamp(24px, 4vw, 30px);
+            letter-spacing: -0.4px;
+            line-height: 1.2;
+        }
+        .meta-line {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            margin: 0 0 16px;
+        }
+        .part-heading {
+            margin-top: 38px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: var(--surface-bg);
+            border-left: 4px solid var(--accent-green);
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            scroll-margin-top: 18px;
+        }
+        .part-heading.terms {
+            border-left-color: var(--accent-gold);
         }
         h2 {
             color: var(--text-primary);
-            font-size: 19px;
+            font-size: 18.5px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
-            margin-top: 32px;
-            scroll-margin-top: 20px;
+            margin-top: 28px;
+            scroll-margin-top: 18px;
         }
         h3 {
             color: var(--accent-gold);
-            font-size: 15.5px;
-            margin-top: 18px;
+            font-size: 15px;
+            margin-top: 16px;
+            margin-bottom: 6px;
         }
         p, li {
             color: var(--text-secondary);
             font-size: 14.5px;
         }
-        ul {
-            padding-left: 20px;
-        }
-        li {
-            margin-bottom: 6px;
-        }
-        a {
-            color: var(--accent-green);
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .badge {
-            display: inline-block;
-            background: rgba(16, 185, 129, 0.14);
-            color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 10px;
-            padding: 4px 10px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+        strong { color: var(--text-primary); }
+        ul, ol { padding-left: 20px; }
+        li { margin-bottom: 6px; }
+        a { color: var(--accent-green); text-decoration: none; }
+        a:hover { text-decoration: underline; }
         .toc {
-            background-color: var(--toc-bg);
+            background-color: var(--surface-bg);
             border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 14px 16px;
-            margin: 20px 0 24px 0;
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 20px 0 24px;
         }
         .toc-title {
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.6px;
             color: var(--accent-green);
-            margin: 0 0 10px 0;
+            margin: 0 0 10px;
         }
         .toc-list {
             list-style: none;
             padding: 0;
             margin: 0;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 6px 14px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 5px 14px;
         }
         .toc-list a {
             display: block;
@@ -122,151 +176,243 @@
             border-radius: 10px;
             border-left: 3px solid transparent;
             color: var(--text-primary);
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 500;
-            transition: background-color 0.15s, border-color 0.15s;
         }
         .toc-list a:hover {
-            background-color: rgba(16, 185, 129, 0.1);
+            background-color: var(--accent-green-soft);
             border-left-color: var(--accent-green);
             text-decoration: none;
         }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 18px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+        th, td {
+            text-align: left;
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        th {
+            background: var(--surface-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 12.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        tr:last-child td { border-bottom: none; }
+        td { color: var(--text-secondary); }
         .callout {
             background: rgba(245, 158, 11, 0.08);
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.32);
             border-radius: 14px;
             padding: 14px 16px;
-            margin: 16px 0;
+            margin: 18px 0;
         }
         .callout p {
             margin: 0;
             color: var(--text-primary);
-            font-size: 13.5px;
+            font-size: 13.8px;
+        }
+        code {
+            background: rgba(148, 163, 184, 0.14);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 12.8px;
+            color: var(--text-primary);
         }
         .footer {
-            margin-top: 36px;
+            margin-top: 40px;
             padding-top: 18px;
             border-top: 1px solid var(--border-color);
             font-size: 13px;
             color: var(--text-secondary);
             text-align: center;
         }
-        code {
-            background: rgba(148, 163, 184, 0.14);
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 13px;
+        @media (max-width: 600px) {
+            .container { padding: 22px 18px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <p style="margin: 0 0 14px 0;"><a href="index.html" style="font-weight: 600; font-size: 13.5px;">&larr; Volver a Tasa VE (tasave.net)</a></p>
-        <span class="badge">Google Play Compliance &bull; v1.2.0</span>
-        <h1>Política de Privacidad — Tasa VE</h1>
-        <p><strong>Última actualización:</strong> 23 de noviembre de 2026 &bull; <strong>Sitio oficial:</strong> <a href="https://tasave.net">tasave.net</a> &bull; <strong>Contacto:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a></p>
-        <p>La aplicación móvil <strong>Tasa VE</strong> respeta y protege la privacidad de sus usuarios. Este documento explica de manera clara y transparente el origen de las cotizaciones, el tratamiento local de datos, nuestras estadísticas anónimas de uso con Firebase Analytics, los permisos del sistema y el funcionamiento de anuncios y suscripciones conforme a las políticas de Google Play.</p>
+    <main class="container">
+        <div class="topbar">
+            <a href="index.html" class="back-link">&larr; Volver a Tasa VE (tasave.net)</a>
+            <div class="part-pills">
+                <a href="#privacidad" class="part-pill">Política de Privacidad</a>
+                <a href="#terminos" class="part-pill">Términos de Uso</a>
+            </div>
+        </div>
 
-        <nav class="toc" aria-label="Índice de secciones">
-            <p class="toc-title">Contenido</p>
+        <span class="badge">Centro Legal Oficial &bull; Google Play Data Safety</span>
+        <h1>Política de Privacidad y Términos de Uso — Tasa VE</h1>
+        <p class="meta-line">
+            <strong>Última actualización:</strong> 26 de noviembre de 2026 &bull;
+            <strong>Sitio oficial:</strong> <a href="https://tasave.net">tasave.net</a> &bull;
+            <strong>Contacto legal y soporte:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>
+        </p>
+        <p>Este documento establece de forma clara, transparente y verificable cómo <strong>Tasa VE</strong> protege tu privacidad, procesa tus datos localmente, maneja los reportes voluntarios de soporte y regula el uso de la aplicación móvil y sus servicios asociados.</p>
+
+        <div class="table-wrap" role="region" aria-label="Resumen de seguridad de datos">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Tratamiento en Tasa VE</th>
+                        <th>Dónde se almacena</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Cuentas, contraseñas o GPS</strong></td>
+                        <td>No se solicitan ni se recopilan.</td>
+                        <td>No aplica (sin registro).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Historial, carrito y perfiles de cobro</strong></td>
+                        <td>Pago Móvil, Cuentas, Zelle, Binance, abonos y logo propio.</td>
+                        <td>100% local en tu teléfono (excluido de respaldo en la nube).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Escáner OCR de precios</strong></td>
+                        <td>Lectura óptica local con Google ML Kit; sin fotos ni videos guardados.</td>
+                        <td>Solo en memoria temporal del dispositivo.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Reportes voluntarios de soporte</strong></td>
+                        <td>Mensaje, módulo, contacto opcional y diagnóstico técnico (versión/modelo/Android).</td>
+                        <td>Solo cuando el usuario decide enviarlo para soporte técnico.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Analítica y anuncios</strong></td>
+                        <td>Eventos anónimos agregados (Firebase) y AdMob en versión gratuita.</td>
+                        <td>Servidores certificados de Google (sin montos ni datos bancarios).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="toc" aria-label="Índice del Centro Legal">
+            <p class="toc-title">Índice rápido</p>
             <ol class="toc-list">
-                <li><a href="#s1">1. Origen y actualización de los datos</a></li>
-                <li><a href="#s2">2. Información que recopilamos y métricas anónimas</a></li>
-                <li><a href="#s3">3. Uso de la información</a></li>
-                <li><a href="#s4">4. Enlaces externos</a></li>
-                <li><a href="#s5">5. Seguridad de los datos</a></li>
-                <li><a href="#s6">6. Publicidad y suscripciones</a></li>
-                <li><a href="#s7">7. Permisos del sistema</a></li>
-                <li><a href="#s8">8. Uso de tecnologías de terceros</a></li>
-                <li><a href="#s9">9. Cambios en esta política</a></li>
-                <li><a href="#s10">10. Contacto</a></li>
+                <li><a href="#s1">1. Responsable y alcance</a></li>
+                <li><a href="#s2">2. Origen de cotizaciones y caché offline</a></li>
+                <li><a href="#s3">3. Datos almacenados localmente</a></li>
+                <li><a href="#s4">4. Reportes voluntarios y soporte técnico</a></li>
+                <li><a href="#s5">5. Analítica anónima agregada</a></li>
+                <li><a href="#s6">6. Seguridad y privacidad visual</a></li>
+                <li><a href="#s7">7. Permisos del sistema Android</a></li>
+                <li><a href="#s8">8. Publicidad, suscripción Ultra y terceros</a></li>
+                <li><a href="#s9">9. Conservación, eliminación y menores</a></li>
+                <li><a href="#s10">10. Modificaciones y contacto oficial</a></li>
+                <li><a href="#terminos">Parte II: Términos de Uso y Descargo Legal</a></li>
             </ol>
         </nav>
 
-        <h2 id="s1">1. Origen y actualización de los datos</h2>
+        <!-- PARTE I: POLÍTICA DE PRIVACIDAD -->
+        <div id="privacidad" class="part-heading">Parte I — Política de Privacidad y Protección de Datos</div>
+
+        <h2 id="s1">1. Responsable y alcance</h2>
+        <p><strong>Tasa VE</strong> es una aplicación móvil independiente de conversión y cálculo financiero desarrollada para usuarios en Venezuela. Esta política aplica a la aplicación Android distribuida oficialmente en Google Play y al sitio web informativo <a href="https://tasave.net">tasave.net</a>.</p>
+
+        <h2 id="s2">2. Origen de cotizaciones y caché offline</h2>
         <ul>
-            <li><strong>Fuentes públicas de referencia:</strong> Las cotizaciones mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM e históricos diarios para el Calendario Bancario) provienen de consultas automatizadas a APIs públicas (<code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code>).</li>
-            <li><strong>Sin afiliación oficial:</strong> Tasa VE es una herramienta independiente de cálculo matemático. <strong>No está afiliada, autorizada ni vinculada</strong> con el Banco Central de Venezuela (BCV), el SENIAT, la SUDEBAN, el Banco de la República de Colombia, Zelle, Binance ni ninguna entidad bancaria o casa de cambio.</li>
-            <li><strong>Caché local (Modo Offline):</strong> Las últimas tasas consultadas y sus variaciones históricas se guardan localmente en tu teléfono para habilitar la consulta sin conexión y actualizar el Widget de pantalla de inicio.</li>
+            <li><strong>Fuentes públicas:</strong> Las tasas mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT referencial, Peso Colombiano COP/TRM e históricos diarios) provienen de APIs públicas de terceros (<code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code>).</li>
+            <li><strong>Sin afiliación oficial:</strong> Tasa VE no está afiliada, autorizada ni vinculada con el Banco Central de Venezuela (BCV), SENIAT, SUDEBAN, Banco de la República de Colombia, Zelle, Binance ni ninguna entidad bancaria o casa de cambio.</li>
+            <li><strong>Caché local (Modo Offline):</strong> Las últimas tasas consultadas se guardan localmente en tu teléfono para permitir conversiones sin conexión y actualizar los widgets de pantalla de inicio.</li>
         </ul>
 
-        <h2 id="s2">2. Información que recopilamos y métricas anónimas</h2>
-        <h3>A. Sin recopilación en servidores propios</h3>
-        <p><strong>Tasa VE NO recopila, no solicita ni almacena en servidores propios</strong> cuentas de usuario, contraseñas, correos electrónicos ni ubicación física. No necesitas registrarte para usar la aplicación.</p>
-
-        <h3>B. Estadísticas anónimas de uso (Google Firebase Analytics)</h3>
-        <p>Para conocer de forma agregada qué herramientas utilizan más nuestros usuarios (por ejemplo, el Conversor COP de frontera, el Calendario SUDEBAN o las calculadoras de <strong>Útiles</strong>) y priorizar mejoras, usamos <strong>Google Firebase Analytics</strong> registrando únicamente eventos genéricos de navegación (<code>tasave_tab_opened</code>, <code>tasave_util_opened</code>, <code>tasave_rate_selected</code>, <code>tasave_calendar_opened</code>, <code>tasave_calendar_day_selected</code>, <code>tasave_scanner_opened</code>, <code>tasave_action</code>).</p>
-        <p><strong>Nunca recopilamos ni enviamos</strong> montos convertidos, totales de carrito, tasas personalizadas, nombres, cédulas, teléfonos, correos ni perfiles de Pago Móvil/Zelle/Binance.</p>
-
-        <h3>C. Datos almacenados localmente en tu dispositivo</h3>
-        <p>Para operar las funciones de la app, la información se guarda únicamente en el almacenamiento interno protegido (<em>sandbox</em>) de tu teléfono Android (SQLite/Room y <code>SharedPreferences</code>):</p>
+        <h2 id="s3">3. Datos almacenados localmente (sin registro)</h2>
+        <p>Tasa VE <strong>no exige creación de cuentas</strong> ni recopila contraseñas o ubicación GPS. Toda tu información operativa reside únicamente en el almacenamiento privado (<em>sandbox</em>) de tu dispositivo Android (SQLite/Room y <code>SharedPreferences</code>):</p>
         <ul>
-            <li><strong>Historial de conversiones:</strong> Cantidades convertidas, monedas seleccionadas y fecha de cálculo.</li>
-            <li><strong>Carrito de compras y preferencias fiscales:</strong> Productos agregados o editados, cantidades, precios unitarios y preferencia referencial de IVA (16%) e IGTF (3%).</li>
-            <li><strong>Perfiles opcionales de cobro (1 gratis / ilimitados en Ultra):</strong> Si decides guardar perfiles de <strong>Pago Móvil</strong>, <strong>Cuenta Bancaria</strong>, <strong>Zelle</strong> o <strong>Binance Pay</strong>, puedes ingresar voluntariamente un alias, banco, Cédula/RIF, teléfono, número de cuenta (20 dígitos), titular o correo/ID digital. Estos datos <strong>permanecen solo en tu dispositivo</strong>, nunca se envían a servidores propios ni a Firebase Analytics y están excluidos del respaldo en la nube de Android.</li>
-            <li><strong>Caché temporal de tarjetas PNG:</strong> Al compartir cálculos o cobros como imagen, la tarjeta PNG temporal se genera en el caché privado local (<code>shared_cards/</code>) compartido mediante <code>FileProvider</code>, sin subirse a ningún servidor externo.</li>
-            <li><strong>Preferencias de interfaz y cuotas diarias:</strong> Tema visual (Oscuro/Claro), saldo diario de escaneos OCR, notificación fija opcional y estado de la suscripción Ultra.</li>
+            <li><strong>Historial y carrito:</strong> Conversiones guardadas, productos del carrito, cantidades, precios unitarios y preferencias referenciales de IVA (16%) e IGTF (3%).</li>
+            <li><strong>Perfiles opcionales de cobro:</strong> Si decides guardar perfiles de <strong>Pago Móvil</strong>, <strong>Cuenta Bancaria</strong>, <strong>Zelle</strong> o <strong>Binance Pay</strong> (alias, banco, Cédula/RIF, teléfono, número de cuenta, titular o correo/ID digital), estos datos permanecen estrictamente en tu teléfono, <strong>nunca se transmiten a servidores propios ni a analítica</strong> y están excluidos del respaldo automático en la nube de Android.</li>
+            <li><strong>Marca propia y tarjetas PNG:</strong> El logo comercial opcional (Ultra) y las tarjetas PNG generadas al compartir se guardan localmente en caché privado (<code>shared_cards/</code>) compartido mediante <code>FileProvider</code> solo cuando decides enviarlas.</li>
         </ul>
 
-        <h2 id="s3">3. Uso de la información</h2>
-        <p>Los datos técnicos y locales se utilizan exclusivamente para:</p>
+        <h2 id="s4">4. Reportes voluntarios, sugerencias y soporte técnico</h2>
+        <p>Tasa VE ofrece un canal voluntario dentro de la app y por correo electrónico (<a href="mailto:soporte@tasave.net">soporte@tasave.net</a>) para reportar errores o enviar sugerencias de mejora.</p>
         <ul>
-            <li>Calcular conversiones de divisas (BCV hoy/mañana, USDT y COP de frontera), totales de carrito, estimaciones referenciales de IVA/IGTF, herramientas de <strong>Útiles</strong> (<em>¿Con qué pago?</em> y <em>Dividir cuenta</em>), consultar feriados en el Calendario SUDEBAN y calcular vuelto en pagos mixtos.</li>
-            <li>Generar resúmenes de texto o tarjetas visuales PNG (con marca personalizada opcional en Ultra) que tú <strong>decides explícitamente</strong> copiar o compartir por mensajería (como WhatsApp).</li>
-            <li>Actualizar los widgets de inicio (<em>Tasas en Vivo</em> gratis y <em>Calculadora y Cobros Ultra</em>), mostrar la <strong>notificación fija opcional (Ultra)</strong> y abrir el <strong>Conversor Flotante</strong> desde la <strong>Barra Rápida</strong> o la notificación fija.</li>
-            <li>Medir de forma anónima y agregada qué herramientas ayudan más, mostrar anuncios no invasivos en la versión gratuita y validar el acceso a <strong>Tasa VE Ultra</strong>.</li>
+            <li><strong>Datos incluidos al enviar un reporte:</strong> Únicamente la descripción que escribes, el módulo seleccionado, el dato de contacto solo si decides proporcionarlo para recibir respuesta y metadatos técnicos básicos de diagnóstico (<strong>versión de la aplicación, tipo de plan, marca/modelo del equipo y versión del sistema Android</strong>).</li>
+            <li><strong>Finalidad estricta:</strong> Estos datos técnicos se utilizan exclusivamente para reproducir fallos en modelos específicos de Android, validar correcciones y responder solicitudes de soporte. Nunca se cruzan ni vinculan con montos convertidos ni con tus perfiles de cobro.</li>
         </ul>
 
-        <h2 id="s4">4. Enlaces externos</h2>
-        <p>Al pulsar <em>"Enviar por WhatsApp"</em>, <em>"Tarjeta (IMG)"</em> o abrir enlaces hacia Google Play, soporte o políticas de terceros, Android abre la aplicación externa correspondiente, la cual se rige por sus propias políticas. Las consultas a <code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code> se limitan a descargar cotizaciones públicas sin enviar información personal ni perfiles de cobro.</p>
+        <h2 id="s5">5. Analítica anónima agregada (Google Firebase Analytics)</h2>
+        <p>Utilizamos <strong>Google Firebase Analytics</strong> para conocer de forma anónima y agregada qué secciones o herramientas son más útiles (por ejemplo, eventos genéricos de navegación como pestaña abierta, herramienta de Útiles o uso del calendario) y mejorar el rendimiento de la app. <strong>Jamás se recopilan ni envían</strong> montos, tasas escritas, nombres, cédulas, teléfonos, correos ni perfiles bancarios.</p>
 
-        <h2 id="s5">5. Seguridad de los datos</h2>
+        <h2 id="s6">6. Seguridad, cifrado y privacidad visual</h2>
         <ul>
-            <li><strong>Cifrado HTTPS (SSL/TLS):</strong> Todas las comunicaciones de red y métricas anónimas utilizan canales cifrados.</li>
-            <li><strong>Procesamiento local:</strong> El escáner OCR por cámara, el conversor flotante, la creación de tarjetas PNG y la barra fija se ejecutan localmente en el dispositivo sin leer chats ni pantallas automáticamente.</li>
-            <li><strong>Exclusión de respaldo en la nube:</strong> Las preferencias locales con perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay se excluyen de la copia de seguridad automática en la nube de Android.</li>
-            <li><strong>Control total:</strong> Puedes eliminar tu historial, carrito o cuentas guardadas en cualquier momento desde la app o desde <em>Ajustes de Android &gt; Aplicaciones &gt; Tasa VE &gt; Almacenamiento</em>.</li>
+            <li><strong>Cifrado en tránsito:</strong> Todas las consultas de red, métricas anónimas y envíos voluntarios de soporte utilizan cifrado <strong>HTTPS (SSL/TLS)</strong>.</li>
+            <li><strong>Procesamiento en el dispositivo:</strong> El escáner OCR por cámara, el conversor flotante, el cálculo de abonos multimoneda, la creación de tarjetas PNG y la barra fija se ejecutan localmente en el teléfono.</li>
+            <li><strong>Privacidad visual (botón de ojito):</strong> Puedes ocultar tus datos sensibles de Pago Móvil, cuentas bancarias, Zelle y Binance Pay en pantalla en cualquier momento desde la pestaña <em>Cobros</em> y el <em>Widget Ultra</em>, manteniendo disponible el copiado rápido cuando lo necesites.</li>
         </ul>
 
-        <h2 id="s6">6. Publicidad y suscripción Ultra</h2>
+        <h2 id="s7">7. Permisos del sistema Android</h2>
         <ul>
-            <li><strong>Versión gratuita (AdMob):</strong> Incluye calculadora BCV exacta, BCV Mañana, USDT paralelo, Peso Colombiano (COP) de frontera, Calendario SUDEBAN, <strong>Barra Rápida</strong> para abrir la app, las herramientas de <strong>Útiles</strong> (<em>¿Con qué pago?</em> con descuento libre y <em>Dividir cuenta</em> en 5 monedas), Pago Mixto, Tarjeta PNG, <strong>Widget Tasas en Vivo</strong> en pantalla de inicio, hasta <strong>5 productos en carrito</strong>, <strong>1 perfil de cobro</strong> y <strong>3 escaneos OCR diarios</strong>. Muestra banners adaptativos, anuncios intersticiales ocasionales tras acciones clave (nunca al abrir la app y con pausas de control) y permite ver voluntariamente un anuncio bonificado para obtener <strong>+5 escaneos extra</strong> o activar <strong>12 horas sin banners ni intersticiales</strong>.</li>
-            <li><strong>Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):</strong> Elimina todos los anuncios y desbloquea de forma ilimitada todas las herramientas: <strong>notificación fija opcional con tasas y Pago Móvil</strong>, <strong>conversor flotante multi-tasa (EUR, USDT, COP) + Pago Móvil desde la Barra Rápida o notificación fija</strong>, escáner de cámara ilimitado, Carrito ilimitado + IVA/IGTF, perfiles de cobro ilimitados, <strong>logo propio en tarjetas PNG</strong> y <strong>Widget Calculadora y Cobro Express</strong>.</li>
-            <li><strong>Renovación y cancelación:</strong> Las suscripciones se renuevan automáticamente vía Google Play salvo cancelación con al menos 24 horas de antelación desde <em>Google Play Store &gt; Suscripciones</em>.</li>
+            <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al abrir el escáner OCR. No graba video ni guarda o sube fotografías.</li>
+            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para mostrar la barra fija de tasas (sin servicio en primer plano intrusivo).</li>
+            <li><strong>Barra Rápida (<code>BIND_QUICK_SETTINGS_TILE</code>):</strong> Integración nativa de Android que solo responde cuando pulsas el acceso directo en el panel rápido.</li>
+            <li><strong>Internet y red (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>):</strong> Para cotizaciones públicas, analítica anónima, anuncios y validación de compras.</li>
+            <li><strong>Facturación (<code>com.android.vending.BILLING</code>):</strong> Para gestionar la suscripción opcional Ultra y la restauración de compras en Google Play.</li>
         </ul>
+
+        <h2 id="s8">8. Publicidad, suscripción Ultra y tecnologías de terceros</h2>
+        <ul>
+            <li><strong>Google Mobile Ads (AdMob):</strong> Muestra banners, intersticiales controlados y anuncios bonificados opcionales en la versión gratuita. Puede utilizar el ID de publicidad de Android (GAID) y diagnósticos antifraude conforme a la <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Política de Privacidad y Anuncios de Google</a>.</li>
+            <li><strong>Google Play In-App Billing:</strong> Gestiona la suscripción opcional <strong>Tasa VE Ultra</strong> ($0.99 USD/mes o $7.99 USD/año) mediante tokens seguros vinculados a tu cuenta Google, sin que Tasa VE acceda a los datos de tu tarjeta. Consulta los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener noreferrer">Términos de Google Play</a>.</li>
+            <li><strong>Google Firebase Analytics:</strong> Métricas anónimas agregadas de navegación conforme a la <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer">Privacidad de Firebase</a>.</li>
+            <li><strong>Google ML Kit (Text Recognition):</strong> Reconocimiento óptico local de precios en el dispositivo.</li>
+        </ul>
+
+        <h2 id="s9">9. Conservación, eliminación de datos y menores</h2>
+        <ul>
+            <li><strong>Control y borrado local:</strong> Puedes editar o eliminar tu historial, carrito, logo y perfiles de cobro en cualquier momento desde la app o desde <em>Ajustes de Android &gt; Aplicaciones &gt; Tasa VE &gt; Almacenamiento</em>.</li>
+            <li><strong>Eliminación de reportes de soporte:</strong> Si enviaste voluntariamente un reporte o sugerencia y deseas solicitar su eliminación de nuestros registros de soporte, escríbenos a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> indicando la fecha aproximada o contacto utilizado.</li>
+            <li><strong>Menores de edad:</strong> Tasa VE no está dirigida a menores de 13 años (o 16 años en el Espacio Económico Europeo) ni recopila conscientemente datos personales de menores.</li>
+        </ul>
+
+        <h2 id="s10">10. Modificaciones y contacto oficial</h2>
+        <p>Podemos actualizar este documento para reflejar mejoras técnicas o cambios normativos y de Google Play. La fecha de <em>Última actualización</em> al encabezado indica siempre la versión vigente.</p>
+        <p><strong>Responsable:</strong> Tasa VE &bull; <strong>Correo:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> &bull; <strong>Web:</strong> <a href="https://tasave.net">https://tasave.net</a></p>
+
+        <!-- PARTE II: TÉRMINOS Y CONDICIONES -->
+        <div id="terminos" class="part-heading terms">Parte II — Términos y Condiciones de Uso y Descargo Legal</div>
+
+        <h2 id="t1">1. Naturaleza del servicio y no afiliación</h2>
+        <p>Tasa VE es una calculadora matemática e informativa de conversión financiera. <strong>No es un banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria</strong>, y no posee vínculo ni respaldo oficial del BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad financiera alguna.</p>
+
+        <h2 id="t2">2. Fuentes públicas y carácter referencial</h2>
+        <p>Las tasas de cambio (BCV, EUR, USDT, COP) se obtienen de fuentes públicas de terceros y pueden presentar desfases frente a operaciones bancarias en tiempo real. Los cálculos de IVA (16%), IGTF (3%), herramientas de Útiles y el Calendario SUDEBAN tienen carácter estrictamente informativo y no sustituyen asesoría contable, financiera ni facturación fiscal.</p>
+
+        <h2 id="t3">3. Cobros, pago mixto, autopegado bancario y tarjetas PNG</h2>
+        <p>Las plantillas de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance), los abonos multimoneda, el formato limpio de autopegado bancario y las tarjetas visuales PNG se generan localmente bajo control exclusivo del usuario. Tasa VE no valida cuentas bancarias, no confirma pagos recibidos ni intermedia transferencias.</p>
+
+        <h2 id="t4">4. Plan gratuito, suscripción Ultra y reembolsos</h2>
+        <p>El Plan Gratuito incluye las funciones base con publicidad de Google AdMob. La suscripción <strong>Tasa VE Ultra</strong> ($0.99 USD/mes o $7.99 USD/año) elimina todos los anuncios, desbloquea funciones avanzadas y se renueva automáticamente mediante Google Play salvo cancelación con al menos 24 horas de antelación desde <em>Google Play Store &gt; Suscripciones</em>. Las compras pueden restaurarse desde Configuración y los reembolsos se rigen por las políticas vigentes de Google Play.</p>
+
+        <h2 id="t5">5. Propiedad intelectual y uso aceptable</h2>
+        <p>El software, interfaz, marca y logotipo de Tasa VE pertenecen a su titular. El usuario conserva plena titularidad sobre el logotipo o nombre comercial propio que cargue localmente para sus tarjetas PNG y se compromete a utilizar la aplicación de forma lícita, sin realizar ingeniería inversa ni usos automatizados abusivos.</p>
+
+        <h2 id="t6">6. Limitación de responsabilidad</h2>
         <div class="callout">
-            <p><strong>Descargo financiero y fiscal:</strong> Los cálculos de IVA (16%), IGTF (3%), herramientas de Útiles, calendario referencial SUDEBAN, lectura por cámara, tarjetas PNG y catálogo de bancos son estrictamente referenciales. Tasa VE no procesa pagos, no valida cuentas ni sustituye asesoría contable o facturación fiscal.</p>
+            <p><strong>Descargo de responsabilidad:</strong> Tasa VE se proporciona <em>"tal cual"</em> y <em>"según disponibilidad"</em>. En la máxima medida permitida por la ley aplicable, el desarrollador no será responsable por pérdidas comerciales, diferencias cambiarias, interrupciones de APIs públicas externas o decisiones financieras tomadas con base en la aplicación.</p>
         </div>
 
-        <h2 id="s7">7. Permisos del sistema</h2>
-        <ul>
-            <li><strong>Cámara (<code>CAMERA</code>):</strong> Opcional y solo en primer plano al usar el escáner de precios. El OCR se ejecuta localmente en el teléfono; <strong>no grabamos video ni almacenamos ni subimos fotografías</strong>.</li>
-            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Opcional en Android 13+ para activar la barra fija opcional de tasas (sin servicio continuo).</li>
-            <li><strong>Barra Rápida (<code>BIND_QUICK_SETTINGS_TILE</code>):</strong> Integración estándar de Android que solo opera cuando el usuario pulsa el botón en su panel rápido.</li>
-            <li><strong>Internet y red (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>):</strong> Para obtener cotizaciones públicas, estadísticas anónimas agregadas, anuncios gratuitos/bonificados y validar suscripciones.</li>
-            <li><strong>Facturación (<code>com.android.vending.BILLING</code>):</strong> Para gestionar la suscripción Ultra y la restauración de compras en Google Play.</li>
-        </ul>
-
-        <h2 id="s8">8. Uso de tecnologías de terceros</h2>
-        <ul>
-            <li><strong>Google Firebase Analytics:</strong> Métricas anónimas y agregadas sobre pantallas/funciones abiertas (sin montos ni identidad). Consulta la <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Política de Privacidad de Firebase</a>.</li>
-            <li><strong>Google Mobile Ads (AdMob):</strong> Entrega de banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales en la versión gratuita y prevención de fraude; puede recopilar el ID de publicidad (GAID), IP anonimizada y diagnósticos técnicos. Consulta la <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Política de Privacidad de Google</a>.</li>
-            <li><strong>Google Play In-App Billing:</strong> Procesamiento seguro de compras y suscripciones mediante tokens anónimos. Consulta los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener">Términos de Google Play</a>.</li>
-            <li><strong>Google ML Kit (Text Recognition):</strong> Reconocimiento óptico de texto ejecutado en el dispositivo para leer etiquetas de precios; el SDK puede intercambiar métricas técnicas mínimas de diagnóstico o descarga de modelos con Google.</li>
-            <li><strong>APIs Públicas de Tasas (<code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code>):</strong> Fuentes públicas de consulta de cotizaciones e históricos de referencia.</li>
-        </ul>
-
-        <h2 id="s9">9. Cambios en esta política</h2>
-        <p>Podemos actualizar esta Política de Privacidad para reflejar mejoras funcionales o requisitos legales y de Google Play. La fecha de <em>Última actualización</em> al inicio indicará siempre la versión vigente. Tasa VE no está dirigida a menores de 13 años (o 16 años en el EEE) ni recopila conscientemente información de menores.</p>
-
-        <h2 id="s10">10. Contacto</h2>
-        <p>Para consultas sobre privacidad, derechos de usuario o soporte técnico:</p>
-        <p><strong>Correo electrónico:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a><br>
-        <strong>Sitio web oficial:</strong> <a href="https://tasave.net" target="_blank" rel="noopener">https://tasave.net</a></p>
+        <h2 id="t7">7. Aceptación y contacto legal</h2>
+        <p>El uso de Tasa VE implica la aceptación de esta Política de Privacidad y Términos de Uso. Para consultas legales, derechos de usuario o soporte técnico: <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</p>
 
         <div class="footer">
-            Tasa VE &bull; Todos los derechos reservados &bull; 2026
+            Tasa VE &bull; Centro Legal Oficial &bull; Todos los derechos reservados &bull; 2026
         </div>
-    </div>
+    </main>
 </body>
 </html>
