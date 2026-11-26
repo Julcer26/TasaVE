@@ -363,6 +363,13 @@ fun CartTab(
                 ) {
                     Button(
                         onClick = {
+                            val cleanCartCaption = activeProfile
+                                ?.formatBankAutoPaste(
+                                    amountVes = summary.totalVes,
+                                    amountUsd = summary.totalUsd
+                                )
+                                ?.takeIf { it.isNotBlank() }
+                                ?: quoteText
                             ShareCardGenerator.shareCartQuoteCard(
                                 context = context,
                                 isDark = isDark,
@@ -372,7 +379,7 @@ fun CartTab(
                                 applyIva = effectiveApplyIva,
                                 applyIgtf = effectiveApplyIgtf,
                                 profile = activeProfile,
-                                captionText = quoteText,
+                                captionText = cleanCartCaption,
                                 customBrandName = if (isUltraUser) customBrandName else null,
                                 customBrandLogoFile = customLogoFile
                             )
@@ -2535,6 +2542,23 @@ fun CheckoutTab(
         }
 
         // Copy, Visual PNG Card & WhatsApp Share Buttons
+        val pendingVesForBank = when {
+            result.remainingVes > 0.005 -> result.remainingVes
+            result.totalVes > 0.005 && !isChange && !isPaidExact -> result.totalVes
+            else -> null
+        }
+        val pendingUsdForBank = when {
+            result.remainingUsd > 0.005 -> result.remainingUsd
+            result.totalUsd > 0.005 && !isChange && !isPaidExact -> result.totalUsd
+            else -> null
+        }
+        val bankAutoPasteText = remember(selectedProfile, pendingVesForBank, pendingUsdForBank) {
+            selectedProfile?.formatBankAutoPaste(
+                amountVes = pendingVesForBank,
+                amountUsd = pendingUsdForBank
+            ).orEmpty()
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -2542,8 +2566,13 @@ fun CheckoutTab(
             OutlinedButton(
                 onClick = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.setPrimaryClip(ClipData.newPlainText("Resumen Tasa VE", shareSummaryText))
-                    Toast.makeText(context, "Resumen copiado", Toast.LENGTH_SHORT).show()
+                    val textToCopy = bankAutoPasteText.ifBlank { shareSummaryText }
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Cobro Tasa VE", textToCopy))
+                    Toast.makeText(
+                        context,
+                        if (bankAutoPasteText.isNotBlank()) "Datos listos para pegar en el banco" else "Resumen copiado",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -2553,7 +2582,12 @@ fun CheckoutTab(
             ) {
                 Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp), tint = textPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Copiar texto", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = textPrimary)
+                Text(
+                    text = if (bankAutoPasteText.isNotBlank()) "Copiar datos" else "Copiar texto",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = textPrimary
+                )
             }
 
             OutlinedButton(
@@ -2576,7 +2610,7 @@ fun CheckoutTab(
                         statusUsd = if (isChange) result.changeUsd else result.remainingUsd,
                         statusVes = if (isChange) result.changeVes else result.remainingVes,
                         profile = selectedProfile,
-                        captionText = shareSummaryText,
+                        captionText = bankAutoPasteText.ifBlank { shareSummaryText },
                         customBrandName = if (isUltraUser) customBrandName.takeIf { it.isNotBlank() } else null,
                         customBrandLogoFile = if (isUltraUser) customLogoFile else null
                     )

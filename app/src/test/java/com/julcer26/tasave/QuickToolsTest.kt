@@ -103,6 +103,9 @@ class QuickToolsTest {
             )
         )
         assertNull(
+            QuickAmountParser.parse("0102\nV24123456\n04141234567\n1540,50")
+        )
+        assertNull(
             QuickAmountParser.parse("$ 35.00 = Bs. 32,122.13 (USD BCV)")
         )
 

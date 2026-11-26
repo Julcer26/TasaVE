@@ -19,6 +19,10 @@ object QuickAmountParser {
 
     private val numberRegex = Regex("\\d[\\d.,]*\\d|\\d+")
     private val leadingZeroCodeRegex = Regex("^0\\d+$")
+    private val bankAutoPasteBlockRegex = Regex(
+        "^0\\d{3}\\s*\\n\\s*[VEJGPC]\\d{5,12}\\s*\\n\\s*04\\d{9}(\\s*\\n\\s*\\d+[.,]\\d{2})?$",
+        RegexOption.IGNORE_CASE
+    )
     private val ignoredMetadataRegex = Regex(
         "(\\*?pago\\s+m[oó]vil\\*?|datos\\s+pago\\s+m[oó]vil|cuenta\\s+bancaria|datos\\s+zelle|datos\\s+binance|ci/rif\\s*:|tasas\\s+del\\s+d[ií]a\\s*•\\s*tasa\\s+ve|resumen\\s+de\\s+cobro|presupuesto\\s*/\\s*pedido|\\(usd\\s+bcv|\\(eur\\s+bcv|\\(usdt\\s+binance|\\(cop\\s+bcv)",
         RegexOption.IGNORE_CASE
@@ -35,7 +39,7 @@ object QuickAmountParser {
     fun parse(rawText: String?): ParsedQuickAmount? {
         if (rawText.isNullOrBlank()) return null
         val trimmed = rawText.trim()
-        if (ignoredMetadataRegex.containsMatchIn(trimmed)) return null
+        if (ignoredMetadataRegex.containsMatchIn(trimmed) || bankAutoPasteBlockRegex.matches(trimmed)) return null
 
         val candidates = numberRegex.findAll(trimmed).mapNotNull { match ->
             val rawToken = match.value

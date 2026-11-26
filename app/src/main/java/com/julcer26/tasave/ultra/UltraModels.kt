@@ -93,6 +93,48 @@ data class PaymentMethodProfile(
     fun formattedBank(): String = if (bankCode.isNotBlank()) "$bankCode - $bankName" else bankName
     fun formattedDoc(): String = if (docNumber.isNotBlank()) "$docPrefix-$docNumber" else ""
     fun formattedPhone(): String = if (phoneNumber.isNotBlank()) "$phonePrefix-$phoneNumber" else ""
+
+    /**
+     * Generates a clean, label-free block optimized for Venezuelan banking apps
+     * (BDV, Banesco, Mercantil, Bancamiga, Provincial) that auto-fill Pago Móvil
+     * fields directly from the clipboard.
+     */
+    fun formatBankAutoPaste(amountVes: Double? = null, amountUsd: Double? = null): String {
+        val cleanDocDigits = docNumber.filter(Char::isDigit)
+        val cleanDoc = if (cleanDocDigits.isNotBlank()) {
+            "${docPrefix.trim().uppercase(java.util.Locale.ROOT)}$cleanDocDigits"
+        } else {
+            ""
+        }
+        val cleanPhone = (phonePrefix + phoneNumber).filter(Char::isDigit)
+        val cleanBankCode = bankCode.filter(Char::isDigit).ifBlank { bankName.trim() }
+        val formattedVes = amountVes?.takeIf { it.isFinite() && it > 0.005 }?.let {
+            String.format(java.util.Locale.US, "%.2f", it).replace('.', ',')
+        }
+        val formattedUsd = amountUsd?.takeIf { it.isFinite() && it > 0.005 }?.let {
+            String.format(java.util.Locale.US, "%.2f", it).replace('.', ',')
+        }
+
+        return when (type) {
+            PaymentMethodType.PAGO_MOVIL -> listOfNotNull(
+                cleanBankCode.takeIf { it.isNotBlank() },
+                cleanDoc.takeIf { it.isNotBlank() },
+                cleanPhone.takeIf { it.isNotBlank() },
+                formattedVes
+            ).joinToString("\n")
+            PaymentMethodType.BANK_ACCOUNT -> listOfNotNull(
+                accountNumber.filter(Char::isDigit).ifBlank { accountNumber.trim() }.takeIf { it.isNotBlank() },
+                cleanDoc.takeIf { it.isNotBlank() },
+                accountHolder.trim().takeIf { it.isNotBlank() },
+                formattedVes
+            ).joinToString("\n")
+            PaymentMethodType.ZELLE, PaymentMethodType.BINANCE -> listOfNotNull(
+                digitalIdentifier.trim().takeIf { it.isNotBlank() },
+                accountHolder.trim().takeIf { it.isNotBlank() },
+                formattedUsd
+            ).joinToString("\n")
+        }
+    }
     fun displayTitle(): String {
         if (alias.isNotBlank()) return alias
         return when (type) {

@@ -433,8 +433,11 @@ class UltraMathAndBillingTest {
         val formatted = com.julcer26.tasave.widget.WidgetCalcMath.formatProfileForWidget(profile, 0, 2)
         assertTrue(formatted.title.contains("Tienda"))
         assertTrue(formatted.title.contains("(1/2)"))
-        assertTrue(formatted.copyText.contains("0134 - Banesco"))
-        assertTrue(formatted.copyText.contains("J-123456789"))
+        assertEquals("0134\nJ123456789\n04141234567", formatted.copyText)
+        assertEquals(
+            "0134\nJ123456789\n04141234567\n1540,50",
+            profile.formatBankAutoPaste(amountVes = 1540.5)
+        )
     }
 
     @Test

@@ -114,10 +114,12 @@ object WidgetCalcMath {
             )
         }
         val header = "${profile.type.label.uppercase(Locale.getDefault())}$alias$counter"
-        val copyBlock = buildString {
-            appendLine("*${profile.type.label}$alias*")
-            lines.forEach { appendLine(it) }
-        }.trim()
+        val copyBlock = profile.formatBankAutoPaste().ifBlank {
+            buildString {
+                appendLine("*${profile.type.label}$alias*")
+                lines.forEach { appendLine(it) }
+            }.trim()
+        }
         return WidgetPaymentCardData(
             title = header,
             displayLines = lines.joinToString("\n").ifBlank { profile.displayTitle() },
