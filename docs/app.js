@@ -580,7 +580,7 @@
 
     stageEl.innerHTML = `
       <div class="sim-topbar">
-        <span class="sim-brand">Cobros y Abonos</span>
+        <span class="sim-brand">Pagos y Abonos</span>
         <button type="button" class="sim-chip ${state.hideSensitive ? "is-amber is-selected" : ""}" id="sim-toggle-eye">
           ${state.hideSensitive ? "Mostrar datos" : "Ocultar datos"}
         </button>
@@ -603,12 +603,12 @@
         <span class="sim-label" id="sim-ck-status">${statusTitle}</span>
         <div class="sim-big-result" id="sim-ck-amount" style="font-size:1.25rem;">$${fmtMoney(absUsd, 2)} / Bs. ${fmtMoney(absBs, 2)}</div>
         <div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.8rem;color:#CBD5E1;">
-          <strong style="color:#34D399;display:block;margin-bottom:2px;">PAGO MÓVIL • Comercio</strong>
+          <strong style="color:#34D399;display:block;margin-bottom:2px;">PAGO MÓVIL • Datos guardados</strong>
           <span class="mono">${maskedData}</span>
         </div>
       </div>
       <button type="button" class="btn btn-primary btn-sm" id="sim-copy-bank" style="width:100%;">
-        Copiar datos (formato limpio para banco)
+        Copiar datos para autocompletar en banco
       </button>
     `;
 
@@ -637,9 +637,9 @@
         : "0134\nV24123456\n04141234567";
       try {
         await navigator.clipboard.writeText(cleanBlock);
-        showToast("Bloque limpio de 4 líneas copiado para el banco");
+        showToast("4 líneas copiadas para autocompletar en tu banco");
       } catch {
-        showToast("Listo para pegar en BDV, Banesco, Mercantil o Bancamiga");
+        showToast("Listo para autocompletar en BDV, Banesco, Mercantil o Bancamiga");
       }
     });
   }
