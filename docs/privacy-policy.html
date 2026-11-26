@@ -3,126 +3,433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Privacidad - Tasa VE</title>
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Política de Privacidad, Seguridad de Datos y Términos de Uso de Tasa VE — Calculadora de conversión financiera para Venezuela.">
+    <title>Política de Privacidad y Términos de Uso — Tasa VE</title>
+    <link rel="canonical" href="https://tasave.net/privacy-policy.html">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
     <style>
         :root {
-            --bg-color: #0A0A0B;
-            --card-bg: #141416;
+            --bg-color: #070A10;
+            --card-bg: #111622;
+            --surface-bg: #171E2E;
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
             --accent-green: #10B981;
+            --accent-green-soft: rgba(16, 185, 129, 0.14);
             --accent-gold: #F59E0B;
-            --border-color: #27272A;
+            --border-color: rgba(148, 163, 184, 0.18);
         }
         @media (prefers-color-scheme: light) {
             :root {
                 --bg-color: #F8FAFC;
                 --card-bg: #FFFFFF;
+                --surface-bg: #F1F5F9;
                 --text-primary: #0F172A;
                 --text-secondary: #475569;
+                --accent-green: #059669;
+                --accent-green-soft: rgba(5, 150, 105, 0.10);
+                --accent-gold: #B45309;
                 --border-color: #E2E8F0;
             }
         }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.68;
             margin: 0;
-            padding: 24px;
+            padding: 20px 16px 40px;
         }
         .container {
-            max-width: 800px;
+            max-width: 880px;
             margin: 0 auto;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
+            border-radius: 22px;
             padding: 36px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
         }
-        h1 {
-            color: var(--accent-green);
-            margin-top: 0;
-            font-size: 28px;
+        .topbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
         }
-        h2 {
-            color: var(--text-primary);
-            font-size: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            margin-top: 32px;
-        }
-        h3 {
-            color: var(--accent-gold);
-            font-size: 16px;
-        }
-        p, li {
-            color: var(--text-secondary);
-            font-size: 15px;
-        }
-        ul {
-            padding-left: 20px;
-        }
-        a {
+        .back-link {
+            font-weight: 700;
+            font-size: 13.5px;
             color: var(--accent-green);
             text-decoration: none;
         }
-        a:hover {
-            text-decoration: underline;
+        .back-link:hover { text-decoration: underline; }
+        .part-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .part-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .part-pill:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
         }
         .badge {
             display: inline-block;
-            background: rgba(16, 185, 129, 0.15);
+            background: var(--accent-green-soft);
             color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 8px;
-            padding: 4px 10px;
+            border: 1px solid rgba(16, 185, 129, 0.34);
+            border-radius: 999px;
+            padding: 4px 12px;
             font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: var(--text-primary);
+            margin: 4px 0 8px;
+            font-size: clamp(24px, 4vw, 30px);
+            letter-spacing: -0.4px;
+            line-height: 1.2;
+        }
+        .meta-line {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            margin: 0 0 16px;
+        }
+        .part-heading {
+            margin-top: 38px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: var(--surface-bg);
+            border-left: 4px solid var(--accent-green);
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            scroll-margin-top: 18px;
+        }
+        .part-heading.terms { border-left-color: var(--accent-gold); }
+        h2 {
+            color: var(--text-primary);
+            font-size: 18.5px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-top: 28px;
+            scroll-margin-top: 18px;
+        }
+        p, li {
+            color: var(--text-secondary);
+            font-size: 14.5px;
+        }
+        strong { color: var(--text-primary); }
+        ul, ol { padding-left: 20px; }
+        li { margin-bottom: 6px; }
+        a { color: var(--accent-green); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .toc {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin: 20px 0 24px;
+        }
+        .toc-title {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--accent-green);
+            margin: 0 0 10px;
+        }
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 5px 14px;
+        }
+        .toc-list a {
+            display: block;
+            padding: 6px 10px;
+            border-radius: 10px;
+            border-left: 3px solid transparent;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .toc-list a:hover {
+            background-color: var(--accent-green-soft);
+            border-left-color: var(--accent-green);
+            text-decoration: none;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 18px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+        th, td {
+            text-align: left;
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        th {
+            background: var(--surface-bg);
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 12.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        tr:last-child td { border-bottom: none; }
+        td { color: var(--text-secondary); }
+        .callout {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.32);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin: 18px 0;
+        }
+        .callout p {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 13.8px;
+        }
+        code {
+            background: rgba(148, 163, 184, 0.14);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 12.8px;
+            color: var(--text-primary);
         }
         .footer {
             margin-top: 40px;
-            padding-top: 20px;
+            padding-top: 18px;
             border-top: 1px solid var(--border-color);
             font-size: 13px;
             color: var(--text-secondary);
             text-align: center;
         }
+        @media (max-width: 600px) {
+            .container { padding: 22px 18px; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <span class="badge">Google Play Compliance</span>
-        <h1>Política de Privacidad — Tasa VE</h1>
-        <p><strong>Última actualización:</strong> 10 de noviembre de 2026</p>
-        <p>La aplicación móvil <strong>Tasa VE</strong> (identificador <code>com.julcer26.tasave</code>) respeta y protege la privacidad de sus usuarios. Este documento explica de manera clara y transparente el tratamiento de datos personales conforme a las políticas del programa de desarrolladores de Google Play.</p>
+    <main class="container">
+        <div class="topbar">
+            <a href="index.html" class="back-link">&larr; Volver a Tasa VE (tasave.net)</a>
+            <div class="part-pills">
+                <a href="#privacidad" class="part-pill">Política de Privacidad</a>
+                <a href="#terminos" class="part-pill">Términos de Uso</a>
+            </div>
+        </div>
 
-        <h2>1. Información que recopila la aplicación</h2>
-        <p><strong>Tasa VE no recopila información personal identificable directa.</strong> No solicitamos nombres, correos electrónicos, cuentas de usuario, números de teléfono ni documentos de identidad para operar la aplicación.</p>
+        <span class="badge">Aviso de Privacidad &bull; Google Play Data Safety</span>
+        <h1>Política de Privacidad y Términos de Uso — Tasa VE</h1>
+        <p class="meta-line">
+            <strong>Última actualización:</strong> 26 de noviembre de 2026 &bull;
+            <strong>Sitio oficial:</strong> <a href="https://tasave.net">tasave.net</a> &bull;
+            <strong>Contacto legal y soporte:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>
+        </p>
+        <p>Este documento regula el tratamiento de la información y las condiciones de uso de <strong>Tasa VE</strong> (la aplicación móvil para Android distribuida en Google Play y el sitio web <a href="https://tasave.net">https://tasave.net</a>). Al descargar, instalar o utilizar Tasa VE, aceptas estas disposiciones.</p>
 
-        <h2>2. Almacenamiento Local</h2>
-        <p>La app funciona bajo una arquitectura orientada a la privacidad. Todos los cálculos, historiales de conversión, caché de tasas de cambio y preferencias visuales se guardan estrictamente en el almacenamiento interno protegido de tu dispositivo Android mediante SQLite y SharedPreferences locales.</p>
+        <div class="table-wrap" role="region" aria-label="Resumen de seguridad de datos">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Tratamiento en Tasa VE</th>
+                        <th>Almacenamiento y transmisión</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Cuentas, contraseñas o ubicación GPS</strong></td>
+                        <td>No se solicita creación de cuentas, contraseñas ni ubicación GPS.</td>
+                        <td>No aplica (sin registro ni rastreo GPS).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Historial, carrito y perfiles de cobro</strong></td>
+                        <td>Conversiones, carrito, IVA/IGTF, perfiles (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos y logo propio.</td>
+                        <td>Almacenamiento 100% local en el dispositivo (excluido del respaldo automático en la nube).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Escáner OCR de precios</strong></td>
+                        <td>Lectura óptica local mediante Google ML Kit; no se almacenan ni suben fotos o videos.</td>
+                        <td>Procesamiento en memoria/caché temporal del dispositivo.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Reportes voluntarios de soporte</strong></td>
+                        <td>Descripción, módulo, contacto opcional (si lo indicas) y diagnóstico técnico (versión de app, plan, marca/modelo y versión de Android).</td>
+                        <td>Enviado únicamente por iniciativa del usuario para soporte técnico e historial de mejoras.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Analítica, publicidad y compras</strong></td>
+                        <td>Eventos agregados de uso (Firebase Analytics), anuncios (Google AdMob en plan gratuito) y suscripciones (Google Play Billing).</td>
+                        <td>Procesados por servicios de Google conforme a sus políticas y configuración del dispositivo.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-        <h2>3. Servicios de Terceros y Publicidad</h2>
-        <p>Para su funcionamiento y monetización, la aplicación integra servicios certificados de Google LLC:</p>
+        <nav class="toc" aria-label="Índice del documento legal">
+            <p class="toc-title">Índice rápido</p>
+            <ol class="toc-list">
+                <li><a href="#s1">1. Responsable y alcance</a></li>
+                <li><a href="#s2">2. Fuentes de cotizaciones y caché offline</a></li>
+                <li><a href="#s3">3. Datos almacenados localmente</a></li>
+                <li><a href="#s4">4. Reportes voluntarios y soporte técnico</a></li>
+                <li><a href="#s5">5. Analítica, publicidad y terceros</a></li>
+                <li><a href="#s6">6. Permisos de Android, widgets y seguridad</a></li>
+                <li><a href="#s7">7. Derechos, eliminación y menores</a></li>
+                <li><a href="#s8">8. Actualizaciones y contacto</a></li>
+                <li><a href="#terminos">Parte II: Términos de Uso y Descargo Legal</a></li>
+            </ol>
+        </nav>
+
+        <!-- PARTE I: POLÍTICA DE PRIVACIDAD -->
+        <div id="privacidad" class="part-heading">Parte I — Política de Privacidad y Protección de Datos</div>
+
+        <h2 id="s1">1. Responsable y alcance</h2>
+        <p><strong>Tasa VE</strong> es una aplicación independiente de conversión y cálculo financiero orientada principalmente a usuarios en Venezuela. Esta Política de Privacidad aplica a la aplicación oficial <strong>Tasa VE</strong> en Google Play y a su sitio web informativo <a href="https://tasave.net">https://tasave.net</a>.</p>
+
+        <h2 id="s2">2. Fuentes de cotizaciones y caché sin conexión (<em>offline</em>)</h2>
         <ul>
-            <li><strong>Google Mobile Ads (AdMob):</strong> Muestra banners publicitarios no invasivos en la versión gratuita. Procesa identificadores publicitarios estándar (GAID), datos técnicos de dispositivo y dirección IP anonimizada para prevención de fraudes y entrega publicitaria. Consulta la <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Política de Privacidad de Google</a>.</li>
-            <li><strong>Google Play In-App Billing:</strong> Permite adquirir la compra única de <em>Tasa VE Pro ($2.99 USD)</em> para remover anuncios para siempre. Los datos de pago son gestionados de forma 100% segura por Google Play. Consulta los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener">Términos del Servicio de Google Play</a>.</li>
-            <li><strong>DolarAPI / BCV:</strong> Consultas automatizadas a APIs públicas para obtener las cotizaciones del Dólar BCV, Euro BCV y USDT paralelo sin recopilar datos del usuario.</li>
+            <li><strong>Fuentes públicas de terceros:</strong> Las cotizaciones mostradas (referencias de Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM y series históricas) se obtienen de fuentes y APIs públicas de terceros (<code>ve.dolarapi.com</code>, <code>rates.dolarvzla.com</code>, <code>co.dolarapi.com</code> y <code>open.er-api.com</code>). Tasa VE no controla la disponibilidad, continuidad ni exactitud de dichas fuentes externas.</li>
+            <li><strong>Sin afiliación oficial:</strong> Tasa VE no pertenece, ni está afiliada, patrocinada, autorizada ni respaldada por el Banco Central de Venezuela (BCV), SENIAT, SUDEBAN, Banco de la República de Colombia, Zelle, Binance ni ninguna entidad bancaria, casa de cambio o pasarela de pago.</li>
+            <li><strong>Caché local:</strong> Las últimas tasas obtenidas se almacenan localmente en el dispositivo para permitir cálculos sin conexión a internet y alimentar widgets de pantalla de inicio.</li>
         </ul>
 
-        <h2>4. Derechos del Usuario y Eliminación de Datos</h2>
-        <p>Puedes borrar tu historial de conversiones en cualquier momento desde el botón "Borrar todo el historial" en la app o borrando los datos de la app en los Ajustes de Android. Para inhabilitar la personalización de anuncios, puedes gestionarlo desde: <em>Ajustes de Android &gt; Google &gt; Anuncios</em>.</p>
+        <h2 id="s3">3. Datos almacenados localmente (sin cuentas de usuario)</h2>
+        <p>Tasa VE no requiere registro ni crea perfiles de cuenta en servidores propios. Los datos operativos se guardan en el almacenamiento privado de la aplicación en Android (bases de datos locales como SQLite/Room y preferencias locales):</p>
+        <ul>
+            <li><strong>Historial y carrito:</strong> Cálculos guardados, ítems del carrito, cantidades, precios unitarios y parámetros referenciales configurados (como porcentajes de IVA o IGTF).</li>
+            <li><strong>Perfiles de cobro y plantillas:</strong> Los datos que ingreses opcionalmente para agilizar cobros o plantillas (como Pago Móvil, datos bancarios, Zelle o Binance Pay) se guardan localmente en el dispositivo, <strong>no se envían a servidores propios de Tasa VE</strong> y están excluidos de copias de seguridad automáticas en la nube de Android. Eres responsable de verificar la exactitud de los datos que compartas con terceros.</li>
+            <li><strong>Logotipo propio y tarjetas PNG:</strong> Las imágenes o logotipos que cargues opcionalmente y las tarjetas visuales generadas al compartir se gestionan localmente y se entregan mediante mecanismos seguros del sistema (<code>FileProvider</code>) solo cuando decides compartirlas.</li>
+        </ul>
 
-        <h2>5. Contacto</h2>
-        <p>Para consultas, aclaraciones o soporte técnico, comunícate con el desarrollador:</p>
-        <p><strong>Correo electrónico:</strong> <a href="mailto:julioingdlop@gmail.com">julioingdlop@gmail.com</a><br>
-        <strong>Repositorio oficial en GitHub:</strong> <a href="https://github.com/Julcer26/TasaVE" target="_blank" rel="noopener">https://github.com/Julcer26/TasaVE</a></p>
+        <h2 id="s4">4. Reportes voluntarios, sugerencias y soporte técnico</h2>
+        <p>Cuando decides enviar un reporte de error, consulta o sugerencia a través de la aplicación o a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>:</p>
+        <ul>
+            <li><strong>Información proporcionada o técnica:</strong> Se procesa el contenido de tu mensaje, el módulo indicado, la dirección de correo o contacto que voluntariamente suministres para recibir respuesta y datos técnicos básicos del entorno (versión de la aplicación, tipo de plan, fabricante/modelo del dispositivo y versión de Android).</li>
+            <li><strong>Finalidad e historial técnico:</strong> Esta información se utiliza exclusivamente para diagnosticar fallos, mejorar la estabilidad, responder tu solicitud y mantenerse como referencia e historial técnico interno de soporte y evolución de la aplicación, salvo que solicites su eliminación expresa escribiendo a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</li>
+        </ul>
+
+        <h2 id="s5">5. Analítica, publicidad, facturación y servicios de terceros</h2>
+        <p>Para operar, financiar el plan gratuito y gestionar suscripciones, Tasa VE integra componentes y servicios de terceros:</p>
+        <ul>
+            <li><strong>Google Firebase Analytics:</strong> Permite medir de forma agregada y estadística el uso general de pantallas y funciones (sin recopilar montos ingresados, datos bancarios ni información de identidad directa). Consulta la <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer">Privacidad de Firebase</a>.</li>
+            <li><strong>Google Mobile Ads (AdMob):</strong> En el plan gratuito puede mostrar formatos publicitarios (como banners, intersticiales o anuncios bonificados). AdMob puede acceder al identificador de publicidad de Android (GAID), direcciones IP/metadatos de red y señales de diagnóstico/prevención de fraude de acuerdo con la <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Política de Privacidad y Anuncios de Google</a>. Puedes restablecer o limitar el ID de publicidad desde los ajustes de tu dispositivo Android.</li>
+            <li><strong>Google Play Billing:</strong> La suscripción opcional <strong>Tasa VE Ultra</strong> ($0.99 USD/mes o $7.99 USD/año, o su equivalente local mostrado en Google Play) se gestiona íntegramente a través de Google Play. Tasa VE no recibe ni almacena los datos de tu tarjeta de crédito o débito. Consulta los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener noreferrer">Términos de Servicio de Google Play</a>.</li>
+            <li><strong>Google ML Kit:</strong> El reconocimiento óptico de texto (OCR) para lectura de precios se ejecuta en el dispositivo sin enviar fotografías a servidores propios de Tasa VE.</li>
+        </ul>
+
+        <h2 id="s6">6. Permisos del sistema Android, widgets y seguridad</h2>
+        <ul>
+            <li><strong>Cámara (<code>CAMERA</code>):</strong> Se solicita únicamente cuando abres el escáner OCR para leer precios en pantalla o etiquetas. No graba video ni sube imágenes a servidores propios.</li>
+            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Utilizada en versiones compatibles de Android cuando habilitas avisos o la barra fija de consulta rápida.</li>
+            <li><strong>Acceso directo de ajustes rápidos (<code>BIND_QUICK_SETTINGS_TILE</code>):</strong> Permite activar la consulta rápida desde el panel de ajustes rápidos de Android cuando tú lo utilizas.</li>
+            <li><strong>Widgets de pantalla de inicio (<code>AppWidget</code> / <code>WorkManager</code>):</strong> No requieren permisos invasivos del sistema; solo operan si decides añadirlos a tu pantalla de inicio, utilizando las cotizaciones en caché local, la conectividad de red para refrescar tasas y el portapapeles del sistema únicamente cuando pulsas copiar datos.</li>
+            <li><strong>Conectividad de red y facturación (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>, <code>BILLING</code>):</strong> Necesaria para consultar cotizaciones públicas, mostrar anuncios en la versión gratuita, enviar métricas agregadas y gestionar compras/suscripciones.</li>
+        </ul>
+        <p><strong>Seguridad:</strong> Las comunicaciones de red hacia servicios externos se realizan mediante cifrado en tránsito (<strong>HTTPS/TLS</strong>), y la función de ocultamiento visual en pantalla permite proteger datos mostrados frente a miradas cercanas. Ningún sistema es infalible al 100%, por lo que se recomienda mantener actualizado tu dispositivo y proteger el acceso físico a tu teléfono.</p>
+
+        <h2 id="s7">7. Derechos del usuario, eliminación de datos y menores de edad</h2>
+        <ul>
+            <li><strong>Borrado de datos locales:</strong> Puedes eliminar tu historial, carrito, perfiles guardados o archivos locales desde la aplicación, o manualmente en Android ingresando en <em>Ajustes &gt; Aplicaciones &gt; Tasa VE &gt; Almacenamiento y caché</em> y seleccionando <strong>Borrar caché</strong> (para eliminar archivos temporales como tarjetas PNG) o <strong>Borrar datos / Eliminar almacenamiento</strong> (para restablecer completamente la aplicación).</li>
+            <li><strong>Solicitud de eliminación de soporte:</strong> Si enviaste un reporte o correo de soporte y deseas solicitar su eliminación, contáctanos en <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> indicando la fecha aproximada y el medio o dirección desde donde escribiste.</li>
+            <li><strong>Derechos de privacidad:</strong> Conforme a la normativa aplicable, puedes solicitar información, rectificación o eliminación respecto a los datos tratados en relación con el soporte técnico o el uso del servicio a través de <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</li>
+            <li><strong>Menores de edad:</strong> Tasa VE no está dirigida a menores de 13 años (o la edad mínima legal exigida en tu jurisdicción) ni recopila conscientemente datos personales de menores. Si eres padre, madre o representante legal y consideras que un menor de edad ha hecho uso indebido de la plataforma o ha enviado información a soporte, repórtalo de inmediato a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> para tomar las medidas y eliminaciones correspondientes.</li>
+        </ul>
+
+        <h2 id="s8">8. Actualizaciones de estas políticas y contacto</h2>
+        <p>Revisaremos y actualizaremos esta Política de Privacidad y los Términos de Uso cada vez que incorporemos cambios funcionales, técnicos o normativos relevantes, o cuando sea necesario alinearnos con actualizaciones de Google Play, publicando siempre la versión vigente con su fecha de <em>Última actualización</em>. Para consultar las políticas oficiales y siempre actualizadas de Google, puedes revisar directamente los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener noreferrer">Términos de Google Play</a> y la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Política de Privacidad de Google</a>.</p>
+        <p><strong>Contacto:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> &bull; <strong>Sitio web:</strong> <a href="https://tasave.net">https://tasave.net</a></p>
+
+        <!-- PARTE II: TÉRMINOS Y CONDICIONES -->
+        <div id="terminos" class="part-heading terms">Parte II — Términos y Condiciones de Uso y Descargo Legal</div>
+
+        <h2 id="t1">1. Naturaleza informativa y no intermediación</h2>
+        <p>Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. <strong>Tasa VE no es una entidad bancaria, casa de cambio, mercado de divisas, procesador de pagos, billetera electrónica, asesora financiera, ni administradora tributaria, y tampoco ejecuta transferencias, liquidaciones o cobros por cuenta de los usuarios.</strong></p>
+
+        <h2 id="t2">2. Exactitud referencial de tasas y cálculos</h2>
+        <p>Las tasas de cambio, conversiones multimoneda, estimaciones de impuestos o retenciones (como IVA o IGTF), calendarios o utilidades informativas tienen fines <strong>estrictamente orientativos e informativos</strong>. Las tasas publicadas pueden diferir de las cotizaciones oficiales vigentes, del mercado o de las aplicadas efectivamente por bancos y comercios al momento de liquidar una operación. No constituyen asesoría financiera, contable, fiscal ni legal.</p>
+
+        <h2 id="t3">3. Herramientas de cobro, pagos mixtos y tarjetas PNG</h2>
+        <p>Las plantillas de texto para cobros (incluyendo el formato limpio para bancos), registros de abonos o pagos mixtos y las imágenes/tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
+
+        <h2 id="t4">4. Plan gratuito, suscripción Ultra, cancelación y reembolsos</h2>
+        <ul>
+            <li><strong>Plan Gratuito:</strong> Ofrece funcionalidades base financiadas mediante publicidad de terceros (Google AdMob).</li>
+            <li><strong>Tasa VE Ultra:</strong> Suscripción opcional de pago recurrente ($0.99 USD/mes o $7.99 USD/año, salvo promociones o impuestos/ajustes de moneda aplicables en Google Play). Salvo que la canceles con al menos 24 horas de antelación al vencimiento del período en curso, la suscripción se renueva automáticamente.</li>
+            <li><strong>Cómo cancelar en Google Play:</strong> Abre <em>Google Play Store &gt; Foto de perfil &gt; Pagos y suscripciones &gt; Suscripciones &gt; Tasa VE &gt; Cancelar suscripción</em> y sigue las instrucciones en pantalla para confirmar la cancelación.</li>
+            <li><strong>Restauración y reembolsos:</strong> Puedes restaurar compras asociadas a tu cuenta de Google desde la aplicación. Los reembolsos se rigen por las políticas y procedimientos vigentes de Google Play.</li>
+        </ul>
+
+        <h2 id="t5">5. Propiedad intelectual, licencia y titularidad del contenido del usuario</h2>
+        <p>Todos los derechos de propiedad intelectual sobre el código, diseño, interfaz, marca y logotipos de Tasa VE corresponden a su titular o licenciantes. Se te otorga una licencia limitada, revocable, no exclusiva e intransferible para usar la aplicación conforme a estos Términos.</p>
+        <p><strong>Titularidad y responsabilidad del usuario:</strong> El usuario declara y garantiza contar con la titularidad o autorización legítima sobre los logotipos, marcas comerciales e información que suministre o cargue en la aplicación, por lo que será plena y exclusivamente responsable ante cualquier reclamo, controversia o circunstancia que surja del suministro de dichos logotipos o de la información y comprobantes generados en la plataforma.</p>
+
+        <h2 id="t6">6. Conducta prohibida</h2>
+        <p>Queda prohibido utilizar Tasa VE para actividades ilícitas, fraudulentas o engañosas; suplantar identidades o adulterar comprobantes; intentar eludir controles técnicos o de suscripción; realizar ingeniería inversa, descompilar o extraer indebidamente el código o los servicios asociados más allá de lo expresamente permitido por la ley; o sobrecargar o interferir con la infraestructura o APIs conectadas.</p>
+
+        <h2 id="t7">7. Niveles de gravedad, responsabilidad civil y penal, y resolución extrajudicial</h2>
+        <p>El incumplimiento de estos Términos o la realización de conductas prohibidas hará responsable al infractor conforme a la legislación civil y/o penal aplicable, evaluándose las medidas según el nivel de gravedad del caso:</p>
+        <ul>
+            <li><strong>Nivel leve:</strong> Uso irregular o contravención menor sin perjuicio económico, reputacional ni técnico grave. Podrá dar lugar a advertencia formal o restricción preventiva del acceso.</li>
+            <li><strong>Nivel moderado:</strong> Reincidencia, intento de elusión de controles técnicos o de suscripción, o uso engañoso de plantillas y tarjetas generadas. Podrá conllevar la suspensión o revocación de la licencia de uso, medidas técnicas de bloqueo y el reclamo de reparación o acuerdo extrajudicial.</li>
+            <li><strong>Nivel grave:</strong> Fraude, estafa, suplantación de identidad, ataques o interferencia contra la infraestructura o APIs, ingeniería inversa ilícita o vulneración de propiedad intelectual o derechos de terceros. Conllevará la revocación inmediata de la licencia y facultará al titular para ejercer las acciones <strong>civiles</strong> (indemnización de daños y perjuicios) y/o <strong>penales</strong> ante los organismos y tribunales competentes.</li>
+        </ul>
+        <p><strong>Solución extrajudicial previa:</strong> Cuando la naturaleza y gravedad del hecho lo permitan, el titular podrá procurar en primera instancia un <strong>arreglo extrajudicial</strong> (mediación, conciliación o acuerdo de resarcimiento amistoso) con el fin de resolver la situación sin acudir a últimas instancias judiciales, reservándose siempre el derecho de accionar legalmente de forma inmediata en casos graves o presuntamente delictivos.</p>
+
+        <h2 id="t8">8. Exclusión de garantías y limitación de responsabilidad</h2>
+        <div class="callout">
+            <p><strong>Descargo de responsabilidad:</strong> Tasa VE se ofrece <strong>"TAL CUAL" (<em>AS IS</em>)</strong> y <strong>"SEGÚN DISPONIBILIDAD" (<em>AS AVAILABLE</em>)</strong>, sin garantías expresas ni implícitas de exactitud continua, disponibilidad ininterrumpida, idoneidad para un fin particular o ausencia de errores. En la máxima medida permitida por la ley aplicable, el titular de Tasa VE no será responsable por pérdidas económicas, lucro cesante, diferencias cambiarias, fallos o cambios en APIs de terceros, interrupciones de red o decisiones comerciales/financieras tomadas con base en la aplicación.</p>
+        </div>
+
+        <h2 id="t9">9. Indemnización</h2>
+        <p>Aceptas mantener indemne al titular de Tasa VE frente a reclamaciones, daños o responsabilidades de terceros derivados <strong>del uso indebido</strong> de la aplicación, de la infracción de estos Términos o de la vulneración de derechos de terceros por parte tuya.</p>
+
+        <h2 id="t10">10. Ley aplicable y resolución de controversias</h2>
+        <p>Estos Términos se regirán e interpretarán conforme a las leyes aplicables de la República Bolivariana de Venezuela, sin perjuicio de las normas imperativas de protección al consumidor o privacidad que resulten aplicables en la jurisdicción del usuario.</p>
+        <p>Ante cualquier controversia, las partes procurarán primero resolverla de buena fe mediante diálogo directo o <strong>arreglo extrajudicial</strong> a través de <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> (salvo hechos graves que requieran actuación inmediata). <strong>De no llegarse a un acuerdo satisfactorio, la controversia será sometida ante los tribunales y entes judiciales correspondientes según la naturaleza civil, mercantil o penal del caso.</strong></p>
+
+        <h2 id="t11">11. Divisibilidad e integridad del acuerdo</h2>
+        <p>Si alguna disposición de estos Términos resulta declarada inválida, nula o inaplicable por una autoridad competente, dicha cláusula se interpretará o ajustará en la medida mínima necesaria para conservar su finalidad, mientras que el resto de las disposiciones mantendrán plena vigencia y validez legal.</p>
+
+        <h2 id="t12">12. Contacto legal y soporte</h2>
+        <p>Para consultas legales, soporte técnico, ejercicio de derechos de privacidad o reportes por uso indebido de la plataforma, comunícate a través de nuestros canales oficiales:</p>
+        <p><strong>Correo electrónico:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a><br>
+        <strong>Sitio web:</strong> <a href="https://tasave.net">https://tasave.net</a></p>
 
         <div class="footer">
-            Tasa VE &bull; Todos los derechos reservados &bull; 2026
+            Tasa VE &bull; Política de Privacidad y Términos de Uso &bull; 2026
         </div>
-    </div>
+    </main>
 </body>
 </html>
