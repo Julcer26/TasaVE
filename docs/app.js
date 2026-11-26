@@ -187,8 +187,8 @@
     const shortCode = heroState.rateKey === "USD_BCV" ? "USD" : (heroState.rateKey === "EUR_BCV" ? "EUR" : info.label);
 
     if (heroDirLabel) heroDirLabel.textContent = heroState.vesToForeign ? `Bs. → ${shortCode}` : `${shortCode} → Bs.`;
-    if (heroInputCap) heroInputCap.textContent = heroState.vesToForeign ? "Monto en Bolívares (Bs.)" : `Monto en ${info.label}`;
-    if (heroOutputCap) heroOutputCap.textContent = heroState.vesToForeign ? `Equivalente en ${info.label}` : "Resultado exacto en Bolívares";
+    if (heroInputCap) heroInputCap.textContent = heroState.vesToForeign ? "Monto en bolívares (Bs.)" : `Monto en ${info.label}`;
+    if (heroOutputCap) heroOutputCap.textContent = heroState.vesToForeign ? `Equivalente en ${info.label}` : "Resultado exacto en bolívares";
     if (heroOutput) {
       heroOutput.textContent = heroState.vesToForeign
         ? `${info.symbol === "COP" ? "" : info.symbol + " "}${fmtMoney(result, info.symbol === "COP" ? 0 : 2)}${info.symbol === "COP" ? " COP" : ""}`
@@ -395,7 +395,7 @@
         </div>
       </div>
       <div class="sim-card">
-        <span class="sim-label">${state.vesToForeign ? "Equivalente en " + info.label : "Resultado en Bolívares"}</span>
+        <span class="sim-label">${state.vesToForeign ? "Equivalente en " + info.label : "Resultado en bolívares"}</span>
         <div class="sim-big-result" id="sim-conv-result">${state.vesToForeign ? `${info.symbol} ${fmtMoney(foreignVal, 2)}` : `Bs. ${fmtMoney(vesVal, 2)}`}</div>
         <div class="sim-sub-row mono" id="sim-conv-equiv">
           <span>USD: $${fmtMoney(RATES.USD_BCV.rate > 0 ? vesVal / RATES.USD_BCV.rate : 0, 2)}</span>
@@ -553,7 +553,7 @@
 
     stageEl.innerHTML = `
       <div class="sim-topbar">
-        <span class="sim-brand">Útiles del Día a Día</span>
+        <span class="sim-brand">Útiles del día a día</span>
         <span class="sim-badge">Gratis</span>
       </div>
       <div class="sim-pill-row">
