@@ -1916,8 +1916,8 @@ fun CheckoutTab(
 
     var selectedRateKey by remember { mutableStateOf("USD_BCV") }
     var totalUsdStr by remember { mutableStateOf("") }
-    var cashUsdStr by remember { mutableStateOf("") }
-    var paidVesStr by remember { mutableStateOf("") }
+    var deposits by remember { mutableStateOf<List<PaymentDeposit>>(emptyList()) }
+    var nextDepositId by remember { mutableStateOf(1L) }
 
     var editingProfile by remember { mutableStateOf<PaymentMethodProfile?>(null) }
     var showProfileDialog by remember { mutableStateOf(false) }
@@ -1949,22 +1949,51 @@ fun CheckoutTab(
     val rateDecimals = if (selectedRateKey == "USDT") 2 else 4
 
     val totalUsd = VeNumberFormat.parseFlexibleDouble(totalUsdStr) ?: 0.0
-    val cashUsd = VeNumberFormat.parseFlexibleDouble(cashUsdStr) ?: 0.0
-    val paidVes = VeNumberFormat.parseFlexibleDouble(paidVesStr) ?: 0.0
+    val usdBcvRate = effectiveUsdBcv?.rate?.takeIf { it > 0.0 } ?: activeRate
+    val eurBcvRate = effectiveEurBcv?.rate?.takeIf { it > 0.0 } ?: activeRate
+    val usdtRate = uiState.usdtParalelo?.rate?.takeIf { it > 0.0 } ?: activeRate
+    val copPerUsd = uiState.copPerUsd.takeIf { it > 0.0 } ?: 4320.0
 
-    val result = remember(totalUsd, cashUsd, paidVes, activeRate) {
-        UltraMath.calculateMixedPayment(totalUsd, cashUsd, paidVes, activeRate)
+    val parsedDeposits = remember(deposits) {
+        deposits.mapNotNull { dep ->
+            val v = VeNumberFormat.parseFlexibleDouble(dep.amountStr) ?: 0.0
+            if (v > 0.0) dep.currency to v else null
+        }
     }
 
-    val shareSummaryText = remember(result, rateLabel, rateDecimals, activeRate, selectedProfile, isUltraUser, customBrandName) {
+    val paidSummaryText = remember(parsedDeposits) {
+        parsedDeposits.joinToString(" + ") { (currency, amount) ->
+            when (currency) {
+                PaymentDepositCurrency.USD -> "$${VeNumberFormat.formatMoney(amount)}"
+                PaymentDepositCurrency.VES -> "Bs. ${VeNumberFormat.formatMoney(amount)}"
+                PaymentDepositCurrency.EUR -> "€${VeNumberFormat.formatMoney(amount)}"
+                PaymentDepositCurrency.USDT -> "${VeNumberFormat.formatMoney(amount)} USDT"
+                PaymentDepositCurrency.COP -> "${VeNumberFormat.formatCop(amount)} COP"
+            }
+        }
+    }
+
+    val result = remember(totalUsd, parsedDeposits, activeRate, usdBcvRate, eurBcvRate, usdtRate, copPerUsd) {
+        UltraMath.calculateMixedPaymentMultiCurrency(
+            totalUsd = totalUsd,
+            deposits = parsedDeposits,
+            checkoutRate = activeRate,
+            usdBcvRate = usdBcvRate,
+            eurBcvRate = eurBcvRate,
+            usdtRate = usdtRate,
+            copPerUsd = copPerUsd
+        )
+    }
+
+    val shareSummaryText = remember(result, paidSummaryText, rateLabel, rateDecimals, activeRate, selectedProfile, isUltraUser, customBrandName) {
         buildString {
             if (result.totalUsd > 0.005) {
                 val brandHeader = if (isUltraUser && customBrandName.isNotBlank()) customBrandName.trim() else "Tasa VE"
                 appendLine("*$brandHeader • Resumen de Cobro*")
                 appendLine("Total: $${VeNumberFormat.formatMoney(result.totalUsd)} • Bs. ${VeNumberFormat.formatMoney(result.totalVes)}")
                 appendLine("Tasa ($rateLabel): Bs. ${VeNumberFormat.formatRate(activeRate, rateDecimals)}")
-                if (result.paidForeignUsd > 0 || result.paidVes > 0) {
-                    appendLine("Abonado: $${VeNumberFormat.formatMoney(result.paidForeignUsd)} + Bs. ${VeNumberFormat.formatMoney(result.paidVes)}")
+                if (paidSummaryText.isNotBlank()) {
+                    appendLine("Abonado: $paidSummaryText")
                 }
                 if (result.remainingUsd > 0.005) {
                     appendLine("Por pagar: $${VeNumberFormat.formatMoney(result.remainingUsd)} / Bs. ${VeNumberFormat.formatMoney(result.remainingVes)}")
@@ -2072,36 +2101,163 @@ fun CheckoutTab(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = cashUsdStr,
-                    onValueChange = { raw ->
-                        VeNumberFormat.sanitizeEditableInput(raw, cashUsdStr)?.let { cashUsdStr = it }
+            if (deposits.isEmpty()) {
+                OutlinedButton(
+                    onClick = {
+                        deposits = listOf(
+                            PaymentDeposit(id = nextDepositId, currency = PaymentDepositCurrency.USD)
+                        )
+                        nextDepositId += 1L
                     },
-                    visualTransformation = VenezuelanNumberVisualTransformation,
-                    label = { Text("Paga en $") },
-                    placeholder = { Text("0,00") },
-                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 42.dp),
                     shape = RoundedCornerShape(14.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = paidVesStr,
-                    onValueChange = { raw ->
-                        VeNumberFormat.sanitizeEditableInput(raw, paidVesStr)?.let { paidVesStr = it }
-                    },
-                    visualTransformation = VenezuelanNumberVisualTransformation,
-                    label = { Text("Paga en Bs.") },
-                    placeholder = { Text("0,00") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
+                    border = BorderStroke(1.dp, borderCol)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = EmeraldLight,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "¿Tiene abono? Agregar abono",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "ABONADO",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldLight,
+                        letterSpacing = 0.6.sp
+                    )
+                    TextButton(
+                        onClick = {
+                            val usedCurrencies = deposits.map { it.currency }.toSet()
+                            val suggestedNext = PaymentDepositCurrency.entries.firstOrNull { it !in usedCurrencies }
+                                ?: PaymentDepositCurrency.VES
+                            deposits = deposits + PaymentDeposit(
+                                id = nextDepositId,
+                                currency = suggestedNext
+                            )
+                            nextDepositId += 1L
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = EmeraldLight,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Agregar otro abono",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight
+                        )
+                    }
+                }
+
+                deposits.forEach { deposit ->
+                    var menuExpanded by remember(deposit.id) { mutableStateOf(false) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box {
+                            OutlinedButton(
+                                onClick = { menuExpanded = true },
+                                modifier = Modifier
+                                    .widthIn(min = 92.dp)
+                                    .heightIn(min = 52.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, borderCol),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = deposit.currency.shortLabel,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = EmeraldLight
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Elegir moneda del abono",
+                                    tint = textSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                PaymentDepositCurrency.entries.forEach { curr ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = curr.displayLabel,
+                                                fontWeight = if (curr == deposit.currency) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (curr == deposit.currency) EmeraldLight else textPrimary
+                                            )
+                                        },
+                                        onClick = {
+                                            deposits = deposits.map {
+                                                if (it.id == deposit.id) it.copy(currency = curr) else it
+                                            }
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = deposit.amountStr,
+                            onValueChange = { raw ->
+                                VeNumberFormat.sanitizeEditableInput(raw, deposit.amountStr)?.let { sanitized ->
+                                    deposits = deposits.map {
+                                        if (it.id == deposit.id) it.copy(amountStr = sanitized) else it
+                                    }
+                                }
+                            },
+                            visualTransformation = VenezuelanNumberVisualTransformation,
+                            label = { Text("Abono (${deposit.currency.shortLabel})") },
+                            placeholder = { Text("0,00") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        IconButton(
+                            onClick = {
+                                deposits = deposits.filterNot { it.id == deposit.id }
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Quitar abono",
+                                tint = textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -2612,7 +2768,8 @@ fun CheckoutTab(
                         profile = selectedProfile,
                         captionText = bankAutoPasteText.ifBlank { shareSummaryText },
                         customBrandName = if (isUltraUser) customBrandName.takeIf { it.isNotBlank() } else null,
-                        customBrandLogoFile = if (isUltraUser) customLogoFile else null
+                        customBrandLogoFile = if (isUltraUser) customLogoFile else null,
+                        paidSummaryOverride = paidSummaryText.takeIf { it.isNotBlank() }
                     )
                 },
                 modifier = Modifier

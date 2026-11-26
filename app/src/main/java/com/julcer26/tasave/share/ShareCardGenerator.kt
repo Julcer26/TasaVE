@@ -307,7 +307,8 @@ object ShareCardGenerator {
         profile: PaymentMethodProfile?,
         captionText: String? = null,
         customBrandName: String? = null,
-        customBrandLogoFile: File? = null
+        customBrandLogoFile: File? = null,
+        paidSummaryOverride: String? = null
     ) {
         com.julcer26.tasave.analytics.AnalyticsTracker.logShareCard(
             context,
@@ -415,11 +416,16 @@ object ShareCardGenerator {
                     totalPaint
                 )
 
-                if (paidUsd > 0.0 || paidVes > 0.0) {
-                    val paidText = "Abonado: $${VeNumberFormat.formatMoney(paidUsd)} + Bs. ${VeNumberFormat.formatMoney(paidVes)}"
-                    fitTextSize(subtitlePaint, paidText, maxSummaryW, minSize = 20f)
+                val paidLine = when {
+                    !paidSummaryOverride.isNullOrBlank() -> "Abonado: $paidSummaryOverride"
+                    paidUsd > 0.0 || paidVes > 0.0 ->
+                        "Abonado: $${VeNumberFormat.formatMoney(paidUsd)} + Bs. ${VeNumberFormat.formatMoney(paidVes)}"
+                    else -> null
+                }
+                if (paidLine != null) {
+                    fitTextSize(subtitlePaint, paidLine, maxSummaryW, minSize = 19f)
                     canvas.drawText(
-                        paidText,
+                        paidLine,
                         148f,
                         currentY + 174f,
                         subtitlePaint

@@ -76,6 +76,38 @@ class UltraMathAndBillingTest {
     }
 
     @Test
+    fun calculateMixedPaymentMultiCurrency_convertsAllCurrenciesAccurately() {
+        // Total $100 @ USD BCV 50 -> Bs. 5.000
+        // Deposits:
+        //   $20 USD       = Bs. 1.000
+        //   Bs. 500 VES   = Bs. 500
+        //   €10 EUR @ 55  = Bs. 550
+        //   10 USDT @ 60  = Bs. 600
+        //   40.000 COP (@4000 COP/$ = $10 BCV) = Bs. 500
+        // Total paid = Bs. 3.150 ($63 equiv) -> Remaining = Bs. 1.850 ($37)
+        val res = UltraMath.calculateMixedPaymentMultiCurrency(
+            totalUsd = 100.0,
+            deposits = listOf(
+                PaymentDepositCurrency.USD to 20.0,
+                PaymentDepositCurrency.VES to 500.0,
+                PaymentDepositCurrency.EUR to 10.0,
+                PaymentDepositCurrency.USDT to 10.0,
+                PaymentDepositCurrency.COP to 40_000.0
+            ),
+            checkoutRate = 50.0,
+            usdBcvRate = 50.0,
+            eurBcvRate = 55.0,
+            usdtRate = 60.0,
+            copPerUsd = 4000.0
+        )
+        assertEquals(3150.0, res.paidVes, 0.01)
+        assertEquals(63.0, res.paidForeignUsd, 0.01)
+        assertEquals(1850.0, res.remainingVes, 0.01)
+        assertEquals(37.0, res.remainingUsd, 0.01)
+        assertEquals(0.0, res.changeUsd, 0.001)
+    }
+
+    @Test
     fun billingEntitlements_ultraAndDebugOverridesWork() {
         // Production entitlements
         assertFalse(

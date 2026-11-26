@@ -180,6 +180,21 @@ data class PagoMovilInfo(
     val phone: String = ""
 )
 
+enum class PaymentDepositCurrency(val shortLabel: String, val displayLabel: String) {
+    USD("USD", "USD ($)"),
+    VES("Bs.", "Bolívares (Bs.)"),
+    EUR("EUR", "Euros (€)"),
+    USDT("USDT", "USDT (₮)"),
+    COP("COP", "Pesos (COP)")
+}
+
+@Immutable
+data class PaymentDeposit(
+    val id: Long,
+    val currency: PaymentDepositCurrency = PaymentDepositCurrency.USD,
+    val amountStr: String = ""
+)
+
 @Immutable
 data class MixedPaymentResult(
     val totalUsd: Double,
@@ -282,6 +297,64 @@ object UltraMath {
                 remainingVes = 0.0,
                 changeUsd = changeUsd,
                 changeVes = changeUsd * safeRate
+            )
+        }
+    }
+
+    fun calculateMixedPaymentMultiCurrency(
+        totalUsd: Double,
+        deposits: List<Pair<PaymentDepositCurrency, Double>>,
+        checkoutRate: Double,
+        usdBcvRate: Double,
+        eurBcvRate: Double,
+        usdtRate: Double,
+        copPerUsd: Double
+    ): MixedPaymentResult {
+        val safeCheckoutRate = if (checkoutRate > 0.0) checkoutRate else 1.0
+        val safeUsdBcv = if (usdBcvRate > 0.0) usdBcvRate else safeCheckoutRate
+        val safeEurBcv = if (eurBcvRate > 0.0) eurBcvRate else safeCheckoutRate
+        val safeUsdt = if (usdtRate > 0.0) usdtRate else safeCheckoutRate
+        val safeCopPerUsd = if (copPerUsd > 0.0) copPerUsd else 4320.0
+
+        val totalVes = totalUsd * safeCheckoutRate
+        var totalPaidVes = 0.0
+        for ((currency, rawAmount) in deposits) {
+            if (!rawAmount.isFinite() || rawAmount <= 0.0) continue
+            totalPaidVes += when (currency) {
+                PaymentDepositCurrency.USD -> rawAmount * safeCheckoutRate
+                PaymentDepositCurrency.VES -> rawAmount
+                PaymentDepositCurrency.EUR -> rawAmount * safeEurBcv
+                PaymentDepositCurrency.USDT -> rawAmount * safeUsdt
+                PaymentDepositCurrency.COP -> (rawAmount / safeCopPerUsd) * safeUsdBcv
+            }
+        }
+
+        val totalPaidUsdEquiv = totalPaidVes / safeCheckoutRate
+        val diffVes = totalVes - totalPaidVes
+        val diffUsd = diffVes / safeCheckoutRate
+
+        return if (diffVes >= 0.0) {
+            MixedPaymentResult(
+                totalUsd = totalUsd,
+                totalVes = totalVes,
+                paidForeignUsd = totalPaidUsdEquiv,
+                paidVes = totalPaidVes,
+                remainingUsd = diffUsd,
+                remainingVes = diffVes,
+                changeUsd = 0.0,
+                changeVes = 0.0
+            )
+        } else {
+            val changeVes = -diffVes
+            MixedPaymentResult(
+                totalUsd = totalUsd,
+                totalVes = totalVes,
+                paidForeignUsd = totalPaidUsdEquiv,
+                paidVes = totalPaidVes,
+                remainingUsd = 0.0,
+                remainingVes = 0.0,
+                changeUsd = changeVes / safeCheckoutRate,
+                changeVes = changeVes
             )
         }
     }
