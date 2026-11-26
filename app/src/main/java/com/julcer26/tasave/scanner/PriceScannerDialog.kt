@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import com.julcer26.tasave.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -166,10 +168,10 @@ fun PriceScannerDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
+                            painter = painterResource(id = R.drawable.ic_price_scanner_123),
                             contentDescription = null,
                             tint = emeraldLight,
-                            modifier = Modifier.size(34.dp)
+                            modifier = Modifier.size(36.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -263,10 +265,10 @@ fun PriceScannerDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
+                            painter = painterResource(id = R.drawable.ic_price_scanner_123),
                             contentDescription = null,
                             tint = emeraldLight,
-                            modifier = Modifier.size(34.dp)
+                            modifier = Modifier.size(36.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))

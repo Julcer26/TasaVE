@@ -369,10 +369,10 @@ fun TasaVeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
+                            painter = painterResource(id = R.drawable.ic_price_scanner_123),
                             contentDescription = "Escanear precio",
                             tint = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(21.dp)
                         )
                     }
 

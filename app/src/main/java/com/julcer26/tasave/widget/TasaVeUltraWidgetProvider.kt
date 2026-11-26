@@ -94,6 +94,9 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                     storage.setUltraWidgetProfileIndex(next)
                 }
             }
+            ACTION_PAY_TOGGLE_PRIVACY -> {
+                storage.setHideSensitiveData(!storage.isHideSensitiveData())
+            }
             ACTION_PAY_COPY -> {
                 val profiles = storage.getPaymentProfiles()
                 val idx = storage.resolveActivePaymentProfileIndex(profiles)
@@ -132,6 +135,7 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
         private const val ACTION_SELECT_RATE = "com.julcer26.tasave.widget.ULTRA_SELECT_RATE"
         private const val ACTION_PAY_PREV = "com.julcer26.tasave.widget.ULTRA_PAY_PREV"
         private const val ACTION_PAY_NEXT = "com.julcer26.tasave.widget.ULTRA_PAY_NEXT"
+        private const val ACTION_PAY_TOGGLE_PRIVACY = "com.julcer26.tasave.widget.ULTRA_PAY_TOGGLE_PRIVACY"
         private const val ACTION_PAY_COPY = "com.julcer26.tasave.widget.ULTRA_PAY_COPY"
 
         private const val EXTRA_TAB = "extra_tab"
@@ -375,12 +379,22 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                     totalCount = profiles.size
                 )
                 setTextViewText(R.id.ultra_pay_title, profileData.title)
-                val visiblePayDetails = if (storage.isHideSensitiveData() && profiles.isNotEmpty()) {
-                    "Datos ocultos por privacidad 🔒\nToca «Copiar datos» para copiarlos o desbloquea el ojito en Cobros."
+                val hideSensitive = storage.isHideSensitiveData()
+                val visiblePayDetails = if (hideSensitive && profiles.isNotEmpty()) {
+                    "Datos ocultos por privacidad 🔒\nToca el ojito para mostrar o «Copiar datos»."
                 } else {
                     profileData.displayLines
                 }
                 setTextViewText(R.id.ultra_pay_details, visiblePayDetails)
+                setImageViewResource(
+                    R.id.ultra_pay_privacy_toggle,
+                    if (hideSensitive) R.drawable.ic_widget_eye_off else R.drawable.ic_widget_eye_on
+                )
+                setViewVisibility(R.id.ultra_pay_privacy_toggle, if (profiles.isNotEmpty()) View.VISIBLE else View.GONE)
+                setOnClickPendingIntent(
+                    R.id.ultra_pay_privacy_toggle,
+                    actionBroadcast(context, 524, ACTION_PAY_TOGGLE_PRIVACY)
+                )
                 setViewVisibility(R.id.ultra_pay_prev, if (profiles.size > 1) View.VISIBLE else View.GONE)
                 setViewVisibility(R.id.ultra_pay_next, if (profiles.size > 1) View.VISIBLE else View.GONE)
                 setOnClickPendingIntent(R.id.ultra_pay_prev, actionBroadcast(context, 520, ACTION_PAY_PREV))

@@ -21,9 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
 
 /**
  * TopBannerAd: Non-intrusive Anchored Adaptive Banner advertising component.
@@ -53,6 +55,7 @@ fun TopBannerAd(
     if (!isInPreview && resolvedUnitId == null) return
 
     var adViewRef by remember { mutableStateOf<AdView?>(null) }
+    var adLoadFailed by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -62,7 +65,7 @@ fun TopBannerAd(
     }
 
     AnimatedVisibility(
-        visible = !hideAds,
+        visible = !hideAds && (isInPreview || !adLoadFailed),
         enter = fadeIn(),
         exit = fadeOut()
     ) {
@@ -131,6 +134,14 @@ fun TopBannerAd(
                                     ViewGroup.LayoutParams.WRAP_CONTENT
                                 )
                                 adViewRef = this
+                                adListener = object : AdListener() {
+                                    override fun onAdLoaded() {
+                                        adLoadFailed = false
+                                    }
+                                    override fun onAdFailedToLoad(error: LoadAdError) {
+                                        adLoadFailed = true
+                                    }
+                                }
                                 loadAd(AdRequest.Builder().build())
                             }
                         }
