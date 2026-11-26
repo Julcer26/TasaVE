@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark light">
-    <meta name="description" content="Política de Privacidad, Seguridad de Datos y Términos de Uso oficiales de Tasa VE — Calculadora de conversión financiera para Venezuela.">
+    <meta name="description" content="Política de Privacidad, Seguridad de Datos y Términos de Uso de Tasa VE — Calculadora de conversión financiera para Venezuela.">
     <title>Política de Privacidad y Términos de Uso — Tasa VE</title>
     <link rel="icon" type="image/png" href="assets/app_icon_512x512.png">
     <style>
@@ -245,7 +245,7 @@
             </div>
         </div>
 
-        <span class="badge">Centro Legal Oficial &bull; Aviso de Privacidad y Google Play Data Safety</span>
+        <span class="badge">Aviso de Privacidad &bull; Google Play Data Safety</span>
         <h1>Política de Privacidad y Términos de Uso — Tasa VE</h1>
         <p class="meta-line">
             <strong>Última actualización:</strong> 26 de noviembre de 2026 &bull;
@@ -282,7 +282,7 @@
                     <tr>
                         <td><strong>Reportes voluntarios de soporte</strong></td>
                         <td>Descripción, módulo, contacto opcional (si lo indicas) y diagnóstico técnico (versión de app, plan, marca/modelo y versión de Android).</td>
-                        <td>Enviado únicamente por iniciativa del usuario para soporte técnico.</td>
+                        <td>Enviado únicamente por iniciativa del usuario para soporte técnico e historial de mejoras.</td>
                     </tr>
                     <tr>
                         <td><strong>Analítica, publicidad y compras</strong></td>
@@ -293,7 +293,7 @@
             </table>
         </div>
 
-        <nav class="toc" aria-label="Índice del Centro Legal">
+        <nav class="toc" aria-label="Índice del documento legal">
             <p class="toc-title">Índice rápido</p>
             <ol class="toc-list">
                 <li><a href="#s1">1. Responsable y alcance</a></li>
@@ -301,10 +301,10 @@
                 <li><a href="#s3">3. Datos almacenados localmente</a></li>
                 <li><a href="#s4">4. Reportes voluntarios y soporte técnico</a></li>
                 <li><a href="#s5">5. Analítica, publicidad y terceros</a></li>
-                <li><a href="#s6">6. Permisos de Android y seguridad</a></li>
+                <li><a href="#s6">6. Permisos de Android, widgets y seguridad</a></li>
                 <li><a href="#s7">7. Derechos, eliminación y menores</a></li>
-                <li><a href="#s8">8. Cambios y contacto</a></li>
-                <li><a href="#terminos">Parte II: Términos de Uso y Descargo Legal (10 cláusulas)</a></li>
+                <li><a href="#s8">8. Actualizaciones y contacto</a></li>
+                <li><a href="#terminos">Parte II: Términos de Uso y Descargo Legal</a></li>
             </ol>
         </nav>
 
@@ -333,7 +333,7 @@
         <p>Cuando decides enviar un reporte de error, consulta o sugerencia a través de la aplicación o a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>:</p>
         <ul>
             <li><strong>Información proporcionada o técnica:</strong> Se procesa el contenido de tu mensaje, el módulo indicado, la dirección de correo o contacto que voluntariamente suministres para recibir respuesta y datos técnicos básicos del entorno (versión de la aplicación, tipo de plan, fabricante/modelo del dispositivo y versión de Android).</li>
-            <li><strong>Finalidad y conservación:</strong> Esta información se utiliza exclusivamente para diagnosticar fallos, mejorar la estabilidad y responder a tu solicitud. Se conserva únicamente durante el tiempo necesario para atender el soporte, resolver incidencias o cumplir obligaciones legales aplicables.</li>
+            <li><strong>Finalidad e historial técnico:</strong> Esta información se utiliza exclusivamente para diagnosticar fallos, mejorar la estabilidad, responder tu solicitud y mantenerse como referencia e historial técnico interno de soporte y evolución de la aplicación, salvo que solicites su eliminación expresa escribiendo a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</li>
         </ul>
 
         <h2 id="s5">5. Analítica, publicidad, facturación y servicios de terceros</h2>
@@ -345,68 +345,86 @@
             <li><strong>Google ML Kit:</strong> El reconocimiento óptico de texto (OCR) para lectura de precios se ejecuta en el dispositivo sin enviar fotografías a servidores propios de Tasa VE.</li>
         </ul>
 
-        <h2 id="s6">6. Permisos del sistema Android y seguridad</h2>
+        <h2 id="s6">6. Permisos del sistema Android, widgets y seguridad</h2>
         <ul>
             <li><strong>Cámara (<code>CAMERA</code>):</strong> Se solicita únicamente cuando abres el escáner OCR para leer precios en pantalla o etiquetas. No graba video ni sube imágenes a servidores propios.</li>
             <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Utilizada en versiones compatibles de Android cuando habilitas avisos o la barra fija de consulta rápida.</li>
             <li><strong>Acceso directo de ajustes rápidos (<code>BIND_QUICK_SETTINGS_TILE</code>):</strong> Permite activar la consulta rápida desde el panel de ajustes rápidos de Android cuando tú lo utilizas.</li>
+            <li><strong>Widgets de pantalla de inicio (<code>AppWidget</code> / <code>WorkManager</code>):</strong> No requieren permisos invasivos del sistema; solo operan si decides añadirlos a tu pantalla de inicio, utilizando las cotizaciones en caché local, la conectividad de red para refrescar tasas y el portapapeles del sistema únicamente cuando pulsas copiar datos.</li>
             <li><strong>Conectividad de red y facturación (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>, <code>BILLING</code>):</strong> Necesaria para consultar cotizaciones públicas, mostrar anuncios en la versión gratuita, enviar métricas agregadas y gestionar compras/suscripciones.</li>
         </ul>
         <p><strong>Seguridad:</strong> Las comunicaciones de red hacia servicios externos se realizan mediante cifrado en tránsito (<strong>HTTPS/TLS</strong>), y la función de ocultamiento visual en pantalla permite proteger datos mostrados frente a miradas cercanas. Ningún sistema es infalible al 100%, por lo que se recomienda mantener actualizado tu dispositivo y proteger el acceso físico a tu teléfono.</p>
 
         <h2 id="s7">7. Derechos del usuario, eliminación de datos y menores de edad</h2>
         <ul>
-            <li><strong>Borrado de datos locales:</strong> Puedes eliminar tu historial, carrito, perfiles guardados o archivos locales desde la aplicación o borrando los datos de la app en <em>Ajustes &gt; Aplicaciones &gt; Tasa VE &gt; Almacenamiento</em>.</li>
+            <li><strong>Borrado de datos locales:</strong> Puedes eliminar tu historial, carrito, perfiles guardados o archivos locales desde la aplicación, o manualmente en Android ingresando en <em>Ajustes &gt; Aplicaciones &gt; Tasa VE &gt; Almacenamiento y caché</em> y seleccionando <strong>Borrar caché</strong> (para eliminar archivos temporales como tarjetas PNG) o <strong>Borrar datos / Eliminar almacenamiento</strong> (para restablecer completamente la aplicación).</li>
             <li><strong>Solicitud de eliminación de soporte:</strong> Si enviaste un reporte o correo de soporte y deseas solicitar su eliminación, contáctanos en <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> indicando la fecha aproximada y el medio o dirección desde donde escribiste.</li>
-            <li><strong>Derechos de privacidad:</strong> Según la normativa aplicable (incluyendo, cuando corresponda, el RGPD en el Espacio Económico Europeo), puedes solicitar información, rectificación o eliminación respecto a los datos tratados en relación con el soporte o el uso del servicio a través de <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</li>
-            <li><strong>Menores de edad:</strong> Tasa VE no está dirigida a menores de 13 años (o la edad mínima superior exigida en tu jurisdicción, como 16 años en el EEE) ni recopila conscientemente datos personales de menores. Si detectas que un menor ha enviado información de soporte, contáctanos para eliminarla.</li>
+            <li><strong>Derechos de privacidad:</strong> Conforme a la normativa aplicable, puedes solicitar información, rectificación o eliminación respecto a los datos tratados en relación con el soporte técnico o el uso del servicio a través de <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</li>
+            <li><strong>Menores de edad:</strong> Tasa VE no está dirigida a menores de 13 años (o la edad mínima legal exigida en tu jurisdicción) ni recopila conscientemente datos personales de menores. Si eres padre, madre o representante legal y consideras que un menor de edad ha hecho uso indebido de la plataforma o ha enviado información a soporte, repórtalo de inmediato a <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> para tomar las medidas y eliminaciones correspondientes.</li>
         </ul>
 
-        <h2 id="s8">8. Cambios en esta política y contacto</h2>
-        <p>Podemos actualizar esta Política de Privacidad ante cambios funcionales, técnicos, de políticas de Google Play o normativos. Publicaremos la versión actualizada indicando la fecha de <em>Última actualización</em>.</p>
+        <h2 id="s8">8. Actualizaciones de estas políticas y contacto</h2>
+        <p>Revisaremos y actualizaremos esta Política de Privacidad y los Términos de Uso cada vez que incorporemos cambios funcionales, técnicos o normativos relevantes, o cuando sea necesario alinearnos con actualizaciones de Google Play, publicando siempre la versión vigente con su fecha de <em>Última actualización</em>. Para consultar las políticas oficiales y siempre actualizadas de Google, puedes revisar directamente los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener noreferrer">Términos de Google Play</a> y la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Política de Privacidad de Google</a>.</p>
         <p><strong>Contacto:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> &bull; <strong>Sitio web:</strong> <a href="https://tasave.net">https://tasave.net</a></p>
 
         <!-- PARTE II: TÉRMINOS Y CONDICIONES -->
         <div id="terminos" class="part-heading terms">Parte II — Términos y Condiciones de Uso y Descargo Legal</div>
 
         <h2 id="t1">1. Naturaleza informativa y no intermediación</h2>
-        <p>Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. <strong>Tasa VE no es una entidad bancaria, casa de cambio, mercado de divisas, procesador de pagos, billetera electrónica, asesora financiera ni administradora tributaria</strong>, ni ejecuta transferencias, liquidaciones o cobros por cuenta de los usuarios.</p>
+        <p>Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. <strong>Tasa VE no es una entidad bancaria, casa de cambio, mercado de divisas, procesador de pagos, billetera electrónica, asesora financiera, ni administradora tributaria, y tampoco ejecuta transferencias, liquidaciones o cobros por cuenta de los usuarios.</strong></p>
 
         <h2 id="t2">2. Exactitud referencial de tasas y cálculos</h2>
         <p>Las tasas de cambio, conversiones multimoneda, estimaciones de impuestos o retenciones (como IVA o IGTF), calendarios o utilidades informativas tienen fines <strong>estrictamente orientativos e informativos</strong>. Las tasas publicadas pueden diferir de las cotizaciones oficiales vigentes, del mercado o de las aplicadas efectivamente por bancos y comercios al momento de liquidar una operación. No constituyen asesoría financiera, contable, fiscal ni legal.</p>
 
         <h2 id="t3">3. Herramientas de cobro, pagos mixtos y tarjetas PNG</h2>
-        <p>Las plantillas de texto para cobros, registros de abonos o pagos mixtos y las imágenes/tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
+        <p>Las plantillas de texto para cobros (incluyendo el formato limpio para bancos), registros de abonos o pagos mixtos y las imágenes/tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
 
-        <h2 id="t4">4. Plan gratuito, suscripción Ultra, renovación y reembolsos</h2>
+        <h2 id="t4">4. Plan gratuito, suscripción Ultra, cancelación y reembolsos</h2>
         <ul>
             <li><strong>Plan Gratuito:</strong> Ofrece funcionalidades base financiadas mediante publicidad de terceros (Google AdMob).</li>
-            <li><strong>Tasa VE Ultra:</strong> Suscripción opcional de pago recurrente ($0.99 USD/mes o $7.99 USD/año, salvo promociones o impuestos/ajustes de moneda aplicables en Google Play). Salvo que la canceles con al menos 24 horas de antelación al vencimiento del período en curso desde <em>Google Play Store &gt; Pagos y suscripciones &gt; Suscripciones</em>, la suscripción se renueva automáticamente.</li>
+            <li><strong>Tasa VE Ultra:</strong> Suscripción opcional de pago recurrente ($0.99 USD/mes o $7.99 USD/año, salvo promociones o impuestos/ajustes de moneda aplicables en Google Play). Salvo que la canceles con al menos 24 horas de antelación al vencimiento del período en curso, la suscripción se renueva automáticamente.</li>
+            <li><strong>Cómo cancelar en Google Play:</strong> Abre <em>Google Play Store &gt; Foto de perfil &gt; Pagos y suscripciones &gt; Suscripciones &gt; Tasa VE &gt; Cancelar suscripción</em> y sigue las instrucciones en pantalla para confirmar la cancelación.</li>
             <li><strong>Restauración y reembolsos:</strong> Puedes restaurar compras asociadas a tu cuenta de Google desde la aplicación. Los reembolsos se rigen por las políticas y procedimientos vigentes de Google Play.</li>
         </ul>
 
-        <h2 id="t5">5. Propiedad intelectual y licencia de uso</h2>
-        <p>Todos los derechos de propiedad intelectual sobre el código, diseño, interfaz, marca y logotipos de Tasa VE corresponden a su titular o licenciantes. Se te otorga una licencia limitada, revocable, no exclusiva e intransferible para usar la aplicación conforme a estos Términos. Conservas la titularidad sobre tus propios logotipos o contenidos cargados localmente.</p>
+        <h2 id="t5">5. Propiedad intelectual, licencia y titularidad del contenido del usuario</h2>
+        <p>Todos los derechos de propiedad intelectual sobre el código, diseño, interfaz, marca y logotipos de Tasa VE corresponden a su titular o licenciantes. Se te otorga una licencia limitada, revocable, no exclusiva e intransferible para usar la aplicación conforme a estos Términos.</p>
+        <p><strong>Titularidad y responsabilidad del usuario:</strong> El usuario declara y garantiza contar con la titularidad o autorización legítima sobre los logotipos, marcas comerciales e información que suministre o cargue en la aplicación, por lo que será plena y exclusivamente responsable ante cualquier reclamo, controversia o circunstancia que surja del suministro de dichos logotipos o de la información y comprobantes generados en la plataforma.</p>
 
         <h2 id="t6">6. Conducta prohibida</h2>
-        <p>Queda prohibido utilizar Tasa VE para actividades ilícitas, fraudulentas o engañosas; intentar eludir controles técnicos o de suscripción; realizar ingeniería inversa, descompilar o extraer indebidamente el código o los servicios asociados más allá de lo expresamente permitido por la ley; o sobrecargar o interferir con la infraestructura o APIs conectadas.</p>
+        <p>Queda prohibido utilizar Tasa VE para actividades ilícitas, fraudulentas o engañosas; suplantar identidades o adulterar comprobantes; intentar eludir controles técnicos o de suscripción; realizar ingeniería inversa, descompilar o extraer indebidamente el código o los servicios asociados más allá de lo expresamente permitido por la ley; o sobrecargar o interferir con la infraestructura o APIs conectadas.</p>
 
-        <h2 id="t7">7. Exclusión de garantías y limitación de responsabilidad</h2>
+        <h2 id="t7">7. Niveles de gravedad, responsabilidad civil y penal, y resolución extrajudicial</h2>
+        <p>El incumplimiento de estos Términos o la realización de conductas prohibidas hará responsable al infractor conforme a la legislación civil y/o penal aplicable, evaluándose las medidas según el nivel de gravedad del caso:</p>
+        <ul>
+            <li><strong>Nivel leve:</strong> Uso irregular o contravención menor sin perjuicio económico, reputacional ni técnico grave. Podrá dar lugar a advertencia formal o restricción preventiva del acceso.</li>
+            <li><strong>Nivel moderado:</strong> Reincidencia, intento de elusión de controles técnicos o de suscripción, o uso engañoso de plantillas y tarjetas generadas. Podrá conllevar la suspensión o revocación de la licencia de uso, medidas técnicas de bloqueo y el reclamo de reparación o acuerdo extrajudicial.</li>
+            <li><strong>Nivel grave:</strong> Fraude, estafa, suplantación de identidad, ataques o interferencia contra la infraestructura o APIs, ingeniería inversa ilícita o vulneración de propiedad intelectual o derechos de terceros. Conllevará la revocación inmediata de la licencia y facultará al titular para ejercer las acciones <strong>civiles</strong> (indemnización de daños y perjuicios) y/o <strong>penales</strong> ante los organismos y tribunales competentes.</li>
+        </ul>
+        <p><strong>Solución extrajudicial previa:</strong> Cuando la naturaleza y gravedad del hecho lo permitan, el titular podrá procurar en primera instancia un <strong>arreglo extrajudicial</strong> (mediación, conciliación o acuerdo de resarcimiento amistoso) con el fin de resolver la situación sin acudir a últimas instancias judiciales, reservándose siempre el derecho de accionar legalmente de forma inmediata en casos graves o presuntamente delictivos.</p>
+
+        <h2 id="t8">8. Exclusión de garantías y limitación de responsabilidad</h2>
         <div class="callout">
             <p><strong>Descargo de responsabilidad:</strong> Tasa VE se ofrece <strong>"TAL CUAL" (<em>AS IS</em>)</strong> y <strong>"SEGÚN DISPONIBILIDAD" (<em>AS AVAILABLE</em>)</strong>, sin garantías expresas ni implícitas de exactitud continua, disponibilidad ininterrumpida, idoneidad para un fin particular o ausencia de errores. En la máxima medida permitida por la ley aplicable, el titular de Tasa VE no será responsable por pérdidas económicas, lucro cesante, diferencias cambiarias, fallos o cambios en APIs de terceros, interrupciones de red o decisiones comerciales/financieras tomadas con base en la aplicación.</p>
         </div>
 
-        <h2 id="t8">8. Indemnización</h2>
-        <p>Aceptas mantener indemne al titular de Tasa VE frente a reclamaciones, daños o responsabilidades de terceros derivados de un uso indebido de la aplicación, infracción de estos Términos o vulneración de derechos de terceros por parte tuya.</p>
+        <h2 id="t9">9. Indemnización</h2>
+        <p>Aceptas mantener indemne al titular de Tasa VE frente a reclamaciones, daños o responsabilidades de terceros derivados <strong>del uso indebido</strong> de la aplicación, de la infracción de estos Términos o de la vulneración de derechos de terceros por parte tuya.</p>
 
-        <h2 id="t9">9. Ley aplicable y resolución de controversias</h2>
-        <p>Estos Términos se regirán e interpretarán conforme a las leyes aplicables de la República Bolivariana de Venezuela, sin perjuicio de las normas imperativas de protección al consumidor o privacidad que resulten aplicables en la jurisdicción del usuario. Cualquier controversia se procurará resolver primero de buena fe a través de <a href="mailto:soporte@tasave.net">soporte@tasave.net</a>.</p>
+        <h2 id="t10">10. Ley aplicable y resolución de controversias</h2>
+        <p>Estos Términos se regirán e interpretarán conforme a las leyes aplicables de la República Bolivariana de Venezuela, sin perjuicio de las normas imperativas de protección al consumidor o privacidad que resulten aplicables en la jurisdicción del usuario.</p>
+        <p>Ante cualquier controversia, las partes procurarán primero resolverla de buena fe mediante diálogo directo o <strong>arreglo extrajudicial</strong> a través de <a href="mailto:soporte@tasave.net">soporte@tasave.net</a> (salvo hechos graves que requieran actuación inmediata). <strong>De no llegarse a un acuerdo satisfactorio, la controversia será sometida ante los tribunales y entes judiciales correspondientes según la naturaleza civil, mercantil o penal del caso.</strong></p>
 
-        <h2 id="t10">10. Divisibilidad y contacto</h2>
-        <p>Si alguna disposición de estos Términos resulta inválida o inaplicable, las restantes conservarán plena validez. Para consultas legales o de soporte, escríbenos a <strong><a href="mailto:soporte@tasave.net">soporte@tasave.net</a></strong> o visita <strong><a href="https://tasave.net">https://tasave.net</a></strong>.</p>
+        <h2 id="t11">11. Divisibilidad e integridad del acuerdo</h2>
+        <p>Si alguna disposición de estos Términos resulta declarada inválida, nula o inaplicable por una autoridad competente, dicha cláusula se interpretará o ajustará en la medida mínima necesaria para conservar su finalidad, mientras que el resto de las disposiciones mantendrán plena vigencia y validez legal.</p>
+
+        <h2 id="t12">12. Contacto legal y soporte</h2>
+        <p>Para consultas legales, soporte técnico, ejercicio de derechos de privacidad o reportes por uso indebido de la plataforma, comunícate a través de nuestros canales oficiales:</p>
+        <p><strong>Correo electrónico:</strong> <a href="mailto:soporte@tasave.net">soporte@tasave.net</a><br>
+        <strong>Sitio web:</strong> <a href="https://tasave.net">https://tasave.net</a></p>
 
         <div class="footer">
-            Tasa VE &bull; Centro Legal Oficial &bull; 2026
+            Tasa VE &bull; Política de Privacidad y Términos de Uso &bull; 2026
         </div>
     </main>
 </body>
