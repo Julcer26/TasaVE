@@ -3184,45 +3184,47 @@ private fun LegalCenterDialog(
 
     val privacySections = remember {
         listOf(
-            "1. Responsable y Alcance" to
-                "Tasa VE es una aplicación móvil independiente de cálculo y conversión financiera. Esta Política de Privacidad describe de forma transparente cómo se tratan los datos locales, las consultas a fuentes públicas de tasas, las métricas anónimas de uso, los reportes voluntarios de soporte y las tecnologías de terceros integradas, conforme a los lineamientos de Seguridad de Datos (Data Safety) de Google Play.",
-            "2. Origen de Cotizaciones y Caché Offline" to
-                "Las tasas mostradas (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT referencial, Peso Colombiano COP e históricos) se obtienen de APIs públicas (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no está afiliada ni respaldada por el BCV, SENIAT, SUDEBAN ni entidad financiera alguna. Las últimas cotizaciones se guardan localmente para habilitar el Modo Offline y los Widgets.",
-            "3. Datos Almacenados Localmente (Sin Registro)" to
-                "Tasa VE NO exige registro ni recopila en servidores propios cuentas, contraseñas ni ubicación GPS. Tu historial de conversiones, carrito de compras, preferencias de IVA/IGTF, abonos de pago mixto, logo comercial opcional y perfiles de cobro (Pago Móvil, Cuenta Bancaria, Zelle y Binance Pay) se guardan exclusivamente en el almacenamiento privado (sandbox) de tu dispositivo Android y están excluidos del respaldo automático en la nube de Android.",
-            "4. Reportes Voluntarios, Sugerencias y Soporte" to
-                "Cuando decides voluntariamente enviar un reporte de error o una sugerencia desde la app (o escribir a soporte@tasave.net), se transmiten únicamente el texto que escribes, el módulo seleccionado, el dato de contacto si optas por incluirlo y metadatos técnicos básicos de diagnóstico (versión de la aplicación, tipo de plan, marca/modelo del equipo y versión de Android). Esta información se utiliza exclusivamente para reproducir incidencias, validar mejoras y brindarte respuesta; nunca se vincula con tus montos ni perfiles bancarios.",
-            "5. Analítica Anónima Agregada (Firebase Analytics)" to
-                "Usamos Google Firebase Analytics para medir de manera agregada y anónima qué pantallas o herramientas se utilizan más (por ejemplo, conversor, escáner, carrito o útiles) con el fin de priorizar estabilidad y mejoras. Jamás se envían montos, tasas escritas, nombres, cédulas, teléfonos, correos ni perfiles de cobro.",
-            "6. Seguridad, Cifrado y Privacidad Visual" to
-                "Toda comunicación de red utiliza cifrado HTTPS (SSL/TLS). El escáner OCR de precios, el conversor flotante, la generación de tarjetas PNG en caché temporal privado (shared_cards) y la barra fija se ejecutan localmente en el teléfono. Puedes ocultar tus datos bancarios y de cobro en pantalla en cualquier momento mediante el botón de privacidad visual (ojito) en Cobros y en el Widget Ultra.",
-            "7. Permisos del Sistema Android" to
-                "• Cámara (CAMERA): Opcional y solo en primer plano para lectura OCR local de precios; no graba video ni sube fotografías.\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para la barra fija de tasas.\n• Barra Rápida (Quick Settings Tile): Integración estándar del sistema activada solo por acción directa del usuario.\n• Internet y Facturación (INTERNET, ACCESS_NETWORK_STATE, BILLING): Para cotizaciones públicas, analítica anónima, anuncios y gestión de suscripciones en Google Play.",
-            "8. Publicidad, Suscripción Ultra y Terceros" to
-                "La versión gratuita integra Google Mobile Ads (AdMob) con banners, intersticiales controlados y anuncios bonificados opcionales (puede usar ID de publicidad GAID y diagnósticos antifraude). La suscripción opcional Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año) se procesa exclusivamente mediante Google Play Billing y elimina todos los anuncios. Otros SDKs integrados: Google Firebase Analytics y Google ML Kit (OCR local).",
-            "9. Conservación, Eliminación y Menores" to
-                "Los datos locales permanecen bajo tu control absoluto y puedes editarlos o eliminarlos en 1 toque dentro de la app o borrando los datos en Ajustes de Android. Si enviaste un reporte voluntario de soporte y deseas solicitar su eliminación, escribe a soporte@tasave.net. Tasa VE no está dirigida a menores de 13 años (o 16 en el EEE).",
-            "10. Modificaciones y Contacto Oficial" to
-                "Podemos actualizar esta política para reflejar nuevas funciones o requisitos regulatorios y de Google Play. Versión vigente: 26 de noviembre de 2026.\nCorreo legal y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
+            "1. Responsable y alcance" to
+                "Tasa VE es una aplicación independiente de conversión y cálculo financiero orientada principalmente a usuarios en Venezuela. Esta Política de Privacidad aplica a la aplicación oficial Tasa VE en Google Play y a su sitio web informativo https://tasave.net.",
+            "2. Fuentes de cotizaciones y caché offline" to
+                "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM e históricos) provienen de APIs públicas de terceros (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no controla su disponibilidad ni exactitud, y no está afiliada al BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidad bancaria alguna. Las últimas tasas se guardan localmente para operar sin conexión y alimentar los widgets.",
+            "3. Datos almacenados localmente (sin cuentas)" to
+                "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de IVA/IGTF, perfiles opcionales de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos, logotipo propio y tarjetas PNG temporales (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar los datos que compartas con terceros.",
+            "4. Reportes voluntarios y soporte técnico" to
+                "Cuando decides enviar un reporte de error, consulta o sugerencia desde la app o a soporte@tasave.net, se procesa tu mensaje, el módulo indicado, el contacto opcional si decides suministrarlo y datos técnicos básicos del entorno (versión de la app, tipo de plan, fabricante/modelo del equipo y versión de Android). Se usan exclusivamente para diagnosticar fallos, mejorar la estabilidad y responderte, conservándose solo el tiempo necesario para soporte o cumplimiento legal.",
+            "5. Analítica, publicidad, facturación y terceros" to
+                "• Google Firebase Analytics: Métricas agregadas y estadísticas de uso general de pantallas y funciones, sin montos ingresados ni datos bancarios.\n• Google Mobile Ads (AdMob): Anuncios en el plan gratuito; puede acceder al ID de publicidad (GAID), IP/red y señales antifraude. Puedes restablecer o limitar el GAID en los ajustes de Android.\n• Google Play Billing: Gestiona la suscripción opcional Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año o equivalente local) sin que Tasa VE acceda a tu tarjeta.\n• Google ML Kit: Reconocimiento OCR local en el dispositivo sin subir fotografías.",
+            "6. Permisos de Android y seguridad" to
+                "• Cámara (CAMERA): Solo al abrir el escáner OCR; no graba video ni sube fotos.\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para avisos o barra fija.\n• Ajustes rápidos (Quick Settings Tile): Solo se activa cuando tú lo utilizas.\n• Red y facturación (INTERNET, ACCESS_NETWORK_STATE, BILLING): Cotizaciones públicas, anuncios gratuitos, métricas agregadas y suscripciones.\nLas comunicaciones usan cifrado HTTPS/TLS y puedes ocultar datos sensibles en pantalla con el botón de privacidad (ojito). Ningún sistema es infalible al 100 %; mantén tu equipo actualizado y protegido.",
+            "7. Derechos, eliminación de datos y menores" to
+                "Puedes borrar tus datos locales desde la app o en Ajustes > Aplicaciones > Tasa VE > Almacenamiento. Para solicitar eliminación, información o rectificación de reportes de soporte (incluyendo derechos RGPD cuando corresponda), escribe a soporte@tasave.net indicando la fecha aproximada y el contacto usado. Tasa VE no está dirigida a menores de 13 años (o 16 en el EEE) ni recopila conscientemente sus datos.",
+            "8. Cambios en esta política y contacto" to
+                "Podemos actualizar esta Política de Privacidad ante cambios funcionales, técnicos, de políticas de Google Play o normativos. Versión vigente: 26 de noviembre de 2026.\nContacto legal y soporte: soporte@tasave.net\nSitio web oficial: https://tasave.net"
         )
     }
 
     val termsSections = remember {
         listOf(
-            "1. Naturaleza del Servicio y No Afiliación" to
-                "Tasa VE es una herramienta matemática e informativa de conversión financiera. NO es un banco, casa de cambio, procesador de pagos, billetera digital ni autoridad tributaria, y no tiene relación oficial con el BCV, SENIAT, SUDEBAN, Zelle, Binance ni entidades bancarias.",
-            "2. Fuentes Públicas y Carácter Referencial" to
-                "Las tasas (BCV, EUR, USDT, COP) se consultan de fuentes públicas de terceros y pueden presentar desfases frente a operaciones bancarias en tiempo real. Los cálculos de IVA (16%), IGTF (3%), herramientas de Útiles y el Calendario SUDEBAN son estrictamente referenciales y no sustituyen asesoría contable ni facturación fiscal.",
-            "3. Cobros, Pago Mixto, Autopegado y Tarjetas PNG" to
-                "Los perfiles de cobro (Pago Móvil, Cuenta Bancaria, Zelle, Binance), el formato limpio de autopegado bancario, los abonos multimoneda y las tarjetas visuales PNG se generan localmente a solicitud del usuario. Tasa VE no valida cuentas, no verifica transferencias ni intermedia fondos.",
-            "4. Plan Gratuito y Suscripción Tasa VE Ultra" to
-                "El Plan Gratuito incluye las funciones base con publicidad de Google AdMob. La suscripción Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año) se factura a través de Google Play y se renueva automáticamente salvo cancelación con al menos 24 horas de antelación desde Google Play Store > Suscripciones. Las compras y reembolsos se rigen por las políticas de Google Play y pueden restaurarse desde Configuración.",
-            "5. Propiedad Intelectual y Uso Aceptable" to
-                "El diseño, código, marca y logotipo de Tasa VE pertenecen a su titular. El usuario conserva plena titularidad sobre el logotipo o nombre comercial propio que cargue localmente para sus tarjetas PNG y se compromete a utilizar la app de forma lícita, sin ingeniería inversa ni automatización abusiva.",
-            "6. Limitación de Responsabilidad" to
-                "La aplicación se ofrece \"tal cual\" y \"según disponibilidad\". En la máxima medida permitida por la ley, el desarrollador no será responsable por pérdidas comerciales, diferencias cambiarias, interrupciones de APIs externas o decisiones financieras tomadas con base en los cálculos de la app.",
-            "7. Cambios y Contacto Legal" to
-                "El uso continuado de Tasa VE tras la publicación de cambios implica la aceptación de los términos actualizados. Para soporte, derechos de privacidad o consultas legales: soporte@tasave.net • https://tasave.net/privacy-policy.html."
+            "1. Naturaleza informativa y no intermediación" to
+                "Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. NO es banco, casa de cambio, mercado de divisas, procesador de pagos, billetera electrónica, asesora financiera ni administradora tributaria, ni ejecuta transferencias o cobros.",
+            "2. Exactitud referencial de tasas y cálculos" to
+                "Las tasas, conversiones multimoneda, estimaciones de IVA/IGTF, calendarios y utilidades tienen fines estrictamente orientativos e informativos. Pueden diferir de las cotizaciones vigentes o aplicadas por bancos y comercios, y no constituyen asesoría financiera, contable, fiscal ni legal.",
+            "3. Cobros, pagos mixtos y tarjetas PNG" to
+                "Las plantillas de texto (incluyendo formato limpio para bancos), abonos multimoneda y tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica titularidad de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación o disputas entre terceros.",
+            "4. Plan gratuito, Ultra, renovación y reembolsos" to
+                "El Plan Gratuito incluye funciones base con publicidad de Google AdMob. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año, o equivalente local en Google Play) se renueva automáticamente salvo cancelación al menos 24 horas antes desde Google Play Store > Pagos y suscripciones > Suscripciones. Puedes restaurar compras en la app; los reembolsos se rigen por las políticas de Google Play.",
+            "5. Propiedad intelectual y licencia de uso" to
+                "El código, diseño, interfaz, marca y logotipos de Tasa VE pertenecen a su titular o licenciantes. Se te otorga una licencia limitada, revocable, no exclusiva e intransferible de uso conforme a estos Términos. Conservas plena titularidad sobre tus propios logotipos o contenidos cargados localmente.",
+            "6. Conducta prohibida" to
+                "Se prohíbe usar Tasa VE para actividades ilícitas, fraudulentas o engañosas; intentar eludir controles técnicos o de suscripción; realizar ingeniería inversa, descompilar o extraer código más allá de lo permitido por la ley; o sobrecargar/interferir con las APIs o infraestructura conectada.",
+            "7. Exclusión de garantías y responsabilidad" to
+                "Tasa VE se ofrece \"TAL CUAL\" (AS IS) y \"SEGÚN DISPONIBILIDAD\" (AS AVAILABLE), sin garantías de exactitud continua o ausencia de errores. En la máxima medida permitida por la ley, el titular no será responsable por pérdidas económicas, lucro cesante, diferencias cambiarias, fallos de APIs externas o decisiones tomadas con base en la app.",
+            "8. Indemnización" to
+                "Aceptas mantener indemne al titular de Tasa VE frente a reclamaciones, daños o responsabilidades de terceros derivados de un uso indebido de la aplicación, infracción de estos Términos o vulneración de derechos de terceros.",
+            "9. Ley aplicable y resolución de controversias" to
+                "Estos Términos se regirán por las leyes aplicables de la República Bolivariana de Venezuela, sin perjuicio de las normas imperativas de protección al consumidor o privacidad vigentes en la jurisdicción del usuario. Cualquier controversia se procurará resolver primero de buena fe vía soporte@tasave.net.",
+            "10. Divisibilidad y contacto" to
+                "Si alguna disposición resulta inválida o inaplicable, las restantes conservarán plena validez. Para consultas legales o de soporte: soporte@tasave.net • https://tasave.net/privacy-policy.html."
         )
     }
 
