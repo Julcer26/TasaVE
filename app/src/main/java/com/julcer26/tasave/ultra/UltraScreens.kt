@@ -1809,7 +1809,7 @@ fun MarketTab(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Widgets de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
                     Text(
-                        text = "Tasas en Vivo gratis para todos • Calculadora y Datos Rápidos en Ultra.",
+                        text = "Tasas del Día gratis para todos • Calculadora y Datos Rápidos en Ultra.",
                         fontSize = 11.sp,
                         color = textSecondary
                     )
@@ -1826,7 +1826,7 @@ fun MarketTab(
                         if (manager.isRequestPinAppWidgetSupported) {
                             manager.requestPinAppWidget(provider, null, null)
                         } else {
-                            Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE • Tasas en Vivo.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE • Tasas del Día.", Toast.LENGTH_LONG).show()
                         }
                     } else {
                         Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
@@ -1840,7 +1840,7 @@ fun MarketTab(
             ) {
                 Icon(Icons.AutoMirrored.Filled.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(17.dp), tint = EmeraldLight)
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Fijar Widget Tasas en Vivo (Gratis)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
+                Text("Fijar Widget Tasas del Día (Gratis)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
             }
 
             // Ultra Pro Widget Pin / Unlock Button
@@ -1854,7 +1854,7 @@ fun MarketTab(
                             if (manager.isRequestPinAppWidgetSupported) {
                                 manager.requestPinAppWidget(provider, null, null)
                             } else {
-                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Pagos.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Datos.", Toast.LENGTH_LONG).show()
                             }
                         } else {
                             Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
@@ -1868,7 +1868,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.Widgets, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Fijar Widget Calculadora y Pagos (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Fijar Widget Calculadora y Datos (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             } else {
                 Button(
@@ -1881,7 +1881,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Desbloquear Widget Calc. + Pagos ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Text("Desbloquear Widget Calc. + Datos ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
                 }
             }
         }
@@ -1994,7 +1994,7 @@ fun CheckoutTab(
         buildString {
             if (result.totalUsd > 0.005) {
                 val brandHeader = if (isUltraUser && customBrandName.isNotBlank()) customBrandName.trim() else "Tasa VE"
-                appendLine("*$brandHeader • Resumen de Pago*")
+                appendLine("*$brandHeader • Instrucciones de Pago*")
                 appendLine("Total: $${VeNumberFormat.formatMoney(result.totalUsd)} • Bs. ${VeNumberFormat.formatMoney(result.totalVes)}")
                 appendLine("Tasa ($rateLabel): Bs. ${VeNumberFormat.formatRate(activeRate, rateDecimals)}")
                 if (paidSummaryText.isNotBlank()) {
@@ -2356,7 +2356,7 @@ fun CheckoutTab(
                     )
                     Text(
                         text = if (hideSensitiveData) {
-                            "Datos sensibles ocultos • Toca el ojito para mostrar"
+                            "Datos sensibles ocultos • Toca el botón de privacidad para mostrar"
                         } else {
                             "Pago Móvil, Bancos, Zelle o Binance • Toca para incluir"
                         },
@@ -2903,7 +2903,7 @@ private fun CustomBrandDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Marca en Tarjeta PNG",
+                            text = "Marca en Instrucciones de Pago",
                             fontSize = 15.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = textPrimary
@@ -3676,15 +3676,15 @@ fun PlansComparisonDialog(
                         listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
                         listOf("BCV Mañana + Calendario Bancario", "✓", "✓"),
                         listOf("Útiles (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
-                        listOf("Pago Mixto + Tarjeta PNG (Pagos y Carrito)", "✓", "✓"),
-                        listOf("Perfiles (PM/Banco/Zelle/Bin.)", "1", "∞"),
+                        listOf("Cálculo mixto + Instrucciones de pago", "✓", "✓"),
+                        listOf("Perfiles bancarios (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
-                        listOf("Escáner cámara OCR", "3/día +5 Ad", "∞"),
+                        listOf("Escáner de precios", "3/día +5 Ad", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
-                        listOf("Widget Tasas en Vivo", "✓", "✓"),
-                        listOf("Widget Calculadora y Pagos", "—", "✓"),
-                        listOf("Barra fija y Conversor flotante", "—", "✓"),
-                        listOf("Logo propio en Tarjeta PNG", "—", "✓")
+                        listOf("Widget Tasas del Día", "✓", "✓"),
+                        listOf("Widget Calculadora y Datos", "—", "✓"),
+                        listOf("Notificación fija y Acceso flotante", "—", "✓"),
+                        listOf("Logo propio en Instrucciones de pago", "—", "✓")
                     )
                     rows.forEach { cols ->
                         Row(

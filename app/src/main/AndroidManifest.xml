@@ -69,7 +69,7 @@
         <receiver
             android:name=".widget.TasaVeRatesWidgetProvider"
             android:exported="true"
-            android:label="Tasa VE • Tasas en Vivo">
+            android:label="Tasa VE • Tasas del Día">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -81,7 +81,7 @@
         <receiver
             android:name=".widget.TasaVeUltraWidgetProvider"
             android:exported="true"
-            android:label="Tasa VE Ultra • Calculadora y Pagos">
+            android:label="Tasa VE Ultra • Calculadora y Datos">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

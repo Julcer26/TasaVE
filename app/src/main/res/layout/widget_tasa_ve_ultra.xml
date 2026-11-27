@@ -64,7 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:gravity="center"
-            android:text="Calculadora rápida en tu pantalla, tasas en vivo y copia tu Pago Móvil, Zelle o Binance en 1 toque."
+            android:text="Calculadora rápida en tu pantalla, tasas del día y copia tu Pago Móvil, Zelle o Binance en 1 toque."
             android:textColor="#94A3B8"
             android:textSize="11sp" />
 
@@ -151,7 +151,7 @@
                 android:gravity="center"
                 android:minWidth="52dp"
                 android:paddingHorizontal="10dp"
-                android:text="Pagos"
+                android:text="Datos"
                 android:textColor="#CBD5E1"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -685,7 +685,7 @@
                     android:ellipsize="end"
                     android:gravity="center"
                     android:maxLines="1"
-                    android:text="DATOS DE PAGO"
+                    android:text="DATOS BANCARIOS"
                     android:textColor="#34D399"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -729,7 +729,7 @@
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="3dp"
                     android:maxLines="5"
-                    android:text="Configura tu Pago Móvil, Zelle o Binance en la pestaña Pagos."
+                    android:text="Configura tu Pago Móvil, Zelle o Binance en la pestaña Datos."
                     android:textColor="#E2E8F0"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -760,7 +760,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/widget_key_accent"
                     android:gravity="center"
-                    android:text="Pagos ↗"
+                    android:text="Datos ↗"
                     android:textColor="#34D399"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />

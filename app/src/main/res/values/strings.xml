@@ -9,5 +9,5 @@
     <string name="feedback_webhook_url">https://script.google.com/macros/s/AKfycbzALLNeeUlfhD0uw2WLNeNQRVC-LQYuo4GaMAKa1XlK7F3wh0yT3ZfQxrbZHFAbVdo/exec</string>
     <string name="widget_description">Consulta al instante USD BCV, EUR BCV, USDT y la brecha cambiaria desde tu pantalla de inicio.</string>
     <string name="widget_free_description">Gratis: consulta USD BCV, EUR BCV, USDT, brecha y BCV Mañana directo en tu inicio.</string>
-    <string name="widget_ultra_description">Ultra: tasas en vivo, calculadora rápida y tus datos de pago en 1 toque.</string>
+    <string name="widget_ultra_description">Ultra: tasas del día, calculadora rápida y tus datos bancarios en 1 toque.</string>
 </resources>

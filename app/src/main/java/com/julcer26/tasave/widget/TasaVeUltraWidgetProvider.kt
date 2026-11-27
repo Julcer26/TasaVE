@@ -381,7 +381,7 @@ class TasaVeUltraWidgetProvider : AppWidgetProvider() {
                 setTextViewText(R.id.ultra_pay_title, profileData.title)
                 val hideSensitive = storage.isHideSensitiveData()
                 val visiblePayDetails = if (hideSensitive && profiles.isNotEmpty()) {
-                    "Datos ocultos por privacidad 🔒\nToca el ojito para mostrar o «Copiar datos»."
+                    "Datos ocultos por privacidad 🔒\nToca el botón de privacidad para mostrar o «Copiar datos»."
                 } else {
                     profileData.displayLines
                 }
