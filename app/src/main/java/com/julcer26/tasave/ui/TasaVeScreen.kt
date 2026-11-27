@@ -1463,7 +1463,7 @@ fun TasaVeScreen(
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Compartir Tarjeta (IMG)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Compartir cálculo (IMG)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 

@@ -151,7 +151,7 @@
                 android:gravity="center"
                 android:minWidth="52dp"
                 android:paddingHorizontal="10dp"
-                android:text="Datos"
+                android:text="Perfiles"
                 android:textColor="#CBD5E1"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -685,7 +685,7 @@
                     android:ellipsize="end"
                     android:gravity="center"
                     android:maxLines="1"
-                    android:text="DATOS BANCARIOS"
+                    android:text="MIS PERFILES"
                     android:textColor="#34D399"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -729,7 +729,7 @@
                     android:layout_height="wrap_content"
                     android:lineSpacingExtra="3dp"
                     android:maxLines="5"
-                    android:text="Configura tu Pago Móvil, Zelle o Binance en la pestaña Datos."
+                    android:text="Configura tu Pago Móvil, Zelle o Binance en la pestaña Perfiles."
                     android:textColor="#E2E8F0"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -760,7 +760,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/widget_key_accent"
                     android:gravity="center"
-                    android:text="Datos ↗"
+                    android:text="Perfiles ↗"
                     android:textColor="#34D399"
                     android:textSize="11.5sp"
                     android:textStyle="bold" />

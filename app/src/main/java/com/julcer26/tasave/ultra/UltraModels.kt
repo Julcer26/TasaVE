@@ -6,7 +6,7 @@ enum class AppTab(val label: String) {
     CONVERTER("Conversor"),
     CART("Carrito"),
     MARKET("Extras"),
-    CHECKOUT("Datos")
+    CHECKOUT("Perfiles")
 }
 
 enum class UserTier {

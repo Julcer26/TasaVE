@@ -402,7 +402,7 @@ fun CartTab(
                         )
                         Spacer(modifier = Modifier.width(5.dp))
                         Text(
-                            text = "Tarjeta (IMG)",
+                            text = "Resumen (IMG)",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -1809,7 +1809,7 @@ fun MarketTab(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Widgets de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
                     Text(
-                        text = "Tasas del Día gratis para todos • Calculadora y Datos Rápidos en Ultra.",
+                        text = "Tasas del Día gratis para todos • Calculadora y Perfiles en Ultra.",
                         fontSize = 11.sp,
                         color = textSecondary
                     )
@@ -1854,7 +1854,7 @@ fun MarketTab(
                             if (manager.isRequestPinAppWidgetSupported) {
                                 manager.requestPinAppWidget(provider, null, null)
                             } else {
-                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Datos.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Perfiles.", Toast.LENGTH_LONG).show()
                             }
                         } else {
                             Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
@@ -1868,7 +1868,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.Widgets, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Fijar Widget Calculadora y Datos (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Fijar Widget Calculadora y Perfiles (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             } else {
                 Button(
@@ -1881,7 +1881,7 @@ fun MarketTab(
                 ) {
                     Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Desbloquear Widget Calc. + Datos ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Text("Desbloquear Widget Calc. + Perfiles ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
                 }
             }
         }
@@ -2346,9 +2346,9 @@ fun CheckoutTab(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (isUltraUser) {
-                            "Mis Datos de Pago (${paymentProfiles.size})"
+                            "Mis Perfiles (${paymentProfiles.size})"
                         } else {
-                            "Mis Datos de Pago (${paymentProfiles.size}/${UltraMath.FREE_PAYMENT_PROFILES_MAX} gratis)"
+                            "Mis Perfiles (${paymentProfiles.size}/${UltraMath.FREE_PAYMENT_PROFILES_MAX} gratis)"
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -2720,92 +2720,41 @@ fun CheckoutTab(
             ).orEmpty()
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedButton(
-                onClick = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val textToCopy = bankAutoPasteText.ifBlank { shareSummaryText }
-                    clipboard.setPrimaryClip(ClipData.newPlainText("Datos de Pago Tasa VE", textToCopy))
-                    Toast.makeText(
-                        context,
-                        if (bankAutoPasteText.isNotBlank()) "Datos listos para pegar en el banco" else "Resumen copiado",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, borderCol)
-            ) {
-                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp), tint = textPrimary)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = if (bankAutoPasteText.isNotBlank()) "Copiar datos" else "Copiar texto",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = textPrimary
-                )
-            }
-
-            OutlinedButton(
-                onClick = {
-                    val statusTitle = when {
-                        isChange -> "VUELTO A ENTREGAR"
-                        isPaidExact -> "CUENTA SALDADA"
-                        else -> "FALTA POR PAGAR"
-                    }
-                    ShareCardGenerator.shareCheckoutCard(
-                        context = context,
-                        isDark = isDark,
-                        totalUsd = result.totalUsd,
-                        totalVes = result.totalVes,
-                        rateLabel = rateLabel,
-                        rateValue = activeRate,
-                        paidUsd = result.paidForeignUsd,
-                        paidVes = result.paidVes,
-                        statusTitle = statusTitle,
-                        statusUsd = if (isChange) result.changeUsd else result.remainingUsd,
-                        statusVes = if (isChange) result.changeVes else result.remainingVes,
-                        profile = selectedProfile,
-                        captionText = bankAutoPasteText.ifBlank { shareSummaryText },
-                        customBrandName = if (isUltraUser) customBrandName.takeIf { it.isNotBlank() } else null,
-                        customBrandLogoFile = if (isUltraUser) customLogoFile else null,
-                        paidSummaryOverride = paidSummaryText.takeIf { it.isNotBlank() }
-                    )
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 48.dp),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, Color(0x4D10B981))
-            ) {
-                Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Tarjeta (IMG)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
-            }
-        }
-
         Button(
             onClick = {
-                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, shareSummaryText)
+                val statusTitle = when {
+                    isChange -> "VUELTO A ENTREGAR"
+                    isPaidExact -> "CUENTA SALDADA"
+                    else -> "FALTA POR PAGAR"
                 }
-                context.startActivity(Intent.createChooser(sendIntent, "Enviar resumen por WhatsApp"))
+                ShareCardGenerator.shareCheckoutCard(
+                    context = context,
+                    isDark = isDark,
+                    totalUsd = result.totalUsd,
+                    totalVes = result.totalVes,
+                    rateLabel = rateLabel,
+                    rateValue = activeRate,
+                    paidUsd = result.paidForeignUsd,
+                    paidVes = result.paidVes,
+                    statusTitle = statusTitle,
+                    statusUsd = if (isChange) result.changeUsd else result.remainingUsd,
+                    statusVes = if (isChange) result.changeVes else result.remainingVes,
+                    profile = selectedProfile,
+                    captionText = bankAutoPasteText.ifBlank { shareSummaryText },
+                    customBrandName = if (isUltraUser) customBrandName.takeIf { it.isNotBlank() } else null,
+                    customBrandLogoFile = if (isUltraUser) customLogoFile else null,
+                    paidSummaryOverride = paidSummaryText.takeIf { it.isNotBlank() }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 48.dp),
+                .heightIn(min = 50.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
         ) {
-            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text("Enviar por WhatsApp", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Compartir perfil", fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
         }
     }
 
@@ -3682,7 +3631,7 @@ fun PlansComparisonDialog(
                         listOf("Escáner de precios", "3/día +5 Ad", "∞"),
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Widget Tasas del Día", "✓", "✓"),
-                        listOf("Widget Calculadora y Datos", "—", "✓"),
+                        listOf("Widget Calculadora y Perfiles", "—", "✓"),
                         listOf("Notificación fija y Acceso flotante", "—", "✓"),
                         listOf("Logo propio en Instrucciones de pago", "—", "✓")
                     )
