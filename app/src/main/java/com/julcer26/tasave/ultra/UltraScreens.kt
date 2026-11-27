@@ -39,6 +39,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AddToHomeScreen
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -997,42 +999,67 @@ fun MarketTab(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         TopBannerAd(isDark = isDark, isUltraUser = isUltraUser, isAdFreePassActive = isAdFreePassActive)
 
         if (selectedTool != null) {
-            // Cabecera ← Volver a Extras
+            // Clean minimal back header bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(cardBg)
-                    .border(1.dp, borderCol, RoundedCornerShape(14.dp))
-                    .clickable { selectedTool = null }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(top = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver a Extras",
-                    tint = EmeraldLight,
-                    modifier = Modifier.size(18.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(cardBg)
+                        .border(1.dp, borderCol, CircleShape)
+                        .clickable { selectedTool = null },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver a Extras",
+                        tint = EmeraldLight,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = selectedTool!!.title,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "Volver a todas las herramientas",
-                        fontSize = 10.5.sp,
+                        text = "Extras",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
                         color = textSecondary
                     )
+                }
+                if (selectedTool == UtilTool.COMPARE && usdRate > 0.0 && usdtRate > 0.0) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(Color(0x22F59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(999.dp))
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "Dif. ${if (spreadUsdtVsBcv >= 0) "+" else ""}${formatDec2(spreadUsdtVsBcv)}%",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AmberUltra
+                        )
+                    }
                 }
             }
 
@@ -1052,66 +1079,64 @@ fun MarketTab(
                         cashDiscountFixedUsd = if (isFixedUsdDiscount) discountVal else 0.0
                     )
 
+                    // Card 1: Clean Inputs Card
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(22.dp))
                             .background(cardBg)
-                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .border(1.dp, borderCol, RoundedCornerShape(22.dp))
                             .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Text(
-                            text = "Compara en segundos si te rinde más cambiar USDT a bolívares (pagando a BCV) o pagar directo en efectivo \$ / Zelle.",
-                            fontSize = 11.5.sp,
-                            color = textSecondary
-                        )
-
                         OutlinedTextField(
                             value = priceText,
                             onValueChange = { raw ->
                                 VeNumberFormat.sanitizeEditableInput(raw, priceText)?.let { priceText = it }
                             },
                             visualTransformation = VenezuelanNumberVisualTransformation,
-                            label = { Text("Monto a pagar ($)") },
+                            label = { Text("Monto ($)") },
                             singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "¿Descuento en efectivo / Zelle?",
-                                    fontSize = 11.sp,
+                                    text = "Descuento en efectivo / Zelle",
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = textSecondary
                                 )
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    listOf(false to "% Porc.", true to "\$ Monto").forEach { (isFixed, lbl) ->
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(surfaceMuted)
+                                        .border(1.dp, borderCol, RoundedCornerShape(10.dp))
+                                        .padding(2.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    listOf(false to "%", true to "$").forEach { (isFixed, lbl) ->
                                         val active = isFixedUsdDiscount == isFixed
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
-                                                .border(
-                                                    1.dp,
-                                                    if (active) Emerald else borderCol,
-                                                    RoundedCornerShape(8.dp)
-                                                )
+                                                .background(if (active) Emerald else Color.Transparent)
                                                 .clickable { isFixedUsdDiscount = isFixed }
-                                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                                .padding(horizontal = 12.dp, vertical = 4.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = lbl,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (active) EmeraldLight else textSecondary
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = if (active) Color.Black else textSecondary
                                             )
                                         }
                                     }
@@ -1125,27 +1150,27 @@ fun MarketTab(
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 presets.forEach { (valStr, labelStr) ->
                                     val active = discountText.trim() == valStr
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (active) Color(0x2610B981) else surfaceMuted)
                                             .border(
                                                 1.dp,
                                                 if (active) Emerald else borderCol,
-                                                RoundedCornerShape(10.dp)
+                                                RoundedCornerShape(12.dp)
                                             )
                                             .clickable { discountText = valStr }
-                                            .padding(vertical = 8.dp),
+                                            .padding(vertical = 9.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = labelStr,
-                                            fontSize = 11.sp,
+                                            fontSize = 11.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (active) EmeraldLight else textPrimary
                                         )
@@ -1163,17 +1188,73 @@ fun MarketTab(
                                 visualTransformation = VenezuelanNumberVisualTransformation,
                                 label = {
                                     Text(
-                                        if (isFixedUsdDiscount) "Descuento libre en dólares ($)"
-                                        else "Descuento libre en porcentaje (%)"
+                                        if (isFixedUsdDiscount) "Otro descuento en $"
+                                        else "Otro descuento en %"
                                     )
                                 },
                                 placeholder = {
                                     Text(if (isFixedUsdDiscount) "Ej: 8,50" else "Ej: 7,5")
                                 },
                                 singleLine = true,
+                                shape = RoundedCornerShape(14.dp),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.fillMaxWidth()
                             )
+                        }
+                    }
+
+                    // Card 2: Dedicated Verdict & Side-by-Side Comparison Card
+                    val winnerColor = if (res.recommendUsdt) EmeraldLight else BlueEuro
+                    val winnerBorder = if (res.recommendUsdt) Color(0x5510B981) else Color(0x5560A5FA)
+                    val savingsAmount = if (res.recommendUsdt) res.usdtSavingsVsCashUsd else res.cashSavingsVsUsdtUsd
+                    val discountDesc = when {
+                        discountVal <= 0.0 -> "Directo en divisas"
+                        isFixedUsdDiscount -> "Con -$${formatDec2(res.cashDiscountUsd)} desc."
+                        else -> "Con -${formatDec2(res.cashDiscountPercent).removeSuffix(",00")}% desc."
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(cardBg)
+                            .border(1.dp, winnerBorder, RoundedCornerShape(22.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                Text(
+                                    text = "MEJOR OPCIÓN",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = winnerColor,
+                                    letterSpacing = 0.8.sp
+                                )
+                                Text(
+                                    text = if (res.recommendUsdt) "Cambiar USDT a Bs." else "Efectivo \$ / Zelle",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = textPrimary
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(winnerColor.copy(alpha = 0.16f))
+                                    .padding(horizontal = 11.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Ahorras $${formatDec2(savingsAmount)}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = winnerColor
+                                )
+                            }
                         }
 
                         Row(
@@ -1186,32 +1267,41 @@ fun MarketTab(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(if (res.recommendUsdt) Color(0x1810B981) else surfaceMuted)
                                     .border(1.5.dp, if (res.recommendUsdt) Emerald else borderCol, RoundedCornerShape(16.dp))
-                                    .padding(12.dp),
+                                    .padding(13.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(
-                                    text = "1. Cambiando USDT",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (res.recommendUsdt) EmeraldLight else textPrimary
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    if (res.recommendUsdt) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = EmeraldLight,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Cambiando USDT",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (res.recommendUsdt) EmeraldLight else textSecondary
+                                    )
+                                }
                                 Text(
                                     text = "${formatDec2(res.usdtNeededToCoverBs)} USDT",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = textPrimary
+                                    color = textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = "Para cubrir Bs. ${formatDec2(res.bsAmount)}",
-                                    fontSize = 10.5.sp,
+                                    text = "Bs. ${formatDec2(res.bsAmount)}",
+                                    fontSize = 11.sp,
                                     color = textSecondary
                                 )
-                            }
-
-                            val discountDesc = when {
-                                discountVal <= 0.0 -> "Pago directo en divisas"
-                                isFixedUsdDiscount -> "Con -$${formatDec2(res.cashDiscountUsd)} de desc."
-                                else -> "Con -${formatDec2(res.cashDiscountPercent).removeSuffix(",00")}% de desc."
                             }
 
                             Column(
@@ -1220,80 +1310,70 @@ fun MarketTab(
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(if (!res.recommendUsdt) Color(0x1860A5FA) else surfaceMuted)
                                     .border(1.5.dp, if (!res.recommendUsdt) BlueEuro else borderCol, RoundedCornerShape(16.dp))
-                                    .padding(12.dp),
+                                    .padding(13.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(
-                                    text = "2. Efectivo \$ / Zelle",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (!res.recommendUsdt) BlueEuro else textPrimary
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    if (!res.recommendUsdt) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = BlueEuro,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = "Efectivo \$ / Zelle",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (!res.recommendUsdt) BlueEuro else textSecondary
+                                    )
+                                }
                                 Text(
                                     text = "$${formatDec2(res.cashOrZelleEffectiveUsd)}",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = textPrimary
+                                    color = textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = discountDesc,
-                                    fontSize = 10.5.sp,
+                                    fontSize = 11.sp,
                                     color = textSecondary
                                 )
                             }
                         }
+                    }
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (res.recommendUsdt) Color(0x2210B981) else Color(0x2260A5FA))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = if (res.recommendUsdt) EmeraldLight else BlueEuro,
-                                modifier = Modifier.size(18.dp)
+                    Button(
+                        onClick = {
+                            val rec = if (res.recommendUsdt) {
+                                "Conviene cambiar ${formatDec2(res.usdtNeededToCoverBs)} USDT (ahorro $${formatDec2(res.usdtSavingsVsCashUsd)})"
+                            } else {
+                                "Conviene usar $${formatDec2(res.cashOrZelleEffectiveUsd)} directo (ahorro $${formatDec2(res.cashSavingsVsUsdtUsd)})"
+                            }
+                            val discNote = if (res.cashDiscountUsd > 0.0) {
+                                " (desc. -$${formatDec2(res.cashDiscountUsd)} / -${formatDec2(res.cashDiscountPercent).removeSuffix(",00")}%)"
+                            } else ""
+                            sharePlainText(
+                                context,
+                                "Compartir comparación",
+                                "¿Qué me conviene más para $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}$discNote\n$rec"
                             )
-                            Text(
-                                text = if (res.recommendUsdt) {
-                                    "Conviene cambiar USDT: ahorras $${formatDec2(res.usdtSavingsVsCashUsd)} frente al pago directo."
-                                } else {
-                                    "Conviene pagar en Efectivo \$ / Zelle: ahorras $${formatDec2(res.cashSavingsVsUsdtUsd)} frente a cambiar USDT."
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = textPrimary
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                val rec = if (res.recommendUsdt) {
-                                    "Conviene cambiar ${formatDec2(res.usdtNeededToCoverBs)} USDT (ahorro $${formatDec2(res.usdtSavingsVsCashUsd)})"
-                                } else {
-                                    "Conviene pagar $${formatDec2(res.cashOrZelleEffectiveUsd)} directo (ahorro $${formatDec2(res.cashSavingsVsUsdtUsd)})"
-                                }
-                                val discNote = if (res.cashDiscountUsd > 0.0) {
-                                    " (desc. -$${formatDec2(res.cashDiscountUsd)} / -${formatDec2(res.cashDiscountPercent).removeSuffix(",00")}%)"
-                                } else ""
-                                sharePlainText(
-                                    context,
-                                    "Compartir comparación",
-                                    "¿Qué me conviene más para $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}$discNote\n$rec"
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Compartir resultado", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(17.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Compartir resultado", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
 
@@ -1313,21 +1393,44 @@ fun MarketTab(
                         copPerUsd = copPerUsd
                     )
 
+                    val perPersonPrimary = if (selectedCurrency == SplitCurrency.VES) {
+                        "Bs. ${formatDec2(splitRes.perPersonBs)}"
+                    } else {
+                        formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)
+                    }
+                    val perPersonConversion = if (selectedCurrency == SplitCurrency.VES) {
+                        "$${formatDec2(splitRes.perPersonUsd)}"
+                    } else {
+                        "Bs. ${formatDec2(splitRes.perPersonBs)}"
+                    }
+                    val totalPrimary = if (selectedCurrency == SplitCurrency.VES) {
+                        "Bs. ${formatDec2(splitRes.totalBs)}"
+                    } else {
+                        formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)
+                    }
+                    val totalConversion = if (selectedCurrency == SplitCurrency.VES) {
+                        "$${formatDec2(splitRes.totalUsd)}"
+                    } else {
+                        "Bs. ${formatDec2(splitRes.totalBs)}"
+                    }
+
+                    // Card 1: Clean Inputs Card
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
+                            .clip(RoundedCornerShape(22.dp))
                             .background(cardBg)
-                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .border(1.dp, borderCol, RoundedCornerShape(22.dp))
                             .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                text = "Moneda de la cuenta",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = textSecondary
+                                text = "MONEDA",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textSecondary,
+                                letterSpacing = 0.8.sp
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -1338,20 +1441,20 @@ fun MarketTab(
                                     Box(
                                         modifier = Modifier
                                             .weight(1f)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (active) Color(0x2610B981) else surfaceMuted)
                                             .border(
                                                 1.dp,
                                                 if (active) Emerald else borderCol,
-                                                RoundedCornerShape(10.dp)
+                                                RoundedCornerShape(12.dp)
                                             )
                                             .clickable { selectedCurrency = cur }
-                                            .padding(vertical = 8.dp),
+                                            .padding(vertical = 9.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = cur.chipLabel,
-                                            fontSize = 10.5.sp,
+                                            fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (active) EmeraldLight else textPrimary,
                                             maxLines = 1
@@ -1369,541 +1472,678 @@ fun MarketTab(
                             visualTransformation = VenezuelanNumberVisualTransformation,
                             label = { Text(selectedCurrency.inputLabel) },
                             singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Personas ($people)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                OutlinedIconButton(onClick = { if (people > 2) people-- }, modifier = Modifier.size(34.dp)) {
-                                    Text("-", fontWeight = FontWeight.Bold, color = textPrimary)
-                                }
-                                OutlinedIconButton(onClick = { if (people < 30) people++ }, modifier = Modifier.size(34.dp)) {
-                                    Text("+", fontWeight = FontWeight.Bold, color = textPrimary)
-                                }
-                            }
-                        }
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf(2, 3, 4, 6, 8).forEach { cnt ->
-                                val active = people == cnt
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (active) Emerald.copy(alpha = 0.2f) else surfaceMuted)
-                                        .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(10.dp))
-                                        .clickable { people = cnt }
-                                        .padding(vertical = 8.dp),
-                                    contentAlignment = Alignment.Center
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Personas", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("$cnt", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(surfaceMuted)
+                                            .border(1.dp, borderCol, CircleShape)
+                                            .clickable { if (people > 2) people-- },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Remove, contentDescription = "Menos", tint = textPrimary, modifier = Modifier.size(16.dp))
+                                    }
+                                    Text(
+                                        text = "$people",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = textPrimary,
+                                        modifier = Modifier.widthIn(min = 24.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0x2610B981))
+                                            .border(1.dp, Color(0x5510B981), CircleShape)
+                                            .clickable { if (people < 30) people++ },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.Add, contentDescription = "Más", tint = EmeraldLight, modifier = Modifier.size(16.dp))
+                                    }
                                 }
                             }
-                        }
 
-                        val primaryPerPersonText = when (selectedCurrency) {
-                            SplitCurrency.VES -> "Bs. ${formatDec2(splitRes.perPersonBs)}  •  $${formatDec2(splitRes.perPersonUsd)} BCV"
-                            else -> "${formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)}  •  Bs. ${formatDec2(splitRes.perPersonBs)}"
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf(2, 3, 4, 6, 8).forEach { cnt ->
+                                    val active = people == cnt
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (active) Color(0x2610B981) else surfaceMuted)
+                                            .border(1.dp, if (active) Emerald else borderCol, RoundedCornerShape(12.dp))
+                                            .clickable { people = cnt }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("$cnt", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (active) EmeraldLight else textPrimary)
+                                    }
+                                }
+                            }
                         }
-                        val equivParts = buildList {
-                            if (selectedCurrency != SplitCurrency.USD && selectedCurrency != SplitCurrency.VES) {
-                                add("$${formatDec2(splitRes.perPersonUsd)} BCV")
-                            }
-                            if (selectedCurrency != SplitCurrency.USDT) {
-                                add("${formatDec2(splitRes.perPersonUsdt)} USDT")
-                            }
-                            if (selectedCurrency != SplitCurrency.EUR) {
-                                add("€${formatDec2(splitRes.perPersonEur)}")
-                            }
-                            if (selectedCurrency != SplitCurrency.COP) {
-                                add("${formatCopAmount(splitRes.perPersonCop)} COP")
-                            }
-                        }
+                    }
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0x1810B981))
-                                .border(1.dp, Color(0x4D10B981), RoundedCornerShape(16.dp))
-                                .padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "CADA PERSONA PAGA (${splitRes.peopleCount} PERS. • ${selectedCurrency.code})",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
-                            )
-                            Text(
-                                text = primaryPerPersonText,
-                                fontSize = 19.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = textPrimary
-                            )
-                            Text(
-                                text = "Equiv. c/u: ${equivParts.joinToString("  •  ")}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = EmeraldLight
-                            )
-                            Text(
-                                text = if (selectedCurrency == SplitCurrency.VES) {
-                                    "Cuenta total: Bs. ${formatDec2(splitRes.totalBs)} ($${formatDec2(splitRes.totalUsd)} BCV)"
-                                } else {
-                                    "Cuenta total: ${formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)} (Bs. ${formatDec2(splitRes.totalBs)})"
-                                },
-                                fontSize = 11.sp,
-                                color = textSecondary
-                            )
-                        }
+                    // Card 2: Focused Per-Person Result (Selected Currency + Single Conversion only)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(Color(0x1610B981))
+                            .border(1.dp, Color(0x4D10B981), RoundedCornerShape(22.dp))
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "POR PERSONA (${splitRes.peopleCount} PERS. • ${selectedCurrency.code})",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight,
+                            letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            text = perPersonPrimary,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = perPersonConversion,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldLight
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 6.dp),
+                            color = Color(0x2E10B981)
+                        )
+                        Text(
+                            text = "Cuenta total: $totalPrimary  •  $totalConversion",
+                            fontSize = 12.sp,
+                            color = textSecondary
+                        )
+                    }
 
-                        Button(
-                            onClick = {
-                                val perPersonPrimary = if (selectedCurrency == SplitCurrency.VES) {
-                                    "Bs. ${formatDec2(splitRes.perPersonBs)}"
-                                } else {
-                                    formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)
-                                }
-                                val perPersonConversion = if (selectedCurrency == SplitCurrency.VES) {
-                                    "$${formatDec2(splitRes.perPersonUsd)}"
-                                } else {
-                                    "Bs. ${formatDec2(splitRes.perPersonBs)}"
-                                }
-                                val totalPrimary = if (selectedCurrency == SplitCurrency.VES) {
-                                    "Bs. ${formatDec2(splitRes.totalBs)}"
-                                } else {
-                                    formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)
-                                }
-                                val totalConversion = if (selectedCurrency == SplitCurrency.VES) {
-                                    "$${formatDec2(splitRes.totalUsd)}"
-                                } else {
-                                    "Bs. ${formatDec2(splitRes.totalBs)}"
-                                }
-                                val rateSubtitle = when (selectedCurrency) {
-                                    SplitCurrency.USD, SplitCurrency.VES -> "Tasa $: Bs. ${VeNumberFormat.formatRate(usdRate, 4)}"
-                                    SplitCurrency.EUR -> "Tasa €: Bs. ${VeNumberFormat.formatRate(eurRate, 4)}"
-                                    SplitCurrency.USDT -> "Tasa USDT: Bs. ${VeNumberFormat.formatRate(usdtRate, 2)}"
-                                    SplitCurrency.COP -> "1 $ = ${formatCopAmount(copPerUsd)} COP"
-                                }
-                                ShareCardGenerator.shareSplitBillCard(
-                                    context = context,
-                                    isDark = isDark,
-                                    peopleCount = splitRes.peopleCount,
-                                    currencyCode = selectedCurrency.code,
-                                    perPersonPrimary = perPersonPrimary,
-                                    perPersonConversion = perPersonConversion,
-                                    totalPrimary = totalPrimary,
-                                    totalConversion = totalConversion,
-                                    rateSubtitle = rateSubtitle
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-                        ) {
-                            Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Mandar al grupo (IMG)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
+                    Button(
+                        onClick = {
+                            val rateSubtitle = when (selectedCurrency) {
+                                SplitCurrency.USD, SplitCurrency.VES -> "Tasa $: Bs. ${VeNumberFormat.formatRate(usdRate, 4)}"
+                                SplitCurrency.EUR -> "Tasa €: Bs. ${VeNumberFormat.formatRate(eurRate, 4)}"
+                                SplitCurrency.USDT -> "Tasa USDT: Bs. ${VeNumberFormat.formatRate(usdtRate, 2)}"
+                                SplitCurrency.COP -> "1 $ = ${formatCopAmount(copPerUsd)} COP"
+                            }
+                            ShareCardGenerator.shareSplitBillCard(
+                                context = context,
+                                isDark = isDark,
+                                peopleCount = splitRes.peopleCount,
+                                currencyCode = selectedCurrency.code,
+                                perPersonPrimary = perPersonPrimary,
+                                perPersonConversion = perPersonConversion,
+                                totalPrimary = totalPrimary,
+                                totalConversion = totalConversion,
+                                rateSubtitle = rateSubtitle
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
+                    ) {
+                        Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(17.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Compartir imagen", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
             }
         } else {
-            // Resumen compacto de referencia BCV vs USDT
+            // 1. Clean Top Reference Strip ($ BCV vs USDT)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(cardBg)
-                    .border(1.dp, borderCol, RoundedCornerShape(14.dp))
-                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                    .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                    .padding(horizontal = 14.dp, vertical = 11.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "BCV Bs. ${formatDec2(usdRate)}  •  USDT Bs. ${formatDec2(usdtRate)}",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = textSecondary
-                )
-                Text(
-                    text = "Dif. ${if (spreadUsdtVsBcv >= 0) "+" else ""}${formatDec2(spreadUsdtVsBcv)}%",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AmberUltra
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Column {
+                        Text("DÓLAR BCV", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.6.sp)
+                        Text("Bs. ${formatDec2(usdRate)}", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = textPrimary)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(22.dp)
+                            .background(borderCol)
+                    )
+                    Column {
+                        Text("USDT", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = textSecondary, letterSpacing = 0.6.sp)
+                        Text("Bs. ${formatDec2(usdtRate)}", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = textPrimary)
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(Color(0x20F59E0B))
+                        .border(1.dp, Color(0x45F59E0B), RoundedCornerShape(999.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Text(
+                        text = "${if (spreadUsdtVsBcv >= 0) "+" else ""}${formatDec2(spreadUsdtVsBcv)}%",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AmberUltra
+                    )
+                }
             }
 
-            // Hub de 4 herramientas del día a día
+            // 2. HERRAMIENTAS — Full-width sleek interactive cards (zero truncation!)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "HERRAMIENTAS DEL DÍA A DÍA",
-                    fontSize = 10.sp,
+                    text = "HERRAMIENTAS",
+                    fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = EmeraldLight,
-                    letterSpacing = 0.6.sp
+                    letterSpacing = 0.9.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                UtilTool.entries.chunked(2).forEach { rowTools ->
+
+                val toolCards = listOf(
+                    Triple(
+                        UtilTool.COMPARE,
+                        Icons.AutoMirrored.Filled.CompareArrows,
+                        Pair(EmeraldLight, "Compara USDT a Bs. vs efectivo o Zelle")
+                    ),
+                    Triple(
+                        UtilTool.SPLIT,
+                        Icons.Default.Group,
+                        Pair(PurpleZelle, "Reparte la cuenta y comparte la imagen")
+                    )
+                )
+
+                toolCards.forEach { (tool, icon, meta) ->
+                    val (accent, desc) = meta
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(cardBg)
+                            .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                            .clickable {
+                                selectedTool = tool
+                                onTrackUtilTool(tool.analyticsKey)
+                            }
+                            .padding(horizontal = 14.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(13.dp)
                     ) {
-                        rowTools.forEach { tool ->
-                            val icon = when (tool) {
-                                UtilTool.COMPARE -> Icons.AutoMirrored.Filled.CompareArrows
-                                UtilTool.SPLIT -> Icons.Default.Group
-                            }
-                            val accent = when (tool) {
-                                UtilTool.COMPARE -> EmeraldLight
-                                UtilTool.SPLIT -> PurpleZelle
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(cardBg)
-                                    .border(1.dp, borderCol, RoundedCornerShape(18.dp))
-                                    .clickable {
-                                        selectedTool = tool
-                                        onTrackUtilTool(tool.analyticsKey)
-                                    }
-                                    .padding(14.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(accent.copy(alpha = 0.15f))
+                                .border(1.dp, accent.copy(alpha = 0.30f), RoundedCornerShape(14.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = tool.title,
+                                tint = accent,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = tool.title,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary
+                            )
+                            Text(
+                                text = desc,
+                                fontSize = 12.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(surfaceMuted),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Abrir",
+                                tint = accent,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 3. ACCESOS RÁPIDOS — Clean grouped card with hairline divider (zero triple nesting)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "ACCESOS RÁPIDOS",
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldLight,
+                    letterSpacing = 0.9.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(cardBg)
+                        .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                ) {
+                    // Row 1: Notificación fija
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(11.dp))
+                                .background(Emerald.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsActive,
+                                contentDescription = null,
+                                tint = EmeraldLight,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(accent.copy(alpha = 0.16f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = tool.title,
-                                        tint = accent,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
                                 Text(
-                                    text = tool.title,
-                                    fontSize = 13.sp,
+                                    text = "Notificación fija",
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textPrimary
+                                )
+                                if (!isUltraUser) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(Color(0x26F59E0B))
+                                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                                    ) {
+                                        Text(
+                                            text = "ULTRA",
+                                            fontSize = 8.5.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = AmberUltra
+                                        )
+                                    }
+                                }
+                            }
+                            Text(
+                                text = "Tasas y accesos en tu panel superior",
+                                fontSize = 11.5.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Switch(
+                            checked = isUltraUser && persistentNotifEnabled,
+                            onCheckedChange = { enable ->
+                                if (!isUltraUser) {
+                                    Toast.makeText(
+                                        context,
+                                        "La notificación fija es exclusiva de Tasa VE Ultra.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    onOpenPlans()
+                                } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                                    PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    persistentNotifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    val ok = onTogglePersistentNotif(enable)
+                                    if (ok) {
+                                        Toast.makeText(
+                                            context,
+                                            if (enable) "Notificación fija activada" else "Notificación fija desactivada",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Emerald,
+                                checkedTrackColor = Color(0x4D10B981)
+                            )
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 14.dp),
+                        color = borderCol
+                    )
+
+                    // Row 2: Acceso en Panel Rápido (inline action pill)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(11.dp))
+                                .background(BlueEuro.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = BlueEuro,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Conversor flotante",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary
+                            )
+                            Text(
+                                text = "Añade el botón al panel rápido",
+                                fontSize = 11.5.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                onTrackUtilTool("add_quick_tile")
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    val statusBarManager = context.getSystemService(StatusBarManager::class.java)
+                                    statusBarManager?.requestAddTileService(
+                                        ComponentName(context, TasaVeQuickTileService::class.java),
+                                        "Tasa VE",
+                                        AndroidIcon.createWithResource(context, R.drawable.ic_launcher_monochrome),
+                                        ContextCompat.getMainExecutor(context)
+                                    ) { resultCode ->
+                                        val msg = when (resultCode) {
+                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
+                                                "Botón añadido al panel rápido"
+                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
+                                                "Tasa VE ya está en tu panel rápido"
+                                            else ->
+                                                "Puedes añadir Tasa VE editando tu panel rápido"
+                                        }
+                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Desliza la barra superior → Editar → arrastra \"Tasa VE\"",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            },
+                            shape = RoundedCornerShape(999.dp),
+                            border = BorderStroke(1.dp, Color(0x4D10B981)),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Text(
+                                text = "Añadir",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldLight
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 4. WIDGETS DE INICIO — Clean grouped card with inline action pills
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "WIDGETS DE INICIO",
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldLight,
+                    letterSpacing = 0.9.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(cardBg)
+                        .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                ) {
+                    // Row 1: Widget Tasas del Día (Gratis)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(11.dp))
+                                .background(Emerald.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                                contentDescription = null,
+                                tint = EmeraldLight,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                text = "Tasas del Día",
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary
+                            )
+                            Text(
+                                text = "$, € y USDT en tu pantalla · Gratis",
+                                fontSize = 11.5.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                TasaVeRatesWidgetProvider.updateAllWidgets(context)
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    val manager = AppWidgetManager.getInstance(context)
+                                    val provider = ComponentName(context, TasaVeRatesWidgetProvider::class.java)
+                                    if (manager.isRequestPinAppWidgetSupported) {
+                                        manager.requestPinAppWidget(provider, null, null)
+                                    } else {
+                                        Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE • Tasas del Día.", Toast.LENGTH_LONG).show()
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
+                                }
+                            },
+                            shape = RoundedCornerShape(999.dp),
+                            border = BorderStroke(1.dp, Color(0x4D10B981)),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Text(
+                                text = "Fijar",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldLight
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 14.dp),
+                        color = borderCol
+                    )
+
+                    // Row 2: Widget Calculadora y Perfiles (Ultra)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(11.dp))
+                                .background(AmberUltra.copy(alpha = 0.14f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Widgets,
+                                contentDescription = null,
+                                tint = AmberUltra,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "Calculadora y Perfiles",
+                                    fontSize = 13.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = textPrimary,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
                                 )
-                                Text(
-                                    text = tool.subtitle,
-                                    fontSize = 10.5.sp,
-                                    color = textSecondary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    text = "Abrir →",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = accent
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-        // Accesos Rápidos (Notificación Fija + Barra Rápida)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(cardBg)
-                .border(1.dp, borderCol, RoundedCornerShape(20.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Icon(Icons.Default.Bolt, contentDescription = null, tint = EmeraldLight)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Accesos Rápidos (Sin abrir la app)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
-                    Text(
-                        text = "Consulta tasas y calcula directo desde tus notificaciones o la barra superior.",
-                        fontSize = 11.sp,
-                        color = textSecondary
-                    )
-                }
-            }
-
-            // 1) Notificación fija de tasas (Ultra opt-in)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(surfaceMuted)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "Notificación fija de tasas",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary
-                        )
-                        if (!isUltraUser) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0x26F59E0B))
-                                    .padding(horizontal = 6.dp, vertical = 1.dp)
-                            ) {
-                                Text(
-                                    text = "ULTRA",
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = AmberUltra
-                                )
-                            }
-                        }
-                    }
-                    Text(
-                        text = "Barra silenciosa con USD, EUR, USDT, copiar tasas, calc. y Pago Móvil.",
-                        fontSize = 11.sp,
-                        color = textSecondary
-                    )
-                }
-                Switch(
-                    checked = isUltraUser && persistentNotifEnabled,
-                    onCheckedChange = { enable ->
-                        if (!isUltraUser) {
-                            Toast.makeText(
-                                context,
-                                "La barra fija de tasas es exclusiva de Tasa VE Ultra.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            onOpenPlans()
-                        } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                            PackageManager.PERMISSION_GRANTED
-                        ) {
-                            persistentNotifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                            val ok = onTogglePersistentNotif(enable)
-                            if (ok) {
-                                Toast.makeText(
-                                    context,
-                                    if (enable) "Notificación fija activada" else "Notificación fija desactivada",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Emerald,
-                        checkedTrackColor = Color(0x4D10B981)
-                    )
-                )
-            }
-
-            // 2) Botón en Barra Rápida de Android (Quick Settings Tile)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(surfaceMuted)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Botón en Barra Rápida",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textPrimary
-                        )
-                        Text(
-                            text = if (isUltraUser) {
-                                "Abre el conversor flotante directo sobre cualquier app."
-                            } else {
-                                "Abre Tasa VE desde el panel superior (conversor flotante en Ultra)."
-                            },
-                            fontSize = 11.sp,
-                            color = textSecondary
-                        )
-                    }
-                }
-                OutlinedButton(
-                    onClick = {
-                        onTrackUtilTool("add_quick_tile")
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            val statusBarManager = context.getSystemService(StatusBarManager::class.java)
-                            statusBarManager?.requestAddTileService(
-                                ComponentName(context, TasaVeQuickTileService::class.java),
-                                "Tasa VE",
-                                AndroidIcon.createWithResource(context, R.drawable.ic_launcher_monochrome),
-                                ContextCompat.getMainExecutor(context)
-                            ) { resultCode ->
-                                val msg = when (resultCode) {
-                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                                        "Botón añadido a tu Barra Rápida"
-                                    StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                                        "Tasa VE ya está en tu Barra Rápida"
-                                    else ->
-                                        "Puedes añadir Tasa VE editando tu Barra Rápida"
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color(0x26F59E0B))
+                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "ULTRA",
+                                        fontSize = 8.5.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = AmberUltra
+                                    )
                                 }
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            }
+                            Text(
+                                text = "Convierte y copia desde tu inicio",
+                                fontSize = 11.5.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        if (isUltraUser) {
+                            Button(
+                                onClick = {
+                                    TasaVeRatesWidgetProvider.updateAllWidgets(context)
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        val manager = AppWidgetManager.getInstance(context)
+                                        val provider = ComponentName(context, TasaVeUltraWidgetProvider::class.java)
+                                        if (manager.isRequestPinAppWidgetSupported) {
+                                            manager.requestPinAppWidget(provider, null, null)
+                                        } else {
+                                            Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Perfiles.", Toast.LENGTH_LONG).show()
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
+                                    }
+                                },
+                                shape = RoundedCornerShape(999.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Text("Fijar", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold)
                             }
                         } else {
-                            Toast.makeText(
-                                context,
-                                "Desliza la barra superior → Editar (lápiz) → arrastra \"Tasa VE\"",
-                                Toast.LENGTH_LONG
-                            ).show()
+                            Button(
+                                onClick = onOpenPlans,
+                                shape = RoundedCornerShape(999.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Text("Ultra", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold)
+                            }
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, borderCol)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddCircleOutline,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = EmeraldLight
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Añadir a Barra Rápida",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary
-                    )
-                }
-            }
-        }
-
-        // Home Screen Widgets Card (Tasas Gratis + Calculadora y Datos de Pago Ultra)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(cardBg)
-                .border(
-                    1.dp,
-                    if (isUltraUser) borderCol else Color(0x4D10B981),
-                    RoundedCornerShape(20.dp)
-                )
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Icon(Icons.Default.Widgets, contentDescription = null, tint = EmeraldLight)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Widgets de Pantalla de Inicio", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textPrimary)
-                    Text(
-                        text = "Tasas del Día gratis para todos • Calculadora y Perfiles en Ultra.",
-                        fontSize = 11.sp,
-                        color = textSecondary
-                    )
-                }
-            }
-
-            // Free Widget Pin Button (Available to everyone)
-            OutlinedButton(
-                onClick = {
-                    TasaVeRatesWidgetProvider.updateAllWidgets(context)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val manager = AppWidgetManager.getInstance(context)
-                        val provider = ComponentName(context, TasaVeRatesWidgetProvider::class.java)
-                        if (manager.isRequestPinAppWidgetSupported) {
-                            manager.requestPinAppWidget(provider, null, null)
-                        } else {
-                            Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE • Tasas del Día.", Toast.LENGTH_LONG).show()
-                        }
-                    } else {
-                        Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE.", Toast.LENGTH_LONG).show()
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 44.dp),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, Color(0x4D10B981))
-            ) {
-                Icon(Icons.AutoMirrored.Filled.AddToHomeScreen, contentDescription = null, modifier = Modifier.size(17.dp), tint = EmeraldLight)
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Fijar Widget Tasas del Día (Gratis)", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = EmeraldLight)
-            }
-
-            // Ultra Pro Widget Pin / Unlock Button
-            if (isUltraUser) {
-                Button(
-                    onClick = {
-                        TasaVeRatesWidgetProvider.updateAllWidgets(context)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val manager = AppWidgetManager.getInstance(context)
-                            val provider = ComponentName(context, TasaVeUltraWidgetProvider::class.java)
-                            if (manager.isRequestPinAppWidgetSupported) {
-                                manager.requestPinAppWidget(provider, null, null)
-                            } else {
-                                Toast.makeText(context, "Agrégalo desde Widgets → Tasa VE Ultra • Calculadora y Perfiles.", Toast.LENGTH_LONG).show()
-                            }
-                        } else {
-                            Toast.makeText(context, "Mantén presionada tu pantalla de inicio → Widgets → Tasa VE Ultra.", Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 46.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
-                ) {
-                    Icon(Icons.Default.Widgets, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Fijar Widget Calculadora y Perfiles (Ultra)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-            } else {
-                Button(
-                    onClick = onOpenPlans,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 46.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AmberUltra, contentColor = Color.Black)
-                ) {
-                    Icon(Icons.Default.LockOpen, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Desbloquear Widget Calc. + Perfiles ($ultraPrice)", fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
                 }
             }
-        }
         }
     }
 }
