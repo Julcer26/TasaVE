@@ -93,10 +93,10 @@ object PersistentRateNotificationManager {
             if (existing == null) {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
-                    "Barra fija de tasas (Ultra)",
+                    "Notificación flotante (Ultra)",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
-                    description = "Muestra las tasas del día en el panel de notificaciones con botones rápidos."
+                    description = "Notificación fija con tasas, calculadora flotante y copia tu Pago Móvil."
                     setShowBadge(false)
                     enableVibration(false)
                     setSound(null, null)

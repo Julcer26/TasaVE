@@ -1,7 +1,6 @@
 package com.julcer26.tasave.ultra
 
 import android.Manifest
-import android.app.StatusBarManager
 import android.appwidget.AppWidgetManager
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -10,12 +9,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.graphics.drawable.Icon as AndroidIcon
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import com.julcer26.tasave.R
-import com.julcer26.tasave.quick.TasaVeQuickTileService
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -987,7 +984,7 @@ fun MarketTab(
     ) { granted ->
         if (granted) {
             if (onTogglePersistentNotif(true)) {
-                Toast.makeText(context, "Notificación fija de tasas activada", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Notificación flotante activada", Toast.LENGTH_SHORT).show()
             }
         } else {
             Toast.makeText(context, "Permiso de notificaciones denegado", Toast.LENGTH_SHORT).show()
@@ -1753,10 +1750,10 @@ fun MarketTab(
                 }
             }
 
-            // 3. ACCESOS RÁPIDOS — Clean grouped card with hairline divider (zero triple nesting)
+            // 3. ACCESO RÁPIDO — Notificación flotante (Ultra all-in-one)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "ACCESOS RÁPIDOS",
+                    text = "ACCESO RÁPIDO",
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = EmeraldLight,
@@ -1764,193 +1761,97 @@ fun MarketTab(
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
 
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
                         .background(cardBg)
                         .border(1.dp, borderCol, RoundedCornerShape(20.dp))
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Row 1: Notificación fija
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 13.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Emerald.copy(alpha = 0.14f))
+                            .border(1.dp, Emerald.copy(alpha = 0.28f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(11.dp))
-                                .background(Emerald.copy(alpha = 0.14f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.NotificationsActive,
-                                contentDescription = null,
-                                tint = EmeraldLight,
-                                modifier = Modifier.size(19.dp)
-                            )
-                        }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = "Notificación fija",
-                                    fontSize = 13.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textPrimary
-                                )
-                                if (!isUltraUser) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(Color(0x26F59E0B))
-                                            .padding(horizontal = 6.dp, vertical = 1.dp)
-                                    ) {
-                                        Text(
-                                            text = "ULTRA",
-                                            fontSize = 8.5.sp,
-                                            fontWeight = FontWeight.Black,
-                                            color = AmberUltra
-                                        )
-                                    }
-                                }
-                            }
-                            Text(
-                                text = "Tasas y accesos en tu panel superior",
-                                fontSize = 11.5.sp,
-                                color = textSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        Switch(
-                            checked = isUltraUser && persistentNotifEnabled,
-                            onCheckedChange = { enable ->
-                                if (!isUltraUser) {
-                                    Toast.makeText(
-                                        context,
-                                        "La notificación fija es exclusiva de Tasa VE Ultra.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    onOpenPlans()
-                                } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                                    PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    persistentNotifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                } else {
-                                    val ok = onTogglePersistentNotif(enable)
-                                    if (ok) {
-                                        Toast.makeText(
-                                            context,
-                                            if (enable) "Notificación fija activada" else "Notificación fija desactivada",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Emerald,
-                                checkedTrackColor = Color(0x4D10B981)
-                            )
+                        Icon(
+                            imageVector = Icons.Default.NotificationsActive,
+                            contentDescription = null,
+                            tint = EmeraldLight,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 14.dp),
-                        color = borderCol
-                    )
-
-                    // Row 2: Acceso en Panel Rápido (inline action pill)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 13.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(11.dp))
-                                .background(BlueEuro.copy(alpha = 0.14f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Bolt,
-                                contentDescription = null,
-                                tint = BlueEuro,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "Conversor flotante",
-                                fontSize = 13.5.sp,
+                                text = "Notificación flotante",
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = textPrimary
                             )
-                            Text(
-                                text = "Añade el botón al panel rápido",
-                                fontSize = 11.5.sp,
-                                color = textSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0x26F59E0B))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "ULTRA",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = AmberUltra
+                                )
+                            }
                         }
-                        OutlinedButton(
-                            onClick = {
-                                onTrackUtilTool("add_quick_tile")
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    val statusBarManager = context.getSystemService(StatusBarManager::class.java)
-                                    statusBarManager?.requestAddTileService(
-                                        ComponentName(context, TasaVeQuickTileService::class.java),
-                                        "Tasa VE",
-                                        AndroidIcon.createWithResource(context, R.drawable.ic_launcher_monochrome),
-                                        ContextCompat.getMainExecutor(context)
-                                    ) { resultCode ->
-                                        val msg = when (resultCode) {
-                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ->
-                                                "Botón añadido al panel rápido"
-                                            StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ->
-                                                "Tasa VE ya está en tu panel rápido"
-                                            else ->
-                                                "Puedes añadir Tasa VE editando tu panel rápido"
-                                        }
-                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                    }
-                                } else {
+                        Text(
+                            text = "Notificación fija con tasas, calculadora flotante y copia tu Pago Móvil.",
+                            fontSize = 11.5.sp,
+                            color = textSecondary,
+                            lineHeight = 15.sp
+                        )
+                    }
+                    Switch(
+                        checked = isUltraUser && persistentNotifEnabled,
+                        onCheckedChange = { enable ->
+                            if (!isUltraUser) {
+                                Toast.makeText(
+                                    context,
+                                    "La notificación flotante es exclusiva de Tasa VE Ultra.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                onOpenPlans()
+                            } else if (enable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                                PackageManager.PERMISSION_GRANTED
+                            ) {
+                                persistentNotifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                val ok = onTogglePersistentNotif(enable)
+                                if (ok) {
                                     Toast.makeText(
                                         context,
-                                        "Desliza la barra superior → Editar → arrastra \"Tasa VE\"",
-                                        Toast.LENGTH_LONG
+                                        if (enable) "Notificación flotante activada" else "Notificación flotante desactivada",
+                                        Toast.LENGTH_SHORT
                                     ).show()
                                 }
-                            },
-                            shape = RoundedCornerShape(999.dp),
-                            border = BorderStroke(1.dp, Color(0x4D10B981)),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                            modifier = Modifier.height(34.dp)
-                        ) {
-                            Text(
-                                text = "Añadir",
-                                fontSize = 11.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EmeraldLight
-                            )
-                        }
-                    }
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Emerald,
+                            checkedTrackColor = Color(0x4D10B981)
+                        )
+                    )
                 }
             }
 
@@ -3877,7 +3778,7 @@ fun PlansComparisonDialog(
                         listOf("Sin publicidad", "12h/Video", "✓ Siempre"),
                         listOf("Widget Tasas del Día", "✓", "✓"),
                         listOf("Widget Calculadora y Perfiles", "—", "✓"),
-                        listOf("Notificación fija y Acceso flotante", "—", "✓"),
+                        listOf("Notificación flotante (tasas + calc. + PM)", "—", "✓"),
                         listOf("Perfil personalizado", "—", "✓")
                     )
                     rows.forEach { cols ->
@@ -3913,7 +3814,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, barra fija de tasas, conversor flotante en panel rápido, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, perfil personalizado y Widgets Ultra. Cancela cuando quieras.",
+                        text = "Cero anuncios, notificación flotante con tasas, calculadora y Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, perfil personalizado y Widgets Ultra. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp
