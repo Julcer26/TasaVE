@@ -924,8 +924,8 @@ private fun CartItemEditorDialog(
 // TAB 3: EXTRAS (HERRAMIENTAS DEL DÍA A DÍA, ACCESOS RÁPIDOS Y WIDGETS)
 // =========================================================================
 private enum class UtilTool(val title: String, val subtitle: String, val analyticsKey: String) {
-    COMPARE("¿Con qué pago?", "USDT vs Efectivo/$", "compare_payment"),
-    SPLIT("Dividir cuenta", "Entre amigos o grupo", "split_bill")
+    COMPARE("¿Qué me conviene más?", "USDT vs Efectivo/$", "compare_payment"),
+    SPLIT("¿Dividimos la cuenta?", "Entre amigos o grupo", "split_bill")
 }
 
 private fun formatDec2(value: Double): String = VeNumberFormat.formatMoney(value, decimals = 2)
@@ -1283,7 +1283,7 @@ fun MarketTab(
                                 sharePlainText(
                                     context,
                                     "Compartir comparación",
-                                    "¿Con qué pago $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}$discNote\n👉 $rec\nCalculado con Tasa VE"
+                                    "¿Qué me conviene más para $${formatDec2(res.priceUsd)}?\n• Cambiando USDT: ${formatDec2(res.usdtNeededToCoverBs)} USDT (Bs. ${formatDec2(res.bsAmount)})\n• Efectivo/Zelle: $${formatDec2(res.cashOrZelleEffectiveUsd)}$discNote\n$rec"
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -1466,32 +1466,51 @@ fun MarketTab(
 
                         Button(
                             onClick = {
-                                val totalFormatted = formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)
-                                val perPersonFormatted = formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)
-                                val shareBody = buildString {
-                                    append("Cuenta dividida entre ${splitRes.peopleCount} personas (${selectedCurrency.code}):\n")
-                                    if (selectedCurrency == SplitCurrency.VES) {
-                                        append("• Total: Bs. ${formatDec2(splitRes.totalBs)} ($${formatDec2(splitRes.totalUsd)} BCV)\n")
-                                        append("👉 Cada uno paga: Bs. ${formatDec2(splitRes.perPersonBs)} ($${formatDec2(splitRes.perPersonUsd)} BCV / ${formatDec2(splitRes.perPersonUsdt)} USDT / ${formatCopAmount(splitRes.perPersonCop)} COP)\n")
-                                    } else {
-                                        append("• Total: $totalFormatted / Bs. ${formatDec2(splitRes.totalBs)}\n")
-                                        append("👉 Cada uno paga: $perPersonFormatted o Bs. ${formatDec2(splitRes.perPersonBs)} (${equivParts.joinToString(" / ")})\n")
-                                    }
-                                    append("Calculado con Tasa VE")
+                                val perPersonPrimary = if (selectedCurrency == SplitCurrency.VES) {
+                                    "Bs. ${formatDec2(splitRes.perPersonBs)}"
+                                } else {
+                                    formatSplitCurrencyValue(splitRes.perPersonInCurrency, selectedCurrency)
                                 }
-                                sharePlainText(
-                                    context,
-                                    "Compartir cuenta dividida",
-                                    shareBody
+                                val perPersonConversion = if (selectedCurrency == SplitCurrency.VES) {
+                                    "$${formatDec2(splitRes.perPersonUsd)}"
+                                } else {
+                                    "Bs. ${formatDec2(splitRes.perPersonBs)}"
+                                }
+                                val totalPrimary = if (selectedCurrency == SplitCurrency.VES) {
+                                    "Bs. ${formatDec2(splitRes.totalBs)}"
+                                } else {
+                                    formatSplitCurrencyValue(splitRes.totalInCurrency, selectedCurrency)
+                                }
+                                val totalConversion = if (selectedCurrency == SplitCurrency.VES) {
+                                    "$${formatDec2(splitRes.totalUsd)}"
+                                } else {
+                                    "Bs. ${formatDec2(splitRes.totalBs)}"
+                                }
+                                val rateSubtitle = when (selectedCurrency) {
+                                    SplitCurrency.USD, SplitCurrency.VES -> "Tasa $: Bs. ${VeNumberFormat.formatRate(usdRate, 4)}"
+                                    SplitCurrency.EUR -> "Tasa €: Bs. ${VeNumberFormat.formatRate(eurRate, 4)}"
+                                    SplitCurrency.USDT -> "Tasa USDT: Bs. ${VeNumberFormat.formatRate(usdtRate, 2)}"
+                                    SplitCurrency.COP -> "1 $ = ${formatCopAmount(copPerUsd)} COP"
+                                }
+                                ShareCardGenerator.shareSplitBillCard(
+                                    context = context,
+                                    isDark = isDark,
+                                    peopleCount = splitRes.peopleCount,
+                                    currencyCode = selectedCurrency.code,
+                                    perPersonPrimary = perPersonPrimary,
+                                    perPersonConversion = perPersonConversion,
+                                    totalPrimary = totalPrimary,
+                                    totalConversion = totalConversion,
+                                    rateSubtitle = rateSubtitle
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Emerald, contentColor = Color.Black)
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Mandar al grupo", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("Mandar al grupo (IMG)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }
@@ -2085,7 +2104,7 @@ fun CheckoutTab(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "CALCULADORA DE PAGO MIXTO",
+                text = "SACA TU CUENTA",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = EmeraldLight,
@@ -2288,7 +2307,7 @@ fun CheckoutTab(
                 text = when {
                     isChange -> "VUELTO A ENTREGAR"
                     isPaidExact -> "CUENTA SALDADA ✅"
-                    else -> "FALTA POR PAGAR"
+                    else -> "RESTANTE"
                 },
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -2611,7 +2630,7 @@ fun CheckoutTab(
                     } else {
                         Toast.makeText(
                             context,
-                            "Personaliza tu logo en tarjetas con Tasa VE Ultra.",
+                            "Activa tu Perfil personalizado con Tasa VE Ultra.",
                             Toast.LENGTH_SHORT
                         ).show()
                         onOpenPlans()
@@ -2632,7 +2651,7 @@ fun CheckoutTab(
                 if (customLogoPreviewBitmap != null) {
                     Image(
                         bitmap = customLogoPreviewBitmap,
-                        contentDescription = "Logo personalizado",
+                        contentDescription = "Imagen de perfil personalizado",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -2646,57 +2665,43 @@ fun CheckoutTab(
                 }
             }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = if (hasCustomBrandConfigured) {
-                            customBrandName.ifBlank { "Logo propio activo" }
-                        } else {
-                            "Logo propio en Tarjeta PNG"
-                        },
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textPrimary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (!isUltraUser) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0x2EF59E0B))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "ULTRA",
-                                fontSize = 8.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = AmberUltra
-                            )
-                        }
-                    }
-                }
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(
                     text = if (hasCustomBrandConfigured) {
-                        "Se muestra arriba en la tarjeta • Pie Tasa VE abajo"
-                    } else if (isUltraUser) {
-                        "Sube tu logo (PNG/JPG 1:1 ≥ 512 px) y nombre comercial"
+                        customBrandName.ifBlank { "Perfil personalizado" }
                     } else {
-                        "Muestra tu marca arriba manteniendo el pie de Tasa VE"
+                        "Perfil personalizado"
                     },
-                    fontSize = 10.5.sp,
-                    color = textSecondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                if (!isUltraUser) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0x2EF59E0B))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "ULTRA",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = AmberUltra
+                        )
+                    }
+                }
             }
 
             Icon(
                 imageVector = if (isUltraUser) Icons.Default.Edit else Icons.Default.Lock,
-                contentDescription = "Configurar marca",
+                contentDescription = "Configurar perfil personalizado",
                 tint = if (isUltraUser) EmeraldLight else AmberUltra,
                 modifier = Modifier.size(18.dp)
             )
@@ -2725,7 +2730,7 @@ fun CheckoutTab(
                 val statusTitle = when {
                     isChange -> "VUELTO A ENTREGAR"
                     isPaidExact -> "CUENTA SALDADA"
-                    else -> "FALTA POR PAGAR"
+                    else -> "RESTANTE"
                 }
                 ShareCardGenerator.shareCheckoutCard(
                     context = context,
@@ -2852,13 +2857,13 @@ private fun CustomBrandDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Marca en Instrucciones de Pago",
+                            text = "Perfil personalizado",
                             fontSize = 15.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = textPrimary
                         )
                         Text(
-                            text = "Reemplaza la cabecera superior; el pie de Tasa VE se mantiene abajo.",
+                            text = "Muestra tu nombre y foto o logo al compartir tu perfil.",
                             fontSize = 10.5.sp,
                             color = textSecondary
                         )
@@ -2922,8 +2927,8 @@ private fun CustomBrandDialog(
                 OutlinedTextField(
                     value = brandName,
                     onValueChange = { if (it.length <= 40) brandName = it },
-                    label = { Text("Nombre de tu negocio o marca") },
-                    placeholder = { Text("Ej. Bodega La Esquina") },
+                    label = { Text("Nombre (personal o negocio)") },
+                    placeholder = { Text("Ej. Mi Tienda VE") },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -2946,7 +2951,7 @@ private fun CustomBrandDialog(
                         Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldLight)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = if (logoPreviewBitmap != null) "Cambiar logo" else "Subir logo",
+                            text = if (logoPreviewBitmap != null) "Cambiar imagen" else "Subir foto o logo",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldLight
@@ -2959,12 +2964,12 @@ private fun CustomBrandDialog(
                             shape = RoundedCornerShape(14.dp),
                             border = BorderStroke(1.dp, Color(0x4DEF4444))
                         ) {
-                            Icon(Icons.Default.DeleteOutline, contentDescription = "Quitar logo", modifier = Modifier.size(16.dp), tint = Color(0xFFEF4444))
+                            Icon(Icons.Default.DeleteOutline, contentDescription = "Quitar imagen", modifier = Modifier.size(16.dp), tint = Color(0xFFEF4444))
                         }
                     }
                 }
 
-                // Clear specifications box so user logos look crisp
+                // Clear specifications box so user photos/logos look crisp
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2975,29 +2980,29 @@ private fun CustomBrandDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "RECOMENDACIONES PARA TU LOGO",
+                        text = "RECOMENDACIONES",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = EmeraldLight,
                         letterSpacing = 0.6.sp
                     )
                     Text(
-                        text = "• Formato ideal: PNG con fondo transparente (también JPG o WebP).",
+                        text = "• Puedes subir cualquier foto normal o tu logo (JPG, PNG o WebP).",
                         fontSize = 10.5.sp,
                         color = textSecondary
                     )
                     Text(
-                        text = "• Proporción cuadrada 1:1 (se recorta al centro automáticamente).",
+                        text = "• Se ajusta automáticamente a formato cuadrado 1:1 al centro.",
                         fontSize = 10.5.sp,
                         color = textSecondary
                     )
                     Text(
-                        text = "• Tamaño mínimo recomendado: 512 × 512 px para máxima nitidez.",
+                        text = "• Recomendado ≥ 512 × 512 px para máxima nitidez.",
                         fontSize = 10.5.sp,
                         color = textSecondary
                     )
                     Text(
-                        text = "• Evita textos diminutos; un isotipo limpio luce mejor.",
+                        text = "• Se muestra en la cabecera de tu tarjeta; el pie de Tasa VE se mantiene abajo.",
                         fontSize = 10.5.sp,
                         color = textSecondary
                     )
@@ -3622,10 +3627,10 @@ fun PlansComparisonDialog(
                     HorizontalDivider(color = Color(0x1A94A3B8))
 
                     val rows = listOf(
-                        listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
-                        listOf("BCV Mañana + Calendario Bancario", "✓", "✓"),
-                        listOf("Extras (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
-                        listOf("Cálculo mixto + Instrucciones de pago", "✓", "✓"),
+                        listOf("Conversor exacto $, €, Bs., USDT y COP", "✓", "✓"),
+                        listOf("Calendario Bancario e historial", "✓", "✓"),
+                        listOf("Extras (¿Qué me conviene más?, ¿Dividimos la cuenta?)", "✓", "✓"),
+                        listOf("Saca tu cuenta + Compartir perfil", "✓", "✓"),
                         listOf("Perfiles bancarios (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),
                         listOf("Escáner de precios", "3/día +5 Ad", "∞"),
@@ -3633,7 +3638,7 @@ fun PlansComparisonDialog(
                         listOf("Widget Tasas del Día", "✓", "✓"),
                         listOf("Widget Calculadora y Perfiles", "—", "✓"),
                         listOf("Notificación fija y Acceso flotante", "—", "✓"),
-                        listOf("Logo propio en Instrucciones de pago", "—", "✓")
+                        listOf("Perfil personalizado", "—", "✓")
                     )
                     rows.forEach { cols ->
                         Row(
@@ -3668,7 +3673,7 @@ fun PlansComparisonDialog(
                         color = textPrimary
                     )
                     Text(
-                        text = "Cero anuncios, barra fija de tasas, conversor flotante en Barra Rápida con Pago Móvil, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, logo propio y Widgets Ultra. Cancela cuando quieras.",
+                        text = "Cero anuncios, barra fija de tasas, conversor flotante en panel rápido, escáner ∞, carrito ∞ + IVA/IGTF, perfiles ∞, perfil personalizado y Widgets Ultra. Cancela cuando quieras.",
                         fontSize = 11.sp,
                         color = textSecondary,
                         lineHeight = 15.sp

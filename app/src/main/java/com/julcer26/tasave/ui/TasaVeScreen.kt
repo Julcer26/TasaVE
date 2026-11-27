@@ -1412,7 +1412,7 @@ fun TasaVeScreen(
                     val bcvEurRate = effectiveEurBcv?.rate ?: 0.0
                     val parallelUsdtRate = uiState.usdtParalelo?.rate ?: 0.0
 
-                    // Visual PNG Share Card Button
+                    // Plain-Text Share Button (clean calculation only, no links)
                     if (parsedVes > 0.0) {
                         OutlinedButton(
                             onClick = {
@@ -1430,28 +1430,15 @@ fun TasaVeScreen(
                                 } else {
                                     "Bs. ${VeNumberFormat.formatRate(currentRateInfo?.rate ?: 0.0, rateDecimals)}"
                                 }
-
-                                val eqList = buildList {
-                                    if (bcvUsdRate > 0) add("Dólar BCV" to "$${VeNumberFormat.formatMoney(parsedVes / bcvUsdRate)}")
-                                    if (bcvEurRate > 0) add("Euro BCV" to "€${VeNumberFormat.formatMoney(parsedVes / bcvEurRate)}")
-                                    if (parallelUsdtRate > 0) add("USDT Binance" to "₮${VeNumberFormat.formatMoney(parsedVes / parallelUsdtRate)}")
+                                val fromStr = if (viewModel.isVesAsInput) vesStr else foreignStr
+                                val toStr = if (viewModel.isVesAsInput) foreignStr else vesStr
+                                val rateName = currentRateInfo?.label ?: "Tasa"
+                                val plainShareBody = "$fromStr = $toStr\n$rateName: $shareRateDisplay"
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, plainShareBody)
                                 }
-
-                                ShareCardGenerator.shareCalculationCard(
-                                    context = context,
-                                    isDark = isDark,
-                                    inputLabel = if (viewModel.isVesAsInput) "Bolívares (VES)" else (currentRateInfo?.label ?: "Divisa"),
-                                    inputDisplay = if (viewModel.isVesAsInput) vesStr else foreignStr,
-                                    outputLabel = if (viewModel.isVesAsInput) (currentRateInfo?.label ?: "Divisa") else "Bolívares (VES)",
-                                    outputDisplay = if (viewModel.isVesAsInput) foreignStr else vesStr,
-                                    rateLabel = currentRateInfo?.label ?: "Tasa BCV",
-                                    rateDisplay = shareRateDisplay,
-                                    updatedAt = currentRateInfo?.dateUpdated,
-                                    modifierText = null,
-                                    adjustedTotalText = null,
-                                    equivalences = eqList,
-                                    isTomorrowBcv = viewModel.previewTomorrowBcv
-                                )
+                                context.startActivity(Intent.createChooser(sendIntent, "Compartir cálculo"))
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
@@ -1463,7 +1450,7 @@ fun TasaVeScreen(
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Compartir cálculo (IMG)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "Compartir cálculo", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -3189,7 +3176,7 @@ private fun LegalCenterDialog(
             "2. Fuentes de cotizaciones y caché sin conexión (offline)" to
                 "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM y series históricas) provienen de APIs públicas de terceros (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no controla su disponibilidad, continuidad ni exactitud, y no está afiliada al BCV, SENIAT, Zelle, Binance ni entidad bancaria o pasarela alguna. Las últimas tasas se almacenan localmente para operar sin conexión y alimentar los widgets.",
             "3. Datos almacenados localmente (sin cuentas)" to
-                "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de impuestos aplicables (IVA/IGTF), perfiles bancarios opcionales (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), cálculos mixtos, logotipo propio e instrucciones de pago personalizadas en imagen PNG temporales (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar la exactitud de los datos que compartas con terceros.",
+                "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de impuestos aplicables (IVA/IGTF), perfiles bancarios opcionales (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), cálculos en Saca tu cuenta, tu Perfil personalizado (nombre y foto o logo) y las imágenes PNG temporales compartidas (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar la exactitud de los datos que compartas con terceros.",
             "4. Reportes voluntarios, sugerencias y soporte técnico" to
                 "Cuando decides enviar un reporte de error, consulta o sugerencia desde la app o a soporte@tasave.net, se procesa tu mensaje, el módulo indicado, el contacto opcional si decides suministrarlo y datos técnicos básicos del entorno (versión de la app, tipo de plan, fabricante/modelo del equipo y versión de Android). Esta información se utiliza exclusivamente para diagnosticar fallos, mejorar la estabilidad, responderte y mantenerse como referencia e historial técnico interno de soporte y evolución de la aplicación, salvo que solicites su eliminación expresa escribiendo a soporte@tasave.net.",
             "5. Analítica, publicidad, facturación y servicios de terceros" to
@@ -3199,18 +3186,18 @@ private fun LegalCenterDialog(
             "7. Derechos del usuario, eliminación de datos y menores" to
                 "• Borrado de datos locales: Puedes eliminar historial, carrito o perfiles desde la app, o en Ajustes > Aplicaciones > Tasa VE > Almacenamiento y caché > Borrar caché (archivos temporales) o Borrar datos / Eliminar almacenamiento (restablecimiento completo).\n• Derechos y eliminación de soporte: Conforme a la normativa aplicable, puedes solicitar información, rectificación o eliminación de reportes enviados a soporte escribiendo a soporte@tasave.net con la fecha aproximada y contacto usado.\n• Menores de edad: Tasa VE no está dirigida a menores de 13 años (o la edad mínima legal en tu jurisdicción) ni recopila conscientemente sus datos. Si eres padre, madre o representante legal y consideras que un menor hizo uso indebido de la plataforma o envió datos a soporte, repórtalo de inmediato a soporte@tasave.net para tomar las medidas y eliminaciones correspondientes.",
             "8. Actualizaciones de estas políticas y contacto" to
-                "Actualizaremos estas políticas cada vez que existan cambios funcionales, técnicos, normativos o actualizaciones relevantes en las políticas de Google Play, publicando siempre la fecha vigente (26 de noviembre de 2026). Para consultar las condiciones vigentes de Google, revisa play.google.com/intl/es_es/about/play-terms/ y policies.google.com/privacy.\nContacto: soporte@tasave.net • Web: https://tasave.net"
+                "Actualizaremos estas políticas cada vez que existan cambios funcionales, técnicos, normativos o actualizaciones relevantes en las políticas de Google Play, publicando siempre la fecha vigente (27 de noviembre de 2026). Para consultar las condiciones vigentes de Google, revisa play.google.com/intl/es_es/about/play-terms/ y policies.google.com/privacy.\nContacto: soporte@tasave.net • Web: https://tasave.net"
         )
     }
 
     val termsSections = remember {
         listOf(
             "1. Naturaleza informativa y no intermediación" to
-                "Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. TASA VE NO ES UNA ENTIDAD BANCARIA, CASA DE CAMBIO, MERCADO DE DIVISAS, PROCESADOR DE PAGOS, BILLETERA ELECTRÓNICA, ASESORA FINANCIERA, NI ADMINISTRADORA TRIBUTARIA, Y TAMPOCO EJECUTA TRANSFERENCIAS, LIQUIDACIONES O COBROS POR CUENTA DE LOS USUARIOS.",
+                "Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. TASA VE NO ES UNA ENTIDAD BANCARIA, CASA DE CAMBIO, MERCADO DE DIVISAS, PROCESADOR DE PAGOS, BILLETERA ELECTRÓNICA, ASESORA FINANCIERA, NI ADMINISTRADORA TRIBUTARIA, Y TAMPOCO RECIBE, CUSTODIA, TRANSFIERE, LIQUIDA NI PROCESA DINERO, FONDOS O COBROS POR CUENTA DE LOS USUARIOS.",
             "2. Exactitud referencial de tasas y cálculos" to
-                "Las tasas, conversiones multimoneda, estimaciones de IVA/IGTF, calendarios y utilidades tienen fines estrictamente orientativos e informativos. Pueden diferir de las cotizaciones vigentes o aplicadas por bancos y comercios, y no constituyen asesoría financiera, contable, fiscal ni legal.",
-            "3. Instrucciones de pago personalizadas y cálculos mixtos" to
-                "Las plantillas de texto para autocompletar en bancos, los cálculos multimoneda y las instrucciones de pago personalizadas (imagen PNG) se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica titularidad de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.",
+                "Las tasas, conversiones multimoneda, estimaciones de impuestos aplicables, calendarios y herramientas de Extras (¿Qué me conviene más? y ¿Dividimos la cuenta?) tienen fines estrictamente orientativos e informativos. Pueden diferir de las cotizaciones vigentes o aplicadas por bancos y comercios, y no constituyen asesoría financiera, contable, fiscal ni legal.",
+            "3. Perfiles, Saca tu cuenta e imágenes compartidas" to
+                "Las plantillas de texto para autocompletar en bancos, los cálculos de Saca tu cuenta, los perfiles guardados y las tarjetas PNG compartidas (incluyendo tu Perfil personalizado y las cuentas divididas) son simples fichas informativas generadas bajo tu exclusiva dirección y responsabilidad. No constituyen facturas fiscales, recibos oficiales ni comprobantes bancarios de pago. Tasa VE no verifica titularidad de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.",
             "4. Plan gratuito, suscripción Ultra, cancelación y reembolsos" to
                 "El Plan Gratuito incluye funciones base con publicidad de Google AdMob. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año, o equivalente local en Google Play) se renueva automáticamente salvo cancelación al menos 24 horas antes siguiendo: Google Play Store > Foto de perfil > Pagos y suscripciones > Suscripciones > Tasa VE > Cancelar suscripción (y confirmar en pantalla). Puedes restaurar compras desde la app; los reembolsos se rigen por las políticas vigentes de Google Play.",
             "5. Propiedad intelectual y titularidad de contenido" to

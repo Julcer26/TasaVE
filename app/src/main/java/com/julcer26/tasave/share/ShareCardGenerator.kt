@@ -1043,6 +1043,133 @@ object ShareCardGenerator {
         }
     }
 
+    fun shareSplitBillCard(
+        context: Context,
+        isDark: Boolean,
+        peopleCount: Int,
+        currencyCode: String,
+        perPersonPrimary: String,
+        perPersonConversion: String,
+        totalPrimary: String,
+        totalConversion: String,
+        rateSubtitle: String
+    ) {
+        com.julcer26.tasave.analytics.AnalyticsTracker.logShareCard(context, "split_bill", false)
+        runCatching {
+            val width = 1080
+            val height = 820
+
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+
+            val bgTop = if (isDark) Color.parseColor("#0A0A0D") else Color.parseColor("#F8FAFC")
+            val bgBottom = if (isDark) Color.parseColor("#13151B") else Color.parseColor("#E2E8F0")
+            val cardBg = if (isDark) Color.parseColor("#181920") else Color.WHITE
+            val subCardBg = if (isDark) Color.parseColor("#21232C") else Color.parseColor("#F1F5F9")
+            val textPrimary = if (isDark) Color.WHITE else Color.parseColor("#0F172A")
+            val textSecondary = if (isDark) Color.parseColor("#94A3B8") else Color.parseColor("#475569")
+            val emeraldLight = if (isDark) Color.parseColor("#34D399") else Color.parseColor("#047857")
+
+            val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = LinearGradient(0f, 0f, 0f, height.toFloat(), bgTop, bgBottom, Shader.TileMode.CLAMP)
+            }
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
+
+            val cardPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = cardBg }
+            val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = if (isDark) Color.parseColor("#2634D399") else Color.parseColor("#CBD5E1")
+                style = Paint.Style.STROKE
+                strokeWidth = 3f
+            }
+            val outerRect = RectF(56f, 56f, width - 56f, height - 56f)
+            canvas.drawRoundRect(outerRect, 48f, 48f, cardPaint)
+            canvas.drawRoundRect(outerRect, 48f, 48f, borderPaint)
+
+            drawCenteredBrandHeader(
+                context = context,
+                canvas = canvas,
+                width = width,
+                isDark = isDark,
+                textPrimary = textPrimary,
+                textSecondary = textSecondary,
+                pillText = "¿DIVIDIMOS LA CUENTA?",
+                pillTextColor = emeraldLight,
+                pillBgColor = Color.parseColor("#2410B981"),
+                subtitle = "$peopleCount personas • $rateSubtitle"
+            )
+
+            // Main per-person highlight box
+            val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = if (isDark) Color.parseColor("#1810B981") else Color.parseColor("#ECFDF5")
+            }
+            val highlightBorder = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.parseColor("#4D10B981")
+                style = Paint.Style.STROKE
+                strokeWidth = 2.5f
+            }
+            val mainRect = RectF(104f, 326f, width - 104f, 560f)
+            canvas.drawRoundRect(mainRect, 34f, 34f, highlightPaint)
+            canvas.drawRoundRect(mainRect, 34f, 34f, highlightBorder)
+
+            val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = emeraldLight
+                textSize = 25f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            val primaryValPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textPrimary
+                textSize = 60f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            val convValPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = emeraldLight
+                textSize = 42f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+
+            val maxW = (width - 296).toFloat()
+            fitTextSize(primaryValPaint, perPersonPrimary, maxW, minSize = 30f)
+            fitTextSize(convValPaint, perPersonConversion, maxW, minSize = 24f)
+
+            canvas.drawText("POR PERSONA ($peopleCount PERS. • $currencyCode)", 148f, 382f, labelPaint)
+            canvas.drawText(perPersonPrimary, 148f, 460f, primaryValPaint)
+            canvas.drawText(perPersonConversion, 148f, 526f, convValPaint)
+
+            // Total bill box
+            val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = subCardBg }
+            val totalRect = RectF(104f, 588f, width - 104f, 700f)
+            canvas.drawRoundRect(totalRect, 28f, 28f, innerPaint)
+
+            val subLabelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textSecondary
+                textSize = 23f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            val totalValPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textPrimary
+                textSize = 32f
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            }
+            val totalLine = "$totalPrimary  •  $totalConversion"
+            fitTextSize(totalValPaint, totalLine, maxW, minSize = 20f)
+
+            canvas.drawText("CUENTA TOTAL", 148f, 632f, subLabelPaint)
+            canvas.drawText(totalLine, 148f, 678f, totalValPaint)
+
+            val footPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = textSecondary
+                textSize = 22f
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText("Generado con Tasa VE", width / 2f, height - 80f, footPaint)
+
+            val caption = "Cuenta dividida ($peopleCount personas): $perPersonPrimary ($perPersonConversion) por persona. Total: $totalPrimary ($totalConversion)."
+            shareBitmap(context, bitmap, caption)
+        }.onFailure {
+            Toast.makeText(context, "No se pudo generar la imagen", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun shareBitmap(context: Context, bitmap: Bitmap, caption: String) {
         val dir = File(context.cacheDir, "shared_cards").apply { mkdirs() }
         // Clean previous temporary share cards to keep cache tiny
