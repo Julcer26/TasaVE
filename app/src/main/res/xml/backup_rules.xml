@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <exclude domain="sharedpref" path="tasa_ve_preferences.xml" />
+    <exclude domain="database" path="." />
+    <exclude domain="file" path="custom_brand_logo.png" />
 </full-backup-content>

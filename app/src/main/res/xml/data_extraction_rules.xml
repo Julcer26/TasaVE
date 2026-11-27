@@ -2,5 +2,12 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="tasa_ve_preferences.xml" />
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="custom_brand_logo.png" />
     </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="tasa_ve_preferences.xml" />
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="custom_brand_logo.png" />
+    </device-transfer>
 </data-extraction-rules>
