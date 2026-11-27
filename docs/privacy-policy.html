@@ -274,7 +274,7 @@
                         <td>No aplica (sin registro ni rastreo GPS).</td>
                     </tr>
                     <tr>
-                        <td><strong>Historial, carrito y perfiles de pago</strong></td>
+                        <td><strong>Historial, carrito y perfiles bancarios</strong></td>
                         <td>Conversiones, carrito, IVA/IGTF, perfiles (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), abonos y logo propio.</td>
                         <td>Almacenamiento 100% local en el dispositivo (excluido del respaldo automático en la nube).</td>
                     </tr>
@@ -329,8 +329,8 @@
         <p>Tasa VE no requiere registro ni crea perfiles de cuenta en servidores propios. Los datos operativos se guardan en el almacenamiento privado de la aplicación en Android (bases de datos locales como SQLite/Room y preferencias locales):</p>
         <ul>
             <li><strong>Historial y carrito:</strong> Cálculos guardados, ítems del carrito, cantidades, precios unitarios y parámetros referenciales configurados (como porcentajes de IVA o IGTF).</li>
-            <li><strong>Perfiles de pago y plantillas:</strong> Los datos que ingreses opcionalmente para agilizar cálculos o plantillas de pago (como Pago Móvil, datos bancarios, Zelle o Binance Pay) se guardan localmente en el dispositivo, <strong>no se envían a servidores propios de Tasa VE</strong> y están excluidos de copias de seguridad automáticas en la nube de Android. Eres responsable de verificar la exactitud de los datos que compartas con terceros.</li>
-            <li><strong>Logotipo propio y tarjetas PNG:</strong> Las imágenes o logotipos que cargues opcionalmente y las tarjetas visuales generadas al compartir se gestionan localmente y se entregan mediante mecanismos seguros del sistema (<code>FileProvider</code>) solo cuando decides compartirlas.</li>
+            <li><strong>Perfiles bancarios y plantillas:</strong> Los datos que ingreses opcionalmente para agilizar cálculos o instrucciones de pago (como Pago Móvil, datos bancarios, Zelle o Binance Pay) se guardan únicamente en tu dispositivo, <strong>no se envían a ningún tipo de servidor</strong> y están excluidos de copias de seguridad automáticas en la nube de Android. Eres responsable de verificar la exactitud de los datos que compartas con terceros.</li>
+            <li><strong>Logotipo propio e instrucciones de pago (imagen PNG):</strong> Las imágenes o logotipos que cargues opcionalmente y las instrucciones de pago personalizadas generadas al compartir se gestionan localmente y se entregan mediante mecanismos seguros del sistema (<code>FileProvider</code>) solo cuando decides compartirlas.</li>
         </ul>
 
         <h2 id="s4">4. Reportes voluntarios, sugerencias y soporte técnico</h2>
@@ -346,13 +346,13 @@
             <li><strong>Google Firebase Analytics:</strong> Permite medir de forma agregada y estadística el uso general de pantallas y funciones (sin recopilar montos ingresados, datos bancarios ni información de identidad directa). Consulta la <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer">Privacidad de Firebase</a>.</li>
             <li><strong>Google Mobile Ads (AdMob):</strong> En el plan gratuito puede mostrar formatos publicitarios (como banners, intersticiales o anuncios bonificados). AdMob puede acceder al identificador de publicidad de Android (GAID), direcciones IP/metadatos de red y señales de diagnóstico/prevención de fraude de acuerdo con la <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Política de Privacidad y Anuncios de Google</a>. Puedes restablecer o limitar el ID de publicidad desde los ajustes de tu dispositivo Android.</li>
             <li><strong>Google Play Billing:</strong> La suscripción opcional <strong>Tasa VE Ultra</strong> ($0.99 USD/mes o $7.99 USD/año, o su equivalente local mostrado en Google Play) se gestiona íntegramente a través de Google Play. Tasa VE no recibe ni almacena los datos de tu tarjeta de crédito o débito. Consulta los <a href="https://play.google.com/intl/es_es/about/play-terms/" target="_blank" rel="noopener noreferrer">Términos de Servicio de Google Play</a>.</li>
-            <li><strong>Google ML Kit:</strong> El reconocimiento óptico de texto (OCR) para lectura de precios se ejecuta en el dispositivo sin enviar fotografías a servidores propios de Tasa VE.</li>
+            <li><strong>Google ML Kit:</strong> El reconocimiento óptico de texto (OCR) para lectura de precios visibles (no lee códigos QR ni de barras) se ejecuta en el dispositivo sin enviar fotografías a ningún tipo de servidor.</li>
         </ul>
 
         <h2 id="s6">6. Permisos del sistema Android, widgets y seguridad</h2>
         <ul>
-            <li><strong>Cámara (<code>CAMERA</code>):</strong> Se solicita únicamente cuando abres el escáner OCR para leer precios en pantalla o etiquetas. No graba video ni sube imágenes a servidores propios.</li>
-            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Utilizada en versiones compatibles de Android cuando habilitas avisos o la barra fija de consulta rápida.</li>
+            <li><strong>Cámara (<code>CAMERA</code>):</strong> Se solicita únicamente cuando abres el escáner de precios para leer montos visibles en etiquetas o pantallas de lectores de precios del establecimiento (no escanea códigos QR ni códigos de barras). No graba video ni sube imágenes a ningún tipo de servidor.</li>
+            <li><strong>Notificaciones (<code>POST_NOTIFICATIONS</code>):</strong> Utilizada en versiones compatibles de Android cuando habilitas avisos o la notificación fija en el panel de notificaciones.</li>
             <li><strong>Acceso directo de ajustes rápidos (<code>BIND_QUICK_SETTINGS_TILE</code>):</strong> Permite activar la consulta rápida desde el panel de ajustes rápidos de Android cuando tú lo utilizas.</li>
             <li><strong>Widgets de pantalla de inicio (<code>AppWidget</code> / <code>WorkManager</code>):</strong> No requieren permisos invasivos del sistema; solo operan si decides añadirlos a tu pantalla de inicio, utilizando las cotizaciones en caché local, la conectividad de red para refrescar tasas y el portapapeles del sistema únicamente cuando pulsas copiar datos.</li>
             <li><strong>Conectividad de red y facturación (<code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>, <code>BILLING</code>):</strong> Necesaria para consultar cotizaciones públicas, mostrar anuncios en la versión gratuita, enviar métricas agregadas y gestionar compras/suscripciones.</li>
@@ -380,8 +380,8 @@
         <h2 id="t2">2. Exactitud referencial de tasas y cálculos</h2>
         <p>Las tasas de cambio, conversiones multimoneda, estimaciones de impuestos o retenciones (como IVA o IGTF), calendarios o utilidades informativas tienen fines <strong>estrictamente orientativos e informativos</strong>. Las tasas publicadas pueden diferir de las cotizaciones oficiales vigentes, del mercado o de las aplicadas efectivamente por bancos y comercios al momento de liquidar una operación. No constituyen asesoría financiera, contable, fiscal ni legal.</p>
 
-        <h2 id="t3">3. Plantillas de pago, pagos mixtos y tarjetas PNG</h2>
-        <p>Las plantillas de texto para datos de pago (incluyendo el formato limpio para autocompletar en bancos), registros de abonos o pagos mixtos y las imágenes/tarjetas PNG se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
+        <h2 id="t3">3. Instrucciones de pago personalizadas y cálculos mixtos</h2>
+        <p>Las plantillas de texto para autocompletar datos en bancos, los cálculos multimoneda y las instrucciones de pago personalizadas (imagen PNG) se generan bajo tu exclusiva dirección y responsabilidad. Tasa VE no verifica la titularidad o solvencia de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.</p>
 
         <h2 id="t4">4. Plan gratuito, suscripción Ultra, cancelación y reembolsos</h2>
         <ul>
