@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 enum class AppTab(val label: String) {
     CONVERTER("Conversor"),
     CART("Carrito"),
-    MARKET("Útiles"),
+    MARKET("Extras"),
     CHECKOUT("Datos")
 }
 

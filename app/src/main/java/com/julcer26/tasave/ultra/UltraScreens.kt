@@ -921,7 +921,7 @@ private fun CartItemEditorDialog(
 
 // =========================================================================
 // =========================================================================
-// TAB 3: ÚTILES (HERRAMIENTAS DEL DÍA A DÍA, ACCESOS RÁPIDOS Y WIDGETS)
+// TAB 3: EXTRAS (HERRAMIENTAS DEL DÍA A DÍA, ACCESOS RÁPIDOS Y WIDGETS)
 // =========================================================================
 private enum class UtilTool(val title: String, val subtitle: String, val analyticsKey: String) {
     COMPARE("¿Con qué pago?", "USDT vs Efectivo/$", "compare_payment"),
@@ -1003,7 +1003,7 @@ fun MarketTab(
         TopBannerAd(isDark = isDark, isUltraUser = isUltraUser, isAdFreePassActive = isAdFreePassActive)
 
         if (selectedTool != null) {
-            // Cabecera ← Volver a Útiles
+            // Cabecera ← Volver a Extras
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1017,7 +1017,7 @@ fun MarketTab(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver a Útiles",
+                    contentDescription = "Volver a Extras",
                     tint = EmeraldLight,
                     modifier = Modifier.size(18.dp)
                 )
@@ -3675,7 +3675,7 @@ fun PlansComparisonDialog(
                     val rows = listOf(
                         listOf("Calculadora exacta BCV y USDT + COP", "✓", "✓"),
                         listOf("BCV Mañana + Calendario Bancario", "✓", "✓"),
-                        listOf("Útiles (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
+                        listOf("Extras (¿Con qué pago?, Dividir cuenta)", "✓", "✓"),
                         listOf("Cálculo mixto + Instrucciones de pago", "✓", "✓"),
                         listOf("Perfiles bancarios (PM/Banco/Zelle/Bin.)", "1", "∞"),
                         listOf("Carrito inteligente", "5 prod.", "∞ + IVA/IGTF"),

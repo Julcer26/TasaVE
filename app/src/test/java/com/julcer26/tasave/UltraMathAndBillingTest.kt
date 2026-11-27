@@ -185,7 +185,8 @@ class UltraMathAndBillingTest {
         assertEquals("J-123456789", profile.formattedDoc())
         assertEquals("0412-5551234", profile.formattedPhone())
         assertEquals("Mi Comercio", profile.displayTitle())
-        assertEquals("Útiles", AppTab.MARKET.label)
+        assertEquals("Extras", AppTab.MARKET.label)
+        assertEquals("Datos", AppTab.CHECKOUT.label)
 
         val zelleProfile = PaymentMethodProfile(
             id = 2L,
