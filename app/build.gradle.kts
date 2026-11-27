@@ -40,9 +40,11 @@ android {
     ?: keystoreProps.getProperty("storeFile")
     ?: "${rootDir}/my-upload-key.jks"
 
+  val releaseKeystoreFile = rootProject.file(releaseKeystorePath)
+
   signingConfigs {
     create("release") {
-      storeFile = file(releaseKeystorePath)
+      storeFile = releaseKeystoreFile
       storePassword = System.getenv("KEYSTORE_PASSWORD")
         ?: System.getenv("STORE_PASSWORD")
         ?: keystoreProps.getProperty("storePassword")
@@ -68,7 +70,7 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      if (file(releaseKeystorePath).exists() && signingConfigs.getByName("release").storePassword?.isNotBlank() == true) {
+      if (releaseKeystoreFile.exists() && signingConfigs.getByName("release").storePassword?.isNotBlank() == true) {
         signingConfig = signingConfigs.getByName("release")
       }
     }
