@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -28,13 +30,29 @@ android {
     }
   }
 
+  val keystorePropsFile = rootProject.file("keystore.properties")
+  val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) {
+      keystorePropsFile.inputStream().use { load(it) }
+    }
+  }
+  val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
+    ?: keystoreProps.getProperty("storeFile")
+    ?: "${rootDir}/my-upload-key.jks"
+
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("KEYSTORE_PASSWORD") ?: System.getenv("STORE_PASSWORD") ?: "tasavepassword"
-      keyAlias = System.getenv("KEY_ALIAS") ?: "tasave-upload"
-      keyPassword = System.getenv("KEY_PASSWORD") ?: "tasavepassword"
+      storeFile = file(releaseKeystorePath)
+      storePassword = System.getenv("KEYSTORE_PASSWORD")
+        ?: System.getenv("STORE_PASSWORD")
+        ?: keystoreProps.getProperty("storePassword")
+        ?: ""
+      keyAlias = System.getenv("KEY_ALIAS")
+        ?: keystoreProps.getProperty("keyAlias")
+        ?: "tasave-upload"
+      keyPassword = System.getenv("KEY_PASSWORD")
+        ?: keystoreProps.getProperty("keyPassword")
+        ?: ""
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -50,8 +68,7 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      if (file(keystorePath).exists()) {
+      if (file(releaseKeystorePath).exists() && signingConfigs.getByName("release").storePassword?.isNotBlank() == true) {
         signingConfig = signingConfigs.getByName("release")
       }
     }

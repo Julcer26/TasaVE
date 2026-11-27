@@ -18,6 +18,8 @@ local.properties
 debug.keystore
 *.keystore
 *.jks
+*.pem
+keystore.properties
 *.apk
 *.aab
 app/google-services.json
