@@ -1,5 +1,6 @@
 package com.julcer26.tasave.ads
 
+import android.content.Context
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,28 +28,44 @@ import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 
 /**
- * TopBannerAd: Non-intrusive top banner advertising component.
+ * TopBannerAd: Non-intrusive Anchored Adaptive Banner advertising component.
  *
  * Implements Google Play Ads Policy compliance:
  * - Clear disclosure label ("PUBLICIDAD").
- * - Does not obstruct interactive navigation or touch targets.
- * - Automatically disappears when [isProUser] is true.
- * - Uses official Google AdMob test banner unit ID in development to prevent policy violations.
+ * - Uses full-width Anchored Adaptive Banner for ~20-30% higher eCPM than legacy 320x50.
+ * - Automatically disappears when [isUltraUser] or [isAdFreePassActive] is true.
+ * - Resolves test vs production unit IDs automatically via [AdUnits].
  */
 @Composable
 fun TopBannerAd(
     modifier: Modifier = Modifier,
     isDark: Boolean,
-    isProUser: Boolean,
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Official Google Test Banner Ad Unit ID
+    isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
+    adUnitId: String? = null
 ) {
-    if (isProUser) return
+    val hideAds = isUltraUser || isAdFreePassActive
+    if (hideAds) return
 
+    val context = LocalContext.current
     val isInPreview = LocalInspectionMode.current
-    var isAdLoaded by remember { mutableStateOf(false) }
+    val resolvedUnitId = remember(adUnitId, context) {
+        adUnitId ?: AdUnits.bannerAdUnitId(context)
+    }
+    if (!isInPreview && resolvedUnitId == null) return
+
+    var adViewRef by remember { mutableStateOf<AdView?>(null) }
+    var adLoadFailed by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            adViewRef?.destroy()
+            adViewRef = null
+        }
+    }
 
     AnimatedVisibility(
-        visible = !isProUser,
+        visible = !hideAds && (isInPreview || !adLoadFailed),
         enter = fadeIn(),
         exit = fadeOut()
     ) {
@@ -57,7 +75,6 @@ fun TopBannerAd(
                 .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Policy Compliance: Discreet tag identifying sponsored content
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,14 +94,14 @@ fun TopBannerAd(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .background(
                         if (isDark) Color(0x0F222226) else Color(0x0A000000)
                     )
                     .border(
                         width = 1.dp,
                         color = if (isDark) Color(0x14FFFFFF) else Color(0x14000000),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(20.dp)
                     )
                     .padding(vertical = 4.dp),
                 contentAlignment = Alignment.Center
@@ -93,11 +110,11 @@ fun TopBannerAd(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
+                            .height(54.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Banner AdMob (320x50)",
+                            text = "Banner Adaptativo AdMob",
                             fontSize = 11.sp,
                             color = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
@@ -107,23 +124,22 @@ fun TopBannerAd(
                         modifier = Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(),
-                        factory = { context ->
-                            AdView(context).apply {
-                                setAdSize(AdSize.BANNER)
-                                this.adUnitId = adUnitId
+                        factory = { viewContext ->
+                            val adSize = resolveAdaptiveBannerSize(viewContext)
+                            AdView(viewContext).apply {
+                                setAdSize(adSize)
+                                this.adUnitId = resolvedUnitId!!
                                 layoutParams = ViewGroup.LayoutParams(
                                     ViewGroup.LayoutParams.MATCH_PARENT,
                                     ViewGroup.LayoutParams.WRAP_CONTENT
                                 )
+                                adViewRef = this
                                 adListener = object : AdListener() {
                                     override fun onAdLoaded() {
-                                        super.onAdLoaded()
-                                        isAdLoaded = true
+                                        adLoadFailed = false
                                     }
-
                                     override fun onAdFailedToLoad(error: LoadAdError) {
-                                        super.onAdFailedToLoad(error)
-                                        isAdLoaded = false
+                                        adLoadFailed = true
                                     }
                                 }
                                 loadAd(AdRequest.Builder().build())
@@ -134,4 +150,12 @@ fun TopBannerAd(
             }
         }
     }
+}
+
+private fun resolveAdaptiveBannerSize(context: Context): AdSize {
+    val metrics = context.resources.displayMetrics
+    val density = metrics.density.takeIf { it > 0f } ?: 1f
+    val totalWidthDp = (metrics.widthPixels / density).toInt()
+    val containerWidthDp = (totalWidthDp - 32).coerceAtLeast(300)
+    return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, containerWidthDp)
 }

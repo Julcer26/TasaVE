@@ -1,51 +1,59 @@
 # Términos de Servicio y Descargo de Responsabilidad — Tasa VE
 
-**Última actualización:** 10 de noviembre de 2026
+**Última actualización:** 23 de noviembre de 2026 (Versión 1.2.0)
 
-Bienvenido a **Tasa VE** (`com.julcer26.tasave`). Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de los términos, le solicitamos que no utilice la aplicación.
+Bienvenido a **Tasa VE**. Al descargar, instalar o utilizar esta aplicación móvil, usted acepta expresamente los siguientes términos, condiciones y descargos de responsabilidad. Si no está de acuerdo con alguno de ellos, por favor no utilice la aplicación.
 
 ---
 
-## 1. Naturaleza del Servicio y Propósito Informativo
-* **Herramienta de Utilidad Matemática e Informativa:** Tasa VE es una calculadora y cotizadora de consulta matemática para fines estrictamente referenciales, educativos e informativos.
-* **No es una Entidad Financiera:** Tasa VE, su desarrollador y sus colaboradores **NO son una institución financiera, banco, casa de cambio, operador de valores, billetera digital, ni intermediario cambiario**.
-* **Ausencia de Asesoría Financiera:** Ninguna información provista por la aplicación constituye asesoría de inversión, recomendación comercial, oferta de compra/venta de divisas, ni captación de fondos en ninguna jurisdicción.
+## 1. Naturaleza del Servicio y Ausencia de Afiliación
+- **Herramienta Matemática e Informativa:** Tasa VE es una calculadora y herramienta de consulta matemática para fines estrictamente referenciales, educativos e informativos.
+- **Sin Afiliación Institucional:** Tasa VE y su equipo responsable **NO son una institución financiera, banco, casa de cambio, procesador de pagos, billetera digital, autoridad tributaria ni intermediario cambiario**, y **NO están afiliados, patrocinados ni autorizados** por el Banco Central de Venezuela (BCV), el SENIAT, el Banco de la República de Colombia, Zelle, Binance ni ninguna entidad financiera pública o privada.
+- **Directorio Bancario y Plantillas de Cobro:** El listado de códigos y nombres de bancos venezolanos incluido en el módulo Cobros (p. ej., `0134 Banesco`, etc.) y las plantillas de **Pago Móvil**, **Cuenta Bancaria**, **Zelle** y **Binance Pay** son únicamente guías de formato para ayudar al usuario a redactar su propio resumen de cobro o tarjeta visual. Tasa VE **no valida cuentas ni identificadores digitales, no consulta saldos ni ejecuta transferencias**.
+- **Uso Referencial de Cálculos Auxiliares, Calendario, Útiles y Escáner:** La lectura óptica de precios mediante cámara (OCR local), el Carrito Inteligente, las estimaciones de **IVA (16 %)** e **IGTF (3 %)**, los ajustes porcentuales rápidos, la conversión a **Peso Colombiano (COP)** de frontera, el **Calendario bancario**, las calculadoras de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*) y la calculadora de pago mixto o vuelto son asistencias prácticas referenciales. **No constituyen asesoría financiera, contable ni tributaria, ni sustituyen sistemas de facturación fiscal homologados.** El usuario es el único responsable de verificar los montos finales y cotizaciones oficiales antes de pagar, cobrar o facturar.
 
 ---
 
 ## 2. Fuentes de Datos y Descargo de Responsabilidad Cambiario
-* **Origen de las Tasas:** Las cotizaciones mostradas en la aplicación (incluyendo Dólar oficial BCV, Euro oficial BCV y USDT de mercado paralelo) se obtienen mediante consultas automatizadas a fuentes públicas y APIs abiertas (`ve.dolarapi.com`, datos de referencia del Banco Central de Venezuela y promedios de mercados P2P).
-* **Ausencia de Control Cambiario:** Tasa VE no fija, altera, manipula ni garantiza el valor, certeza, vigencia o disponibilidad de ninguna tasa de cambio.
-* **Margen de Error o Desfase Temporal:** Debido a posibles demoras en la actualización de las fuentes públicas o interrupciones de conectividad, las tasas pueden presentar ligeras discrepancias con las cotizaciones bancarias en tiempo real. Se recomienda cotejar siempre con los canales oficiales de las instituciones bancarias antes de pactar o formalizar operaciones comerciales o transacciones en divisas.
-* **Exclusión de Responsabilidad por Pérdidas:** El desarrollador de Tasa VE no se hace responsable de pérdidas financieras, lucro cesante, decisiones comerciales o perjuicios derivados directa o indirectamente del uso de la información suministrada por esta herramienta.
+- **Origen de las Tasas:** Las cotizaciones mostradas (Dólar oficial BCV hoy/mañana, Euro oficial BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM e históricos diarios) se obtienen mediante consultas automatizadas a APIs públicas (`ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com` y `open.er-api.com`).
+- **Ausencia de Control:** Tasa VE no fija, altera, manipula ni garantiza la exactitud, vigencia continua o disponibilidad de ninguna tasa de cambio.
+- **Posibles Desfases:** Pueden existir demoras temporales entre la publicación oficial/mercado y la actualización de las APIs públicas, así como errores de lectura OCR por iluminación o enfoque. Coteje siempre los montos con su banco o fuente oficial antes de concretar operaciones.
+- **Limitación de Responsabilidad:** El desarrollador no será responsable por pérdidas económicas, lucro cesante, diferencias cambiarias, errores de cálculo fiscal o decisiones comerciales derivadas directa o indirectamente del uso de la aplicación.
 
 ---
 
-## 3. Modelo de Monetización y Compras In-App
+## 3. Modelo de Monetización, Compras In-App, Analítica y Suscripciones
 
 ### A. Versión Gratuita con Publicidad
-* La versión gratuita de la aplicación incluye espacios publicitarios (banners superiores) gestionados a través de la red oficial de **Google Mobile Ads (AdMob)**.
-* Los anuncios se muestran de acuerdo con las normativas publicitarias de Google Play ("Better Ads Standards").
+- Incluye la calculadora conversora multi-tasa exacta (**BCV, Euro, USDT**), **BCV Mañana**, **Peso Colombiano (COP)** de frontera, **Calendario Bancario**, **botón en Barra Rápida** para abrir la app, historial local, las herramientas de **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), **Pago Mixto**, **Tarjeta visual PNG**, Widget **Tasas en Vivo**, hasta **5 productos en el carrito**, **1 perfil de cobro** y **3 escaneos diarios** con cámara (con opción **voluntaria** de ver un anuncio bonificado para obtener **+5 escaneos adicionales** o **12 h sin anuncios**).
+- Muestra banners, intersticiales ocasionales tras acciones y anuncios bonificados opcionales gestionados a través de **Google Mobile Ads (AdMob)**.
 
-### B. Versión Pro (Pago Único de $2.99 USD)
-* **Desbloqueo de por vida:** El usuario tiene la opción voluntaria de adquirir **Tasa VE Pro** mediante un pago único de **$2.99 USD** (o su equivalente en moneda local según la tasa de cambio establecida por Google Play en su país).
-* **Beneficios de la Compra Pro:**
-  - Eliminación permanente de todos los banners y avisos publicitarios dentro de la aplicación.
-  - Distintivo visual Pro activo.
-  - Soporte prioritario para futuras actualizaciones.
-* **Sin Suscripciones Recurrentes:** Esta compra no genera cobros mensuales ni renovaciones automáticas.
-* **Procesamiento de Pagos:** Todas las compras se efectúan y gestionan exclusivamente a través de la plataforma segura de **Google Play Billing**.
-* **Restauración de Compras:** La compra queda vinculada a la cuenta de Google del usuario y puede restaurarse en cualquier momento mediante la opción "Restaurar compra anterior" en el menú de Configuración.
-* **Reembolsos:** Las solicitudes de reembolso se rigen de acuerdo con las políticas oficiales de reembolso de Google Play Store.
+### B. Estadísticas Anónimas de Uso
+- Tasa VE registra únicamente eventos anónimos y agregados de navegación (pestañas o herramientas abiertas) mediante **Google Firebase Analytics**, sin montos ni datos personales, para mejorar el funcionamiento de la app.
+
+### C. Tasa VE Ultra (Suscripción Mensual $0.99 USD / Anual $7.99 USD)
+- **Beneficios completos:** Mientras la suscripción **Tasa VE Ultra** esté activa, elimina por completo la publicidad y desbloquea todas las funciones ilimitadas:
+  - **Notificación fija opcional de tasas** con botones de copiado rápido, calculadora y Pago Móvil.
+  - **Conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil en 1 toque** desde la **Barra Rápida** o la notificación fija.
+  - **Escáner de precios OCR ilimitado** por cámara.
+  - **Carrito Inteligente ilimitado** con escaneo directo, edición de productos y cálculos referenciales de **IVA (16 %)** e **IGTF (3 %)**.
+  - **Widget Calculadora y Cobros Ultra**.
+  - **Módulo Cobros avanzado:** Guardado local opcional de **múltiples perfiles ilimitados** (Pago Móvil, Cuentas Bancarias, Zelle y Binance Pay) y **logo propio en Tarjetas PNG**.
+- **Renovación Automática y Cancelación:** La suscripción se renueva automáticamente a través de **Google Play Billing** por el período seleccionado salvo cancelación con al menos **24 horas de antelación** al vencimiento desde *Google Play Store > Suscripciones*. La desinstalación de la app no cancela la suscripción.
+
+### D. Procesamiento, Restauración y Reembolsos
+- **Facturación:** Todas las suscripciones se procesan exclusivamente mediante **Google Play Billing**.
+- **Restauración:** Puede restaurar sus suscripciones vinculadas a su cuenta Google desde *Configuración > Restaurar suscripción*.
+- **Reembolsos:** Se rigen exclusivamente por las políticas oficiales de reembolso de Google Play Store.
 
 ---
 
 ## 4. Propiedad Intelectual
-El diseño de interfaz, código fuente, logotipos y elementos visuales originales de la aplicación son propiedad de su desarrollador (Julcer26). Queda prohibida la reproducción, modificación o descompilación no autorizada de la aplicación con fines comerciales no consentidos.
+El código fuente, diseño de interfaz, logotipos y elementos visuales originales de Tasa VE pertenecen a **Tasa VE**. Queda prohibida su reproducción, redistribución o explotación comercial no autorizada.
 
 ---
 
 ## 5. Contacto
-Para cualquier duda o aclaración sobre estos términos:
-* **Correo de contacto:** julioingdlop@gmail.com
-* **Desarrollador:** Julcer26
+Para dudas, aclaraciones legales o soporte técnico:
+- **Correo electrónico:** soporte@tasave.net
+- **Sitio web oficial:** https://tasave.net

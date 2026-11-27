@@ -4,8 +4,19 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import com.julcer26.tasave.ads.InterstitialAdManager
+import com.julcer26.tasave.ads.RewardedAdManager
 import com.julcer26.tasave.ads.TopBannerAd
+import com.julcer26.tasave.data.TasaVeRepository
+import com.julcer26.tasave.feedback.FeedbackReporter
+import com.julcer26.tasave.feedback.FeedbackSubmission
+import com.julcer26.tasave.feedback.FeedbackSubmitResult
+import com.julcer26.tasave.feedback.FeedbackType
+import com.julcer26.tasave.scanner.PriceScannerDialog
+import com.julcer26.tasave.share.ShareCardGenerator
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -17,6 +28,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -53,11 +65,23 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.julcer26.tasave.BuildConfig
 import com.julcer26.tasave.R
 import androidx.compose.ui.res.painterResource
+import com.julcer26.tasave.analytics.AnalyticsTracker
+import com.julcer26.tasave.calendar.BcvCalendarHelper
 import com.julcer26.tasave.data.ConversionHistory
 import com.julcer26.tasave.data.RateInfo
+import com.julcer26.tasave.ultra.AppTab
+import com.julcer26.tasave.ultra.CartTab
+import com.julcer26.tasave.ultra.CheckoutTab
+import com.julcer26.tasave.ultra.MarketTab
+import com.julcer26.tasave.ultra.PlansComparisonDialog
+import com.julcer26.tasave.ultra.RateSnapshot
+import com.julcer26.tasave.ultra.UltraMath
+import com.julcer26.tasave.ultra.UserTier
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -65,7 +89,9 @@ import java.util.Locale
 @Composable
 fun TasaVeScreen(
     viewModel: TasaVeViewModel,
-    activity: Activity? = null
+    activity: Activity? = null,
+    widgetAction: String? = null,
+    onConsumeWidgetAction: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -74,16 +100,113 @@ fun TasaVeScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
-    val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
-    val proPrice by viewModel.proProductPrice.collectAsStateWithLifecycle()
+    val isUltraUser by viewModel.isUltraUser.collectAsStateWithLifecycle()
+    val debugTier by viewModel.debugTier.collectAsStateWithLifecycle()
+    val ultraMonthlyPrice by viewModel.ultraMonthlyPrice.collectAsStateWithLifecycle()
+    val ultraYearlyPrice by viewModel.ultraYearlyPrice.collectAsStateWithLifecycle()
     val purchaseStatus by viewModel.purchaseStatusMessage.collectAsStateWithLifecycle()
     val historyList by viewModel.historyState.collectAsStateWithLifecycle()
+    val remainingFreeScans by viewModel.remainingFreeScans.collectAsStateWithLifecycle()
+    val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
+    val cartIvaEnabled by viewModel.cartIvaEnabled.collectAsStateWithLifecycle()
+    val cartIgtfEnabled by viewModel.cartIgtfEnabled.collectAsStateWithLifecycle()
+    val rateSnapshots by viewModel.rateSnapshots.collectAsStateWithLifecycle()
+    val isHistoryLoading by viewModel.isHistoryLoading.collectAsStateWithLifecycle()
+    val paymentProfiles by viewModel.paymentProfiles.collectAsStateWithLifecycle()
+    val selectedPaymentProfileId by viewModel.selectedPaymentProfileId.collectAsStateWithLifecycle()
+    val customBrandName by viewModel.customBrandName.collectAsStateWithLifecycle()
+    val customBrandLogoRevision by viewModel.customBrandLogoRevision.collectAsStateWithLifecycle()
+    val persistentNotifEnabled by viewModel.persistentNotifEnabled.collectAsStateWithLifecycle()
+
+    val adFreePassUntilMs by viewModel.adFreePassUntilMs.collectAsStateWithLifecycle()
+    val isAdFreePassActive = adFreePassUntilMs > System.currentTimeMillis()
+    val isAdsDisabled = isUltraUser || isAdFreePassActive
+
+    val rewardedAdManager = remember { RewardedAdManager() }
+    val isRewardedAdLoading by rewardedAdManager.isLoading.collectAsStateWithLifecycle()
+    val interstitialAdManager = remember { InterstitialAdManager() }
+
+    LaunchedEffect(isAdsDisabled) {
+        if (!isAdsDisabled) {
+            rewardedAdManager.preload(context)
+            interstitialAdManager.preload(context, isAdFree = false)
+        }
+    }
 
     val isDark = themeMode == "DARK"
 
-    // Settings & History Modal States
+    // Navigation & Modal States
+    var currentTab by remember { mutableStateOf(AppTab.CONVERTER) }
     var showSettings by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
+    var showScanner by remember { mutableStateOf(false) }
+    var scannerForCart by remember { mutableStateOf(false) }
+    var scannedDuringDialog by remember { mutableStateOf(false) }
+    var showPlansDialog by remember { mutableStateOf(false) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isUltraUser, isDark) {
+        AnalyticsTracker.syncUserProperties(context, isUltra = isUltraUser, isDark = isDark)
+    }
+
+    LaunchedEffect(showPlansDialog) {
+        if (showPlansDialog) {
+            AnalyticsTracker.logPlansOpened(context, isUltra = isUltraUser)
+        }
+    }
+
+    LaunchedEffect(showScanner) {
+        if (showScanner) {
+            AnalyticsTracker.logScannerOpened(context, source = if (scannerForCart) "cart" else "topbar")
+        }
+    }
+
+    LaunchedEffect(widgetAction) {
+        when (widgetAction) {
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CONVERTER -> {
+                currentTab = AppTab.CONVERTER
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CART -> {
+                currentTab = AppTab.CART
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_CHECKOUT -> {
+                currentTab = AppTab.CHECKOUT
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_SCANNER -> {
+                viewModel.refreshRemainingFreeScans()
+                scannerForCart = false
+                showScanner = true
+                onConsumeWidgetAction()
+            }
+            com.julcer26.tasave.widget.TasaVeUltraWidgetProvider.LAUNCH_PLANS,
+            "open_plans" -> {
+                showPlansDialog = true
+                onConsumeWidgetAction()
+            }
+        }
+    }
+
+    val triggerWatchAdFreePass: () -> Unit = {
+        AnalyticsTracker.logAction(context, "ad_free_pass_clicked")
+        rewardedAdManager.showOrLoad(
+            activity = activity,
+            onRewarded = {
+                viewModel.grantAdFreePass12Hours()
+                AnalyticsTracker.logAction(context, "ad_free_pass_granted")
+                Toast.makeText(
+                    context,
+                    "¡Pase de 12 horas sin anuncios activado!",
+                    Toast.LENGTH_LONG
+                ).show()
+            },
+            onError = { msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 
     LaunchedEffect(purchaseStatus) {
         purchaseStatus?.let {
@@ -143,110 +266,113 @@ fun TasaVeScreen(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.clickable { showPlansDialog = true }
                     ) {
-                        // Custom logo container displaying the beautiful internal app logo (with custom emerald-green and amber-yellow vector arrows)
+                        // Custom logo container displaying the internal app logo
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isDark) Color(0x1F10B981) else Color(0x0F10B981))
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF070C16))
                                 .border(
-                                    width = 1.6.dp,
-                                    color = if (isDark) Color(0x5910B981) else Color(0x4010B981),
-                                    shape = RoundedCornerShape(12.dp)
+                                    width = 1.5.dp,
+                                    color = if (isDark) Color(0x5910B981) else Color(0x6610B981),
+                                    shape = RoundedCornerShape(10.dp)
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                                painter = painterResource(id = R.drawable.ic_brand_mark),
                                 contentDescription = "Tasa VE Logo",
                                 tint = Color.Unspecified,
-                                modifier = Modifier.size(34.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                         Text(
                             text = "Tasa VE",
-                            fontSize = 19.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = textPrimary,
-                            letterSpacing = (-0.5).sp
+                            letterSpacing = (-0.4).sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
-
-                        if (isProUser) {
+                        if (isUltraUser) {
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFFF59E0B))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFFF59E0B), Color(0xFFEA580C))
+                                        )
+                                    )
+                                    .padding(horizontal = 7.dp, vertical = 3.dp)
                             ) {
                                 Text(
-                                    text = "PRO",
+                                    text = "ULTRA",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Color.Black
+                                    color = Color.Black,
+                                    maxLines = 1
                                 )
                             }
                         }
                     }
                 },
                 actions = {
-                    // Pro Buy Button (if not already pro)
-                    if (!isProUser) {
-                        Box(
-                            modifier = Modifier
-                                .padding(end = 6.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(Color(0xFFF59E0B), Color(0xFFD97706))
-                                    )
-                                )
-                                .clickable {
-                                    if (activity != null) {
-                                        viewModel.purchasePro(activity)
-                                    } else {
-                                        showSettings = true
-                                    }
-                                }
-                                .padding(horizontal = 9.dp, vertical = 5.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = "Pro",
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Text(
-                                    text = "PRO $proPrice",
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
-                            }
-                        }
-                    }
-
-                    // Conversion History Button
+                    val hasUpcomingHoliday = remember { BcvCalendarHelper.hasUpcomingBankHolidaySoon() }
+                    // Bank Calendar & Daily Historical Rate Lookup
                     Box(
                         modifier = Modifier
                             .padding(end = 4.dp)
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
-                            .clickable(onClick = { showHistory = true }),
+                            .clickable {
+                                showCalendarDialog = true
+                                AnalyticsTracker.logCalendarOpened(context)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "Historial",
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Calendario bancario y tasas",
                             tint = textPrimary,
                             modifier = Modifier.size(18.dp)
+                        )
+                        if (hasUpcomingHoliday) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(6.dp)
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFF59E0B))
+                            )
+                        }
+                    }
+
+                    // Camera Price Scanner Quick Trigger
+                    Box(
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0x2610B981) else Color(0x1F059669))
+                            .clickable {
+                                viewModel.refreshRemainingFreeScans()
+                                scannerForCart = false
+                                showScanner = true
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_price_scanner_123),
+                            contentDescription = "Escanear precio",
+                            tint = if (isDark) Color(0xFF34D399) else Color(0xFF047857),
+                            modifier = Modifier.size(21.dp)
                         )
                     }
 
@@ -254,7 +380,7 @@ fun TasaVeScreen(
                     Box(
                         modifier = Modifier
                             .padding(end = 4.dp)
-                            .size(38.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
                             .clickable(
@@ -277,12 +403,12 @@ fun TasaVeScreen(
                             )
                         }
                     }
-                    
+
                     // Modern Circle Settings Trigger
                     Box(
                         modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(38.dp)
+                            .padding(end = 10.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(if (isDark) Color(0x1F94A3B8) else Color(0x0F000000))
                             .clickable(
@@ -303,22 +429,309 @@ fun TasaVeScreen(
                     scrolledContainerColor = Color.Transparent
                 )
             )
+        },
+        bottomBar = {
+            val navItems = listOf(
+                Triple(AppTab.CONVERTER, Icons.Default.CurrencyExchange, AppTab.CONVERTER.label),
+                Triple(AppTab.CART, Icons.Default.ShoppingCart, AppTab.CART.label),
+                Triple(AppTab.MARKET, Icons.Default.GridView, AppTab.MARKET.label),
+                Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, AppTab.CHECKOUT.label)
+            )
+            val dockContainerColor = if (isDark) Color(0xEB0D131D) else Color(0xFAFFFFFF)
+            val dockBorderColor = if (isDark) Color(0x3834D399) else Color(0x1E0F172A)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    color = dockContainerColor,
+                    border = BorderStroke(1.dp, dockBorderColor),
+                    shadowElevation = if (isDark) 16.dp else 12.dp,
+                    tonalElevation = 0.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 6.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        navItems.forEach { (tab, icon, label) ->
+                            val selected = currentTab == tab
+                            val pillBg by animateColorAsState(
+                                targetValue = if (selected) {
+                                    if (isDark) Color(0x2B10B981) else Color(0x1F059669)
+                                } else {
+                                    Color.Transparent
+                                },
+                                animationSpec = tween(durationMillis = 200),
+                                label = "floatingNavPillBg"
+                            )
+                            val pillBorder = if (selected) {
+                                if (isDark) Color(0x5234D399) else Color(0x40059669)
+                            } else {
+                                Color.Transparent
+                            }
+                            val itemTint by animateColorAsState(
+                                targetValue = if (selected) {
+                                    if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                                } else {
+                                    textSecondary
+                                },
+                                animationSpec = tween(durationMillis = 200),
+                                label = "floatingNavItemTint"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(pillBg)
+                                    .border(1.dp, pillBorder, RoundedCornerShape(22.dp))
+                                    .clickable {
+                                        if (currentTab != tab) {
+                                            currentTab = tab
+                                            AnalyticsTracker.logTabOpened(context, tab.label)
+                                            if (tab != AppTab.CONVERTER) {
+                                                interstitialAdManager.maybeShowAfterAction(
+                                                    activity = activity,
+                                                    isAdFree = isAdsDisabled,
+                                                    appLaunchCount = viewModel.appLaunchCount
+                                                )
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    if (tab == AppTab.CART && cartItems.isNotEmpty()) {
+                                        BadgedBox(
+                                            badge = {
+                                                Badge(
+                                                    containerColor = Color(0xFF10B981),
+                                                    contentColor = Color.Black
+                                                ) {
+                                                    Text(
+                                                        text = "${cartItems.sumOf { it.quantity }}",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = label,
+                                                tint = itemTint,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    } else {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = label,
+                                            tint = itemTint,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                        color = itemTint,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     ) { innerPadding ->
-        Column(
+        Crossfade(
+            targetState = currentTab,
+            animationSpec = tween(durationMillis = 180),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(innerPadding),
+            label = "tabCrossfade"
+        ) { activeTab ->
+            when (activeTab) {
+                AppTab.CART -> {
+                    CartTab(
+                        isDark = isDark,
+                        isUltraUser = isUltraUser,
+                        isAdFreePassActive = isAdFreePassActive,
+                        ultraPrice = ultraMonthlyPrice,
+                        uiState = uiState,
+                        cartItems = cartItems,
+                        applyIva = cartIvaEnabled,
+                        applyIgtf = cartIgtfEnabled,
+                        paymentProfiles = paymentProfiles,
+                        selectedProfileId = selectedPaymentProfileId,
+                        customBrandName = customBrandName,
+                        customBrandLogoRevision = customBrandLogoRevision,
+                        onAddManualItem = { name, amount, isVes, quantity ->
+                            viewModel.addCartItem(name, amount, isVes, quantity = quantity)
+                        },
+                        onEditItem = { id, name, amount, isVes, quantity ->
+                            viewModel.editCartItem(id, name, amount, isVes, quantity)
+                        },
+                        onScanToCart = {
+                            viewModel.refreshRemainingFreeScans()
+                            scannerForCart = true
+                            showScanner = true
+                        },
+                        onUpdateQuantity = { id, delta -> viewModel.updateCartItemQuantity(id, delta) },
+                        onRemoveItem = { id -> viewModel.removeCartItem(id) },
+                        onClearCart = { viewModel.clearCart() },
+                        onToggleIva = { viewModel.toggleCartIva() },
+                        onToggleIgtf = { viewModel.toggleCartIgtf() },
+                        onOpenPlans = { showPlansDialog = true }
+                    )
+                }
+                AppTab.MARKET -> {
+                    MarketTab(
+                        isDark = isDark,
+                        isUltraUser = isUltraUser,
+                        isAdFreePassActive = isAdFreePassActive,
+                        ultraPrice = ultraMonthlyPrice,
+                        uiState = uiState,
+                        snapshots = rateSnapshots,
+                        isHistoryLoading = isHistoryLoading,
+                        persistentNotifEnabled = persistentNotifEnabled,
+                        onTrackUtilTool = { toolKey -> AnalyticsTracker.logUtilToolOpened(context, toolKey) },
+                        onRefreshHistory = { viewModel.fetchHistoricalRates(forceRefresh = true) },
+                        onTogglePersistentNotif = { viewModel.setPersistentRateNotifEnabled(it) },
+                        onOpenPlans = { showPlansDialog = true }
+                    )
+                }
+                AppTab.CHECKOUT -> {
+                    CheckoutTab(
+                        isDark = isDark,
+                        isUltraUser = isUltraUser,
+                        isAdFreePassActive = isAdFreePassActive,
+                        ultraPrice = ultraMonthlyPrice,
+                        uiState = uiState,
+                        effectiveUsdBcv = viewModel.getEffectiveUsdBcv(),
+                        effectiveEurBcv = viewModel.getEffectiveEurBcv(),
+                        paymentProfiles = paymentProfiles,
+                        selectedProfileId = selectedPaymentProfileId,
+                        onSelectProfile = { viewModel.selectPaymentProfile(it) },
+                        onSaveProfile = { viewModel.savePaymentProfile(it) },
+                        onDeleteProfile = { viewModel.deletePaymentProfile(it) },
+                        customBrandName = customBrandName,
+                        customBrandLogoRevision = customBrandLogoRevision,
+                        onSaveCustomBrandName = { viewModel.saveCustomBrandName(it) },
+                        onImportCustomBrandLogo = { viewModel.importCustomBrandLogo(it) },
+                        onRemoveCustomBrandLogo = { viewModel.removeCustomBrandLogo() },
+                        onOpenPlans = { showPlansDialog = true }
+                    )
+                }
+                AppTab.CONVERTER -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Non-intrusive Top Banner Ad (hidden for Pro users)
+            // Non-intrusive Top Banner Ad (hidden for Ultra users or 12h ad-free pass holders)
             TopBannerAd(
                 isDark = isDark,
-                isProUser = isProUser
+                isUltraUser = isUltraUser,
+                isAdFreePassActive = isAdFreePassActive
             )
+
+            // Relocated sleek Ultra banner
+            if (!isUltraUser) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            if (isDark) Color(0x1AF59E0B) else Color(0x1FF59E0B)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color(0x4DF59E0B),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .clickable { showPlansDialog = true }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x2EF59E0B)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.WorkspacePremium,
+                                contentDescription = "Tasa VE Ultra",
+                                tint = Color(0xFFF59E0B),
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Tasa VE Ultra • $ultraMonthlyPrice",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Cero anuncios, escáner ∞, carrito ∞ + IVA/IGTF, barra fija y perfiles ∞",
+                                fontSize = 10.sp,
+                                color = textSecondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFFF59E0B), Color(0xFFEA580C))
+                                )
+                            )
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = "ULTRA",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
 
             // Resilience & Offline alerts banner
             if (uiState.isOfflineError || (uiState.usdBcv?.isLocalOffline == true)) {
@@ -366,8 +779,10 @@ fun TasaVeScreen(
             }
 
             // 1. DATE HEADER & RATE SELECTOR
-            val representativeDate = uiState.usdBcv?.dateUpdated 
-                ?: uiState.eurBcv?.dateUpdated 
+            val effectiveUsdBcv = viewModel.getEffectiveUsdBcv()
+            val effectiveEurBcv = viewModel.getEffectiveEurBcv()
+            val representativeDate = effectiveUsdBcv?.dateUpdated
+                ?: effectiveEurBcv?.dateUpdated
                 ?: uiState.usdtParalelo?.dateUpdated
 
             Column(
@@ -395,16 +810,95 @@ fun TasaVeScreen(
                     }
                 }
 
+                // BCV Hoy vs Mañana segmented selector when BCV has published tomorrow's rate
+                val nextUsd = uiState.nextUsdBcv
+                val nextDateIso = uiState.nextBcvDateIso
+                val isCopSelected = viewModel.selectedRateKey == "COP"
+                val copRateInfo = viewModel.getEffectiveCopRate()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (nextUsd != null && nextDateIso != null) {
+                        FilterChip(
+                            selected = !viewModel.previewTomorrowBcv,
+                            onClick = { viewModel.setTomorrowBcvPreview(false) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = if (isDark) Color(0x2610B981) else Color(0x1F059669),
+                                selectedLabelColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                            ),
+                            label = {
+                                Text(
+                                    text = "BCV Hoy",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        )
+                        FilterChip(
+                            selected = viewModel.previewTomorrowBcv,
+                            onClick = { viewModel.setTomorrowBcvPreview(true) },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0x33F59E0B),
+                                selectedLabelColor = Color(0xFFF59E0B)
+                            ),
+                            label = {
+                                Text(
+                                    text = "Mañana (${TasaVeRepository.formatIsoShortDate(nextDateIso)})",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        )
+                    } else {
+                        Text(
+                            text = "Tasas del día",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textSecondary
+                        )
+                    }
+
+                    FilterChip(
+                        selected = isCopSelected,
+                        onClick = {
+                            if (isCopSelected) {
+                                viewModel.selectRate("USD_BCV")
+                            } else {
+                                viewModel.selectRate("COP")
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x33F59E0B),
+                            selectedLabelColor = Color(0xFFF59E0B)
+                        ),
+                        label = {
+                            Text(
+                                text = "🇨🇴 COP",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    )
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val ratesList = listOf(
-                        Triple("USD_BCV", uiState.usdBcv, "USD - BCV"),
-                        Triple("EUR_BCV", uiState.eurBcv, "EUR - BCV"),
+                        Triple("USD_BCV", effectiveUsdBcv, "USD - BCV"),
+                        Triple("EUR_BCV", effectiveEurBcv, "EUR - BCV"),
                         Triple("USDT", uiState.usdtParalelo, "USDT Binance")
                     )
-                    
+
                     ratesList.forEach { (key, rateInfo, customLabel) ->
                         val isSelected = viewModel.selectedRateKey == key
                         RateSelectorCard(
@@ -414,11 +908,63 @@ fun TasaVeScreen(
                             customLabel = customLabel,
                             isDark = isDark,
                             isSelected = isSelected,
-                            onSelect = { viewModel.selectRate(key) },
-                            onCopy = { rateValue ->
-                                copyToClipboard(context, rateValue.toString())
-                                Toast.makeText(context, "$customLabel copiado: Bs. $rateValue", Toast.LENGTH_SHORT).show()
-                            }
+                            onSelect = { viewModel.selectRate(key) }
+                        )
+                    }
+                }
+
+                val todayUsdVal = uiState.usdBcv?.rate ?: 0.0
+                if (nextUsd != null && nextDateIso != null && !viewModel.previewTomorrowBcv &&
+                    kotlin.math.abs(nextUsd.rate - todayUsdVal) >= 0.0001
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x1FF59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(12.dp))
+                            .clickable { viewModel.setTomorrowBcvPreview(true) }
+                            .padding(horizontal = 12.dp, vertical = 7.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Próxima BCV (${TasaVeRepository.formatIsoShortDate(nextDateIso)}): Bs. ${VeNumberFormat.formatRate(nextUsd.rate, 4)}",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Ver mañana →",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
+                        )
+                    }
+                }
+
+                if (isCopSelected && copRateInfo != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x1FF59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "🇨🇴 Modo Frontera: 1 USD = ${VeNumberFormat.formatInt(uiState.copPerUsd)} COP",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "1.000 COP = Bs. ${VeNumberFormat.formatMoney(copRateInfo.rate * 1000.0)}",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
                         )
                     }
                 }
@@ -427,7 +973,7 @@ fun TasaVeScreen(
             val currentRateInfo = viewModel.getSelectedRateInfo()
 
             // 2. STUNNING DIGITAL CONVERSION CONVERTER (GLASSMORPHIC BACKDROP)
-            
+
             GlassCard(
                 isDark = isDark,
                 modifier = Modifier
@@ -439,7 +985,7 @@ fun TasaVeScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    
+
                     // Head of Calculator
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -453,18 +999,24 @@ fun TasaVeScreen(
                             color = textPrimary,
                             letterSpacing = (-0.3).sp
                         )
-                        
+
                         currentRateInfo?.let {
+                            val badgeText = if (it.key == "COP") {
+                                "1.000 COP = Bs. ${VeNumberFormat.formatMoney(it.rate * 1000.0)}"
+                            } else {
+                                val decs = if (it.key == "USDT") 2 else 4
+                                "Tasa actual: Bs. ${VeNumberFormat.formatRate(it.rate, decs)}"
+                            }
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(
                                         if (isDark) Color(0x2610B981) else Color(0x1F059669)
                                     )
                                     .padding(horizontal = 10.dp, vertical = 3.dp)
                             ) {
                                 Text(
-                                    text = "Tasa actual: Bs. ${String.format(Locale.US, "%.2f", it.rate)}",
+                                    text = badgeText,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
@@ -481,6 +1033,7 @@ fun TasaVeScreen(
                     val topTextColor = if (viewModel.isVesAsInput) {
                         if (isDark) Color(0xFF34D399) else Color(0xFF047857)
                     } else textPrimary
+                    val topFontSize = VeNumberFormat.adaptiveConverterFontSize(topValue)
 
                     val bottomLabel = if (viewModel.isVesAsInput) "Divisa (${currentRateInfo?.label ?: "Moneda Extranjera"})" else "Bolívares (VES)"
                     val bottomSymbol = if (viewModel.isVesAsInput) (currentRateInfo?.symbol ?: "$") else "Bs."
@@ -492,6 +1045,7 @@ fun TasaVeScreen(
                     } else {
                         if (isDark) Color(0xFF34D399) else Color(0xFF047857)
                     }
+                    val bottomFontSize = VeNumberFormat.adaptiveConverterFontSize(bottomValue)
 
                     // Panel 1: Top Input
                     Column(
@@ -520,7 +1074,7 @@ fun TasaVeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(
                                     if (topFocused) {
                                         if (isDark) Color(0x1F10B981) else Color(0x0F10B981)
@@ -535,14 +1089,14 @@ fun TasaVeScreen(
                                     } else {
                                         if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000)
                                     },
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = topSymbol,
-                                fontSize = 28.sp,
+                                fontSize = topFontSize,
                                 fontWeight = FontWeight.Light,
                                 color = if (topFocused) {
                                     Color(0xFF10B981)
@@ -551,19 +1105,21 @@ fun TasaVeScreen(
                                 } else {
                                     if (isDark) Color(0xFF64748B) else Color(0xFF475569)
                                 },
-                                modifier = Modifier.padding(end = 12.dp)
+                                maxLines = 1,
+                                modifier = Modifier.padding(end = if (VeNumberFormat.visualLength(topValue) > 12) 8.dp else 12.dp)
                             )
                             
                             BasicTextField(
                                 value = topValue,
                                 onValueChange = onTopValueChange,
+                                visualTransformation = VenezuelanNumberVisualTransformation,
                                 modifier = Modifier
                                     .weight(1f)
                                     .onFocusChanged { topFocused = it.isFocused }
                                     .testTag(topTestTag),
                                 textStyle = TextStyle(
                                     color = topTextColor,
-                                    fontSize = 28.sp,
+                                    fontSize = topFontSize,
                                     fontWeight = FontWeight.SemiBold,
                                     fontFamily = FontFamily.Default
                                 ),
@@ -580,7 +1136,7 @@ fun TasaVeScreen(
                                     Box(contentAlignment = Alignment.CenterStart) {
                                         if (topValue.isEmpty()) {
                                             Text(
-                                                text = "0.00",
+                                                text = "0,00",
                                                 color = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1),
                                                 fontSize = 28.sp,
                                                 fontWeight = FontWeight.SemiBold
@@ -592,6 +1148,7 @@ fun TasaVeScreen(
                             )
 
                             if (topValue.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
@@ -668,7 +1225,7 @@ fun TasaVeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(
                                     if (bottomFocused) {
                                         if (isDark) Color(0x1F10B981) else Color(0x0F10B981)
@@ -683,14 +1240,14 @@ fun TasaVeScreen(
                                     } else {
                                         if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000)
                                     },
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 .padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = bottomSymbol,
-                                fontSize = 28.sp,
+                                fontSize = bottomFontSize,
                                 fontWeight = FontWeight.Light,
                                 color = if (bottomFocused) {
                                     Color(0xFF10B981)
@@ -699,19 +1256,21 @@ fun TasaVeScreen(
                                 } else {
                                     if (isDark) Color(0xFF64748B) else Color(0xFF475569)
                                 },
-                                modifier = Modifier.padding(end = 12.dp)
+                                maxLines = 1,
+                                modifier = Modifier.padding(end = if (VeNumberFormat.visualLength(bottomValue) > 12) 8.dp else 12.dp)
                             )
                             
                             BasicTextField(
                                 value = bottomValue,
                                 onValueChange = onBottomValueChange,
+                                visualTransformation = VenezuelanNumberVisualTransformation,
                                 modifier = Modifier
                                     .weight(1f)
                                     .onFocusChanged { bottomFocused = it.isFocused }
                                     .testTag(bottomTestTag),
                                 textStyle = TextStyle(
                                     color = bottomTextColor,
-                                    fontSize = 28.sp,
+                                    fontSize = bottomFontSize,
                                     fontWeight = FontWeight.SemiBold,
                                     fontFamily = FontFamily.Default
                                 ),
@@ -728,7 +1287,7 @@ fun TasaVeScreen(
                                     Box(contentAlignment = Alignment.CenterStart) {
                                         if (bottomValue.isEmpty()) {
                                             Text(
-                                                text = "0.00",
+                                                text = "0,00",
                                                 color = if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1),
                                                 fontSize = 28.sp,
                                                 fontWeight = FontWeight.SemiBold
@@ -740,11 +1299,12 @@ fun TasaVeScreen(
                             )
 
                             if (bottomValue.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Copiar resultado de conversión
+                                    // Copiar resultado de conversión en formato bancario venezolano
                                     Box(
                                         modifier = Modifier
                                             .size(24.dp)
@@ -757,13 +1317,14 @@ fun TasaVeScreen(
                                                 }
                                             )
                                             .clickable {
-                                                copyToClipboard(context, bottomValue)
+                                                val formattedCopy = VeNumberFormat.formatCanonicalString(bottomValue)
+                                                copyToClipboard(context, formattedCopy)
                                                 isConvertedCopied = true
                                                 coroutineScope.launch {
                                                     delay(2000)
                                                     isConvertedCopied = false
                                                 }
-                                                Toast.makeText(context, "$bottomSymbol $bottomValue copiado al portapapeles", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "$bottomSymbol $formattedCopy copiado al portapapeles", Toast.LENGTH_SHORT).show()
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -796,6 +1357,9 @@ fun TasaVeScreen(
                         }
                     }
 
+                    val parsedVes = VeNumberFormat.parseFlexibleDouble(viewModel.vesAmount) ?: 0.0
+                    val parsedForeign = VeNumberFormat.parseFlexibleDouble(viewModel.foreignAmount) ?: 0.0
+
                     // Actions: Guardar en Historial y Ver Historial
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -806,6 +1370,11 @@ fun TasaVeScreen(
                                 val saved = viewModel.saveConversionToHistory()
                                 if (saved) {
                                     Toast.makeText(context, "Conversión guardada en el historial", Toast.LENGTH_SHORT).show()
+                                    interstitialAdManager.maybeShowAfterAction(
+                                        activity = activity,
+                                        isAdFree = isAdsDisabled,
+                                        appLaunchCount = viewModel.appLaunchCount
+                                    )
                                 } else {
                                     Toast.makeText(context, "Ingresa un monto para guardar el cálculo", Toast.LENGTH_SHORT).show()
                                 }
@@ -839,20 +1408,63 @@ fun TasaVeScreen(
                         }
                     }
 
+                    val bcvUsdRate = effectiveUsdBcv?.rate ?: 0.0
+                    val bcvEurRate = effectiveEurBcv?.rate ?: 0.0
+                    val parallelUsdtRate = uiState.usdtParalelo?.rate ?: 0.0
+
+                    // Plain-Text Share Button (clean calculation only, no links)
+                    if (parsedVes > 0.0) {
+                        OutlinedButton(
+                            onClick = {
+                                val isCop = currentRateInfo?.key == "COP"
+                                val rateDecimals = if (currentRateInfo?.key == "USDT") 2 else 4
+                                val sym = currentRateInfo?.symbol ?: "$"
+                                val foreignStr = if (isCop) {
+                                    "${VeNumberFormat.formatCop(parsedForeign)} COP"
+                                } else {
+                                    "$sym ${VeNumberFormat.formatMoney(parsedForeign)}"
+                                }
+                                val vesStr = "Bs. ${VeNumberFormat.formatMoney(parsedVes)}"
+                                val shareRateDisplay = if (isCop) {
+                                    "1.000 COP = Bs. ${VeNumberFormat.formatMoney((currentRateInfo?.rate ?: 0.0) * 1000.0)}"
+                                } else {
+                                    "Bs. ${VeNumberFormat.formatRate(currentRateInfo?.rate ?: 0.0, rateDecimals)}"
+                                }
+                                val fromStr = if (viewModel.isVesAsInput) vesStr else foreignStr
+                                val toStr = if (viewModel.isVesAsInput) foreignStr else vesStr
+                                val rateName = currentRateInfo?.label ?: "Tasa"
+                                val plainShareBody = "$fromStr = $toStr\n$rateName: $shareRateDisplay"
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, plainShareBody)
+                                }
+                                context.startActivity(Intent.createChooser(sendIntent, "Compartir cálculo"))
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, Color(0x4D10B981)),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+                            ),
+                            contentPadding = PaddingValues(vertical = 10.dp)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Compartir cálculo", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     // Live Multi-Rate Comparison Panel
-                    val parsedVes = viewModel.vesAmount.toDoubleOrNull() ?: 0.0
-                    val parsedForeign = viewModel.foreignAmount.toDoubleOrNull() ?: 0.0
-                    
                     if (parsedVes > 0.0) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(14.dp))
                                 .background(if (isDark) Color(0x0F222226) else Color(0x0C000000))
                                 .border(
                                     width = 1.dp,
                                     color = if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000),
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -867,32 +1479,36 @@ fun TasaVeScreen(
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isDark) Color(0xFF10B981) else Color(0xFF059669),
-                                    letterSpacing = 0.5.sp
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(end = 6.dp)
                                 )
+                                val headerVesFormatted = "Bs. ${VeNumberFormat.formatMoney(parsedVes)}"
                                 Text(
-                                    text = "Bs. ${String.format(Locale.US, "%,.2f", parsedVes)}",
-                                    fontSize = 11.sp,
+                                    text = headerVesFormatted,
+                                    fontSize = if (headerVesFormatted.length > 18) 9.5.sp else 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = textPrimary
+                                    color = textPrimary,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(1.dp)
                                     .background(if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000))
                             )
-                            
-                            val bcvUsdRate = uiState.usdBcv?.rate ?: 0.0
-                            val bcvEurRate = uiState.eurBcv?.rate ?: 0.0
-                            val parallelUsdtRate = uiState.usdtParalelo?.rate ?: 0.0
-                            
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 // 1. USD Equivalent
+                                val usdVal = if (bcvUsdRate > 0) parsedVes / bcvUsdRate else 0.0
+                                val usdFormatted = "$${VeNumberFormat.formatMoney(usdVal)}"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -901,23 +1517,27 @@ fun TasaVeScreen(
                                         text = "Dólar BCV",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        maxLines = 1
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val usdVal = if (bcvUsdRate > 0) parsedVes / bcvUsdRate else 0.0
                                     Text(
-                                        text = "$${String.format(Locale.US, "%.2f", usdVal)}",
-                                        fontSize = 14.sp,
+                                        text = usdFormatted,
+                                        fontSize = VeNumberFormat.adaptiveTriColumnFontSize(usdFormatted),
                                         fontWeight = FontWeight.Bold,
-                                        color = textPrimary
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.2f", bcvUsdRate)}",
+                                        text = "Tasa: ${VeNumberFormat.formatRate(bcvUsdRate, 4)}",
                                         fontSize = 8.sp,
-                                        color = textSecondary.copy(alpha = 0.7f)
+                                        color = textSecondary.copy(alpha = 0.7f),
+                                        maxLines = 1
                                     )
                                 }
-                                
+
                                 // Divider vertical
                                 Box(
                                     modifier = Modifier
@@ -925,8 +1545,10 @@ fun TasaVeScreen(
                                         .height(36.dp)
                                         .background(if (isDark) Color(0x14FFFFFF) else Color(0x14000000))
                                 )
-                                
+
                                 // 2. EUR Equivalent
+                                val eurVal = if (bcvEurRate > 0) parsedVes / bcvEurRate else 0.0
+                                val eurFormatted = "€${VeNumberFormat.formatMoney(eurVal)}"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -935,23 +1557,27 @@ fun TasaVeScreen(
                                         text = "Euro BCV",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        maxLines = 1
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val eurVal = if (bcvEurRate > 0) parsedVes / bcvEurRate else 0.0
                                     Text(
-                                        text = "€${String.format(Locale.US, "%.2f", eurVal)}",
-                                        fontSize = 14.sp,
+                                        text = eurFormatted,
+                                        fontSize = VeNumberFormat.adaptiveTriColumnFontSize(eurFormatted),
                                         fontWeight = FontWeight.Bold,
-                                        color = textPrimary
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.2f", bcvEurRate)}",
+                                        text = "Tasa: ${VeNumberFormat.formatRate(bcvEurRate, 4)}",
                                         fontSize = 8.sp,
-                                        color = textSecondary.copy(alpha = 0.7f)
+                                        color = textSecondary.copy(alpha = 0.7f),
+                                        maxLines = 1
                                     )
                                 }
-                                
+
                                 // Divider vertical
                                 Box(
                                     modifier = Modifier
@@ -959,8 +1585,10 @@ fun TasaVeScreen(
                                         .height(36.dp)
                                         .background(if (isDark) Color(0x14FFFFFF) else Color(0x14000000))
                                 )
-                                
+
                                 // 3. USDT Equivalent
+                                val usdtVal = if (parallelUsdtRate > 0) parsedVes / parallelUsdtRate else 0.0
+                                val usdtFormatted = "₮${VeNumberFormat.formatMoney(usdtVal)}"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -969,74 +1597,131 @@ fun TasaVeScreen(
                                         text = "USDT Bin.",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = textSecondary
+                                        color = textSecondary,
+                                        maxLines = 1
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    val usdtVal = if (parallelUsdtRate > 0) parsedVes / parallelUsdtRate else 0.0
                                     Text(
-                                        text = "₮${String.format(Locale.US, "%.2f", usdtVal)}",
-                                        fontSize = 14.sp,
+                                        text = usdtFormatted,
+                                        fontSize = VeNumberFormat.adaptiveTriColumnFontSize(usdtFormatted),
                                         fontWeight = FontWeight.Bold,
-                                        color = textPrimary
+                                        color = textPrimary,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "Tasa: ${String.format(Locale.US, "%.2f", parallelUsdtRate)}",
+                                        text = "Tasa: ${VeNumberFormat.formatRate(parallelUsdtRate, 2)}",
                                         fontSize = 8.sp,
-                                        color = textSecondary.copy(alpha = 0.7f)
+                                        color = textSecondary.copy(alpha = 0.7f),
+                                        maxLines = 1
                                     )
                                 }
                             }
-                            
-                            if (parsedForeign > 0.0) {
+
+                            val copVesRate = viewModel.getEffectiveCopRate()?.rate ?: 0.0
+                            if (copVesRate > 0.0) {
+                                val copEquiv = parsedVes / copVesRate
+                                val copFormatted = "${VeNumberFormat.formatInt(copEquiv)} COP"
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isDark) Color(0x14F59E0B) else Color(0x12F59E0B))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "🇨🇴 Frontera (TRM ${VeNumberFormat.formatInt(uiState.copPerUsd)}):",
+                                        fontSize = 9.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = textSecondary,
+                                        modifier = Modifier.padding(end = 6.dp)
+                                    )
+                                    Text(
+                                        text = copFormatted,
+                                        fontSize = if (copFormatted.length > 16) 9.5.sp else 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFF59E0B),
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            if (parsedForeign > 0.0 && currentRateInfo?.key != "COP") {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(1.dp)
                                         .background(if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000))
                                 )
-                                
+
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     val symbol = currentRateInfo?.symbol ?: "$"
                                     Text(
-                                        text = "CON ${String.format(Locale.US, "%,.2f", parsedForeign)} $symbol EN CADA MONEDA:",
+                                        text = "CON ${VeNumberFormat.formatMoney(parsedForeign)} $symbol EN CADA MONEDA:",
                                         fontSize = 8.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = textSecondary,
-                                        letterSpacing = 0.5.sp
+                                        letterSpacing = 0.5.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
-                                    
+
+                                    val bsUsdStr = "Bs. ${VeNumberFormat.formatMoney(parsedForeign * bcvUsdRate)}"
+                                    val bsEurStr = "Bs. ${VeNumberFormat.formatMoney(parsedForeign * bcvEurRate)}"
+                                    val bsUsdtStr = "Bs. ${VeNumberFormat.formatMoney(parsedForeign * parallelUsdtRate)}"
+
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        Column {
-                                            Text(text = "USD BCV", fontSize = 8.5.sp, color = textSecondary)
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(text = "USD BCV", fontSize = 8.5.sp, color = textSecondary, maxLines = 1)
                                             Text(
-                                                text = "Bs. ${String.format(Locale.US, "%,.2f", parsedForeign * bcvUsdRate)}",
-                                                fontSize = 11.sp,
+                                                text = bsUsdStr,
+                                                fontSize = VeNumberFormat.adaptiveSecondaryTriColumnFontSize(bsUsdStr),
                                                 fontWeight = FontWeight.Bold,
-                                                color = textPrimary
+                                                color = textPrimary,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
-                                        Column {
-                                            Text(text = "EUR BCV", fontSize = 8.5.sp, color = textSecondary)
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(text = "EUR BCV", fontSize = 8.5.sp, color = textSecondary, maxLines = 1)
                                             Text(
-                                                text = "Bs. ${String.format(Locale.US, "%,.2f", parsedForeign * bcvEurRate)}",
-                                                fontSize = 11.sp,
+                                                text = bsEurStr,
+                                                fontSize = VeNumberFormat.adaptiveSecondaryTriColumnFontSize(bsEurStr),
                                                 fontWeight = FontWeight.Bold,
-                                                color = textPrimary
+                                                color = textPrimary,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
-                                        Column {
-                                            Text(text = "USDT Bin.", fontSize = 8.5.sp, color = textSecondary)
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.End
+                                        ) {
+                                            Text(text = "USDT Bin.", fontSize = 8.5.sp, color = textSecondary, maxLines = 1)
                                             Text(
-                                                text = "Bs. ${String.format(Locale.US, "%,.2f", parsedForeign * parallelUsdtRate)}",
-                                                fontSize = 11.sp,
+                                                text = bsUsdtStr,
+                                                fontSize = VeNumberFormat.adaptiveSecondaryTriColumnFontSize(bsUsdtStr),
                                                 fontWeight = FontWeight.Bold,
-                                                color = textPrimary
+                                                color = textPrimary,
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
@@ -1048,47 +1733,14 @@ fun TasaVeScreen(
                 }
             }
 
-            // Bottom Navigation sync and state layout conforming to Sleek footer design
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        // Green static active point indicative of real-time sync
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF10B981))
-                        )
-                        Text(
-                            text = if (uiState.isOfflineError) "Sincronizado (Local)" else "Motor en tiempo real activo",
-                            fontSize = 9.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = textSecondary
-                        )
-                    }
-                    Text(
-                        text = "Tasa VE • Desarrollado localmente ❤️",
-                        fontSize = 9.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = textSecondary
-                    )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
                 }
             }
         }
     }
 
-    // 4. DIALOGS: HISTORY AND SETTINGS
+    // 4. DIALOGS: HISTORY, SETTINGS, PLANS AND SCANNER
     if (showHistory) {
         HistoryDialog(
             isDark = isDark,
@@ -1109,19 +1761,134 @@ fun TasaVeScreen(
     if (showSettings) {
         SleekSettingsDialog(
             isDark = isDark,
-            isProUser = isProUser,
-            proPrice = proPrice,
+            isUltraUser = isUltraUser,
+            isAdFreePassActive = isAdFreePassActive,
+            isRewardedAdLoading = isRewardedAdLoading,
+            debugTier = debugTier,
+            ultraMonthlyPrice = ultraMonthlyPrice,
             onDismiss = { showSettings = false },
             onToggleTheme = { viewModel.toggleTheme() },
-            onPurchasePro = {
+            onSelectDebugTier = { tier -> viewModel.setDebugTier(tier) },
+            onOpenPlans = {
+                showSettings = false
+                showPlansDialog = true
+            },
+            onWatchAdFreePass = triggerWatchAdFreePass,
+            onRestorePurchases = {
+                viewModel.restorePurchases()
+            }
+        )
+    }
+
+    if (showCalendarDialog) {
+        BcvCalendarDialog(
+            isDark = isDark,
+            snapshots = rateSnapshots,
+            currentUsd = viewModel.getEffectiveUsdBcv()?.rate ?: uiState.usdBcv?.rate ?: 0.0,
+            currentEur = viewModel.getEffectiveEurBcv()?.rate ?: uiState.eurBcv?.rate ?: 0.0,
+            currentUsdt = uiState.usdtParalelo?.rate ?: 0.0,
+            onApplyQuickAmount = { amountUsd, useUsdt ->
+                currentTab = AppTab.CONVERTER
+                viewModel.selectRate(if (useUsdt) "USDT" else "USD_BCV")
+                viewModel.updateForeignAmount(amountUsd)
+                showCalendarDialog = false
+            },
+            onDismiss = { showCalendarDialog = false }
+        )
+    }
+
+    if (showPlansDialog) {
+        PlansComparisonDialog(
+            isDark = isDark,
+            isUltraUser = isUltraUser,
+            isAdFreePassActive = isAdFreePassActive,
+            isRewardedAdLoading = isRewardedAdLoading,
+            ultraMonthlyPrice = ultraMonthlyPrice,
+            ultraYearlyPrice = ultraYearlyPrice,
+            onPurchaseUltraMonthly = {
+                AnalyticsTracker.logUltraPurchaseClicked(context, "monthly")
                 if (activity != null) {
-                    viewModel.purchasePro(activity)
+                    viewModel.purchaseUltra(activity, yearly = false)
                 } else {
                     Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
                 }
             },
+            onPurchaseUltraYearly = {
+                AnalyticsTracker.logUltraPurchaseClicked(context, "yearly")
+                if (activity != null) {
+                    viewModel.purchaseUltra(activity, yearly = true)
+                } else {
+                    Toast.makeText(context, "Servicio de Google Play no disponible en este momento.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onWatchAdFreePass = triggerWatchAdFreePass,
             onRestorePurchases = {
                 viewModel.restorePurchases()
+            },
+            onDismiss = { showPlansDialog = false }
+        )
+    }
+
+    if (showScanner) {
+        PriceScannerDialog(
+            isUltraUser = isUltraUser,
+            remainingFreeScans = remainingFreeScans,
+            ultraPrice = ultraMonthlyPrice,
+            selectedRateKey = viewModel.selectedRateKey,
+            usdBcv = viewModel.getEffectiveUsdBcv(),
+            eurBcv = viewModel.getEffectiveEurBcv(),
+            usdtParalelo = uiState.usdtParalelo,
+            isRewardedAdLoading = isRewardedAdLoading,
+            onWatchRewardedAd = {
+                rewardedAdManager.showOrLoad(
+                    activity = activity,
+                    onRewarded = {
+                        val next = viewModel.grantRewardedScans(UltraMath.REWARDED_SCAN_BONUS)
+                        Toast.makeText(
+                            context,
+                            "¡+5 escaneos desbloqueados! ($next disponibles)",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    },
+                    onError = { msg ->
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
+            onSelectRate = { key -> viewModel.selectRate(key) },
+            onApplyPrice = { amount, isVes, rateKey ->
+                if (scannerForCart) {
+                    val added = viewModel.addCartItem("Producto escaneado", amount, isVes, rateKey, fromScanner = true)
+                    if (added) {
+                        scannedDuringDialog = true
+                        Toast.makeText(context, "Producto agregado al carrito", Toast.LENGTH_SHORT).show()
+                    } else {
+                        scannedDuringDialog = false
+                        showScanner = false
+                        Toast.makeText(context, "Límite de 5 productos gratis en el carrito", Toast.LENGTH_SHORT).show()
+                        showPlansDialog = true
+                    }
+                } else {
+                    scannedDuringDialog = true
+                    viewModel.applyScannedPrice(amount, isVes, rateKey)
+                    Toast.makeText(context, "Precio escaneado aplicado", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onUpgradeUltra = {
+                scannedDuringDialog = false
+                showScanner = false
+                showPlansDialog = true
+            },
+            onDismiss = {
+                showScanner = false
+                if (scannedDuringDialog) {
+                    scannedDuringDialog = false
+                    interstitialAdManager.maybeShowAfterAction(
+                        activity = activity,
+                        isAdFree = isAdsDisabled,
+                        appLaunchCount = viewModel.appLaunchCount
+                    )
+                }
             }
         )
     }
@@ -1135,8 +1902,7 @@ fun RateSelectorCard(
     customLabel: String,
     isDark: Boolean,
     isSelected: Boolean,
-    onSelect: () -> Unit,
-    onCopy: (Double) -> Unit
+    onSelect: () -> Unit
 ) {
     // Gentle floating scale representation on hover/selection
     val scale = animateFloatAsState(
@@ -1159,12 +1925,7 @@ fun RateSelectorCard(
                 scaleY = scale.value
             }
             .clip(RoundedCornerShape(20.dp))
-            .clickable {
-                onSelect()
-                if (rateInfo != null) {
-                    onCopy(rateInfo.rate)
-                }
-            }
+            .clickable { onSelect() }
             .background(
                 if (isSelected) {
                     if (isDark) Color(0x1F222226) else Color(0x3DFFFFFF)
@@ -1185,10 +1946,10 @@ fun RateSelectorCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            
+
             // Custom label formatted uppercase text
             Text(
                 text = customLabel.uppercase(Locale.getDefault()),
@@ -1212,13 +1973,35 @@ fun RateSelectorCard(
                     )
                 }
             } else {
+                val decimals = if (key == "USDT") 2 else 4
                 Text(
-                    text = String.format(Locale.US, "%.2f", rateInfo.rate),
-                    fontSize = 17.sp,
+                    text = VeNumberFormat.formatRate(rateInfo.rate, decimals),
+                    fontSize = if (key == "USDT") 17.sp else 15.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) Color.White else Color(0xFF0F172A),
-                    letterSpacing = (-0.5).sp
+                    letterSpacing = (-0.5).sp,
+                    maxLines = 1
                 )
+
+                val pct = rateInfo.changePercent
+                if (pct != null && kotlin.math.abs(pct) >= 0.005) {
+                    val isUp = pct > 0.0
+                    val pctColor = if (isUp) Color(0xFF10B981) else Color(0xFFEF4444)
+                    val pctSign = if (isUp) "+" else ""
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(pctColor.copy(alpha = 0.16f))
+                            .padding(horizontal = 6.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = "$pctSign${VeNumberFormat.formatPercent(pct, 2)}%",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = pctColor
+                        )
+                    }
+                }
             }
         }
     }
@@ -1299,7 +2082,7 @@ fun HistoryDialog(
                     }
                 }
 
-                Divider(color = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569))
+                HorizontalDivider(color = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569))
 
                 if (historyList.isEmpty()) {
                     Box(
@@ -1345,12 +2128,12 @@ fun HistoryDialog(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(14.dp))
                                     .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
                                     .border(
                                         width = 1.dp,
                                         color = if (isDark) Color(0x0DFFFFFF) else Color(0x0D000000),
-                                        shape = RoundedCornerShape(16.dp)
+                                        shape = RoundedCornerShape(14.dp)
                                     )
                                     .clickable { onLoadItem(item) }
                                     .padding(12.dp)
@@ -1362,13 +2145,20 @@ fun HistoryDialog(
                                 ) {
                                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                         Text(
-                                            text = "${String.format(Locale.US, "%,.2f", item.amountFrom)} ${item.currencyFrom} = ${String.format(Locale.US, "%,.2f", item.amountTo)} ${item.currencyTo}",
+                                            text = "${VeNumberFormat.formatMoney(item.amountFrom)} ${item.currencyFrom} = ${VeNumberFormat.formatMoney(item.amountTo)} ${item.currencyTo}",
                                             fontSize = 13.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = textPrimary
                                         )
+                                        val isCopItem = item.currencyFrom == "COP" || item.currencyTo == "COP"
+                                        val isUsdtItem = item.currencyFrom == "₮" || item.currencyTo == "₮"
+                                        val historyRateLabel = when {
+                                            isCopItem -> "1.000 COP = Bs. ${VeNumberFormat.formatMoney(item.rate * 1000.0)}"
+                                            isUsdtItem -> "Tasa: Bs. ${VeNumberFormat.formatRate(item.rate, 2)}"
+                                            else -> "Tasa: Bs. ${VeNumberFormat.formatRate(item.rate, 4)}"
+                                        }
                                         Text(
-                                            text = "Tasa: Bs. ${String.format(Locale.US, "%.2f", item.rate)} • $dateStr",
+                                            text = "$historyRateLabel • $dateStr",
                                             fontSize = 10.sp,
                                             color = textSecondary
                                         )
@@ -1415,18 +2205,26 @@ fun HistoryDialog(
 @Composable
 fun SleekSettingsDialog(
     isDark: Boolean,
-    isProUser: Boolean,
-    proPrice: String,
+    isUltraUser: Boolean,
+    isAdFreePassActive: Boolean = false,
+    isRewardedAdLoading: Boolean = false,
+    debugTier: UserTier,
+    ultraMonthlyPrice: String,
     onDismiss: () -> Unit,
     onToggleTheme: () -> Unit,
-    onPurchasePro: () -> Unit,
+    onSelectDebugTier: (UserTier) -> Unit,
+    onOpenPlans: () -> Unit,
+    onWatchAdFreePass: (() -> Unit)? = null,
     onRestorePurchases: () -> Unit
 ) {
-    var expandPrivacy by remember { mutableStateOf(false) }
-    var expandTerms by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var legalDialogTab by remember { mutableStateOf<Int?>(null) }
+    var showFeedbackDialog by remember { mutableStateOf(false) }
 
     val dialogBg = if (isDark) Color(0xFF0E0E10) else Color(0xFFF1F5F9)
     val dividerColor = if (isDark) Color(0x1F94A3B8) else Color(0x1F475569)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
 
     Dialog(
         onDismissRequest = { onDismiss() },
@@ -1461,7 +2259,7 @@ fun SleekSettingsDialog(
                         text = "Configuración",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color(0xFF0F172A),
+                        color = textPrimary,
                         letterSpacing = (-0.3).sp
                     )
                     Box(
@@ -1475,29 +2273,82 @@ fun SleekSettingsDialog(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Cerrar",
-                            tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                            tint = textSecondary,
                             modifier = Modifier.size(14.dp)
                         )
                     }
                 }
 
-                Divider(color = dividerColor)
+                HorizontalDivider(color = dividerColor)
 
-                // PRO UPGRADE / IAP SECTION ($2.99 USD)
+                // DEBUG BUILD: Plan Switcher so user can test FREE / ULTRA without Play Store
+                if (BuildConfig.DEBUG) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isDark) Color(0x1F3B82F6) else Color(0x142563EB)
+                        ),
+                        border = BorderStroke(1.dp, Color(0x4D3B82F6))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "MODO PRUEBA v1.2 (SIMULAR PLAN)",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8),
+                                letterSpacing = 0.6.sp
+                            )
+                            Text(
+                                text = "Alterna libremente entre Gratis y Ultra para probar anuncios, límites y funciones.",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    UserTier.FREE to "Gratis",
+                                    UserTier.ULTRA to "Ultra"
+                                ).forEach { (tier, label) ->
+                                    FilterChip(
+                                        selected = debugTier == tier,
+                                        onClick = { onSelectDebugTier(tier) },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(14.dp),
+                                        label = {
+                                            Text(
+                                                text = label,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // PLAN ULTRA CARD
+                val planBorderColor = if (isUltraUser) Color(0x6610B981) else Color(0x4DF59E0B)
+                val planContainerColor = if (isUltraUser) {
+                    if (isDark) Color(0x1F10B981) else Color(0x1410B981)
+                } else {
+                    if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
+                }
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isProUser) {
-                            if (isDark) Color(0x1F10B981) else Color(0x1410B981)
-                        } else {
-                            if (isDark) Color(0x14F59E0B) else Color(0x0FF59E0B)
-                        }
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = if (isProUser) Color(0x4D10B981) else Color(0x4DF59E0B)
-                    )
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = planContainerColor),
+                    border = BorderStroke(width = 1.dp, color = planBorderColor)
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -1508,58 +2359,123 @@ fun SleekSettingsDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = if (isProUser) Icons.Default.Verified else Icons.Default.Star,
+                                imageVector = if (isUltraUser) Icons.Default.WorkspacePremium else Icons.Default.Star,
                                 contentDescription = null,
-                                tint = if (isProUser) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                tint = if (isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = if (isProUser) "Tasa VE Pro Activo ⭐" else "Tasa VE Pro ($proPrice)",
+                                text = if (isUltraUser) "Tasa VE Ultra Activo ⭐" else "Tasa VE Ultra ($ultraMonthlyPrice)",
                                 fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                                color = textPrimary
                             )
                         }
 
                         Text(
-                            text = if (isProUser) {
-                                "¡Gracias por tu apoyo! Los anuncios están desactivados permanentemente y cuentas con funciones premium."
+                            text = if (isUltraUser) {
+                                "Tienes acceso total: cero anuncios, escáner ilimitado, Carrito ∞ + IVA/IGTF, notificación flotante, Widget y perfiles ilimitados."
                             } else {
-                                "Pago único de $proPrice (sin suscripciones recurrentes). Elimina para siempre todos los anuncios publicitarios y respalda las mejoras del proyecto."
+                                "Elimina toda la publicidad y desbloquea escáner ilimitado, carrito ilimitado + IVA/IGTF, notificación flotante, Widget y perfiles bancarios ilimitados."
                             },
-                            fontSize = 11.sp,
-                            color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                            fontSize = 11.5.sp,
+                            color = textSecondary,
                             lineHeight = 16.sp
                         )
 
-                        if (!isProUser) {
-                            Button(
-                                onClick = onPurchasePro,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFF59E0B),
-                                    contentColor = Color.Black
-                                )
-                            ) {
-                                Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Quitar Publicidad ($proPrice)",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                        Button(
+                            onClick = onOpenPlans,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isUltraUser) Color(0xFF10B981) else Color(0xFFF59E0B),
+                                contentColor = Color.Black
+                            )
+                        ) {
+                            Icon(Icons.Default.WorkspacePremium, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isUltraUser) "Ver detalle de tu Plan Ultra" else "Ver Plan Ultra ($ultraMonthlyPrice)",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
+                        if (!isUltraUser && onWatchAdFreePass != null) {
+                            if (isAdFreePassActive) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0x1F10B981))
+                                        .border(1.dp, Color(0x4D10B981), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFF34D399),
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Text(
+                                        text = "Pase 12h sin anuncios activo",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF34D399)
+                                    )
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = onWatchAdFreePass,
+                                    enabled = !isRewardedAdLoading,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    border = BorderStroke(1.dp, Color(0x4D10B981))
+                                ) {
+                                    if (isRewardedAdLoading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(14.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color(0xFF34D399)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Cargando video...",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF34D399)
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayCircle,
+                                            contentDescription = null,
+                                            tint = Color(0xFF34D399),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "12h sin anuncios (Ver 1 video)",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF34D399)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!isUltraUser) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 TextButton(onClick = onRestorePurchases) {
                                     Text(
-                                        text = "Restaurar compra anterior",
+                                        text = "Restaurar suscripción",
                                         fontSize = 11.sp,
-                                        color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                        color = textSecondary
                                     )
                                 }
                             }
@@ -1571,7 +2487,7 @@ fun SleekSettingsDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
                         .padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1592,12 +2508,12 @@ fun SleekSettingsDialog(
                                 text = "Modo de Interfaz",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                                color = textPrimary
                             )
                             Text(
                                 text = if (isDark) "Tema Oscuro Activo" else "Tema Claro Activo",
                                 fontSize = 10.sp,
-                                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+                                color = textSecondary
                             )
                         }
                     }
@@ -1614,25 +2530,184 @@ fun SleekSettingsDialog(
                     )
                 }
 
-                // Privacy Disclosure con Local storage y Google Play compliance
-                SleekDisclosurePanel(
-                    title = "Política de Privacidad de Datos",
-                    isExpanded = expandPrivacy,
-                    isDark = isDark,
-                    onToggle = { expandPrivacy = !expandPrivacy },
-                    content = "Tasa VE respeta profundamente tu privacidad. Las configuraciones del usuario, caché de cotizaciones e historial de conversiones se almacenan únicamente de forma local en tu dispositivo móvil. Los servicios de Google Mobile Ads (AdMob) y Google Play Billing procesan identificadores técnicos estándar para la entrega no invasiva de anuncios y la verificación de compras in-app conforme a las directrices de privacidad de Google Play. No vendemos ni compartimos datos personales a terceros."
-                )
+                // Community, Official Website & Social Media Section (Real Icons Side-by-Side)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
+                        .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "WEB Y REDES (@tasa.ve)",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        letterSpacing = 0.7.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                // Terms and Conditions Disclosure (Data Disclaimer)
-                SleekDisclosurePanel(
-                    title = "Términos y Descargo de Responsabilidad",
-                    isExpanded = expandTerms,
-                    isDark = isDark,
-                    onToggle = { expandTerms = !expandTerms },
-                    content = "Esta herramienta tiene un carácter estrictamente informativo, educativo y de cálculo matemático. Los datos de cotizaciones se obtienen de fuentes públicas de acceso libre provistas por DolarAPI y el Banco Central de Venezuela (BCV). Tasa VE no fija, manipula ni influye en el valor oficial ni paralelo de divisas, no presta servicios financieros, captación ni intermediación cambiaria. Se recomienda verificar cotizaciones oficiales antes de transacciones bancarias."
-                )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://tasave.net"))
+                                        )
+                                    }.onFailure {
+                                        Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_social_web),
+                                contentDescription = "Página Web Oficial tasave.net",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(46.dp)
+                            )
+                        }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.instagram.com/tasa.ve/"))
+                                        )
+                                    }.onFailure {
+                                        Toast.makeText(context, "No se pudo abrir Instagram", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_social_instagram),
+                                contentDescription = "Instagram @tasa.ve",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(46.dp)
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://www.tiktok.com/@tasa.ve"))
+                                        )
+                                    }.onFailure {
+                                        Toast.makeText(context, "No se pudo abrir TikTok", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_social_tiktok),
+                                contentDescription = "TikTok @tasa.ve",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(46.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Support & Suggestions Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
+                        .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "SOPORTE Y MEJORAS",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFF59E0B),
+                        letterSpacing = 0.7.sp
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.Feedback,
+                        title = "Reportar error o sugerir función",
+                        subtitle = "¿Falló algo o qué te gustaría ver en Tasa VE?",
+                        isDark = isDark,
+                        accentColor = Color(0xFFF59E0B),
+                        onClick = { showFeedbackDialog = true }
+                    )
+                }
+
+                // Legal & Privacy Section (Title-only clean entries)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0x0FFFFFFF) else Color.White)
+                        .border(1.dp, dividerColor, RoundedCornerShape(20.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "LEGAL Y PRIVACIDAD",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981),
+                        letterSpacing = 0.7.sp
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.PrivacyTip,
+                        title = "Privacidad y Protección de Datos",
+                        subtitle = null,
+                        isDark = isDark,
+                        onClick = { legalDialogTab = 0 }
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.Gavel,
+                        title = "Términos de Uso y Descargo",
+                        subtitle = null,
+                        isDark = isDark,
+                        onClick = { legalDialogTab = 1 }
+                    )
+
+                    LegalMenuRow(
+                        icon = Icons.Default.OpenInBrowser,
+                        title = "Ver Política Web Completa",
+                        subtitle = null,
+                        isDark = isDark,
+                        onClick = {
+                            runCatching {
+                                val intent = Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://tasave.net/privacy-policy.html")
+                                )
+                                context.startActivity(intent)
+                            }.onFailure {
+                                Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 // Sleek Footer version detail
                 Column(
@@ -1642,36 +2717,642 @@ fun SleekSettingsDialog(
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isDark) Color(0x1410B981) else Color(0x0A10B981))
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0xFF070C16))
                             .border(
                                 width = 1.dp,
-                                color = if (isDark) Color(0x2610B981) else Color(0x1F10B981),
-                                shape = RoundedCornerShape(16.dp)
+                                color = if (isDark) Color(0x4010B981) else Color(0x5510B981),
+                                shape = RoundedCornerShape(14.dp)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ic_brand_mark),
                             contentDescription = "Tasa VE Logo",
                             tint = Color.Unspecified,
-                            modifier = Modifier.size(46.dp)
+                            modifier = Modifier.size(42.dp)
                         )
                     }
                     
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = "Tasa VE • Versión 1.0.0",
+                        text = "Tasa VE • Versión 1.2.0",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White else Color(0xFF0F172A)
+                        color = textPrimary
                     )
                     Text(
-                        text = if (isProUser) "Versión Pro • Sin Anuncios ⭐" else "Versión Gratuita con Anuncios • Pro Disponible",
+                        text = if (isUltraUser) "Plan Ultra • Todo Desbloqueado ⭐" else "Plan Gratuito • Ultra Disponible",
                         fontSize = 10.sp,
-                        color = if (isDark) Color(0xFF64748B) else Color(0xFF64748B)
+                        color = Color(0xFF64748B)
                     )
+                }
+            }
+        }
+    }
+
+    if (showFeedbackDialog) {
+        FeedbackReportDialog(
+            isDark = isDark,
+            isUltraUser = isUltraUser,
+            onDismiss = { showFeedbackDialog = false }
+        )
+    }
+
+    legalDialogTab?.let { initialTab ->
+        LegalCenterDialog(
+            isDark = isDark,
+            initialTab = initialTab,
+            onOpenWeb = {
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("https://tasave.net/privacy-policy.html"))
+                    )
+                }.onFailure {
+                    Toast.makeText(context, "No se pudo abrir el navegador", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onDismiss = { legalDialogTab = null }
+        )
+    }
+}
+
+@Composable
+private fun LegalMenuRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String? = null,
+    isDark: Boolean,
+    accentColor: Color = Color(0xFF10B981),
+    onClick: () -> Unit
+) {
+    val rowBg = if (isDark) Color(0x12FFFFFF) else Color(0xFFF8FAFC)
+    val rowBorder = if (isDark) Color(0x1F94A3B8) else Color(0x19475569)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(rowBg)
+            .border(1.dp, rowBorder, RoundedCornerShape(14.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = if (subtitle.isNullOrBlank()) 10.dp else 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(accentColor.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accentColor,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = textPrimary
+            )
+            if (!subtitle.isNullOrBlank()) {
+                Text(
+                    text = subtitle,
+                    fontSize = 10.5.sp,
+                    color = textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = textSecondary,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FeedbackReportDialog(
+    isDark: Boolean,
+    isUltraUser: Boolean,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val dialogBg = if (isDark) Color(0xFF141418) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+
+    var selectedType by remember { mutableStateOf(FeedbackType.SUGGESTION) }
+    var selectedModule by remember { mutableStateOf(FeedbackReporter.MODULES.first()) }
+    var description by remember { mutableStateOf("") }
+    var contact by remember { mutableStateOf("") }
+    var isSending by remember { mutableStateOf(false) }
+    var fallbackErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    val buildSubmission = {
+        FeedbackSubmission(
+            type = selectedType,
+            module = selectedModule,
+            description = description.trim(),
+            contact = contact.trim(),
+            planLabel = if (isUltraUser) "Ultra" else "Gratis"
+        )
+    }
+
+    Dialog(
+        onDismissRequest = { if (!isSending) onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg),
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .border(1.dp, Color(0x3310B981), RoundedCornerShape(24.dp))
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Reportes y Sugerencias",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Tu opinión se registra directamente para mejorar Tasa VE.",
+                            fontSize = 10.5.sp,
+                            color = textSecondary
+                        )
+                    }
+                    IconButton(
+                        onClick = { if (!isSending) onDismiss() },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Type Toggle: Bug vs Suggestion
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedType == FeedbackType.BUG,
+                        onClick = { selectedType = FeedbackType.BUG },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.BugReport,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Reportar error",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2EF59E0B),
+                            selectedLabelColor = Color(0xFFF59E0B),
+                            selectedLeadingIconColor = Color(0xFFF59E0B)
+                        )
+                    )
+                    FilterChip(
+                        selected = selectedType == FeedbackType.SUGGESTION,
+                        onClick = { selectedType = FeedbackType.SUGGESTION },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Sugerir función",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = Color(0xFF34D399),
+                            selectedLeadingIconColor = Color(0xFF34D399)
+                        )
+                    )
+                }
+
+                // Module selector
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "PANTALLA O MÓDULO",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textSecondary,
+                        letterSpacing = 0.6.sp
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        FeedbackReporter.MODULES.forEach { mod ->
+                            FilterChip(
+                                selected = selectedModule == mod,
+                                onClick = { selectedModule = mod },
+                                shape = RoundedCornerShape(12.dp),
+                                label = {
+                                    Text(
+                                        text = mod,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (selectedModule == mod) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { if (it.length <= 600) description = it },
+                    label = {
+                        Text(
+                            if (selectedType == FeedbackType.BUG) {
+                                "¿Qué error ocurrió y cómo reproducirlo?"
+                            } else {
+                                "¿Qué más te gustaría ver en la app?"
+                            }
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            if (selectedType == FeedbackType.BUG) {
+                                "Ej. Al escanear una etiqueta con luz baja..."
+                            } else {
+                                "Ej. Me gustaría exportar el carrito a PDF..."
+                            }
+                        )
+                    },
+                    minLines = 3,
+                    maxLines = 5,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = contact,
+                    onValueChange = { if (it.length <= 80) contact = it },
+                    label = { Text("Contacto opcional (correo o @instagram)") },
+                    placeholder = { Text("Solo si deseas recibir respuesta") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                fallbackErrorMessage?.let { msg ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0x1FF59E0B))
+                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(14.dp))
+                            .padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = msg,
+                            fontSize = 11.sp,
+                            color = Color(0xFFF59E0B),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                val opened = FeedbackReporter.openEmailFallback(context, buildSubmission())
+                                if (opened) {
+                                    onDismiss()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "No hay app de correo instalada (soporte@tasave.net)",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, Color(0x66F59E0B)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFFF59E0B))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Enviar por correo a soporte@tasave.net",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF59E0B)
+                            )
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        if (description.trim().length < 5) {
+                            Toast.makeText(
+                                context,
+                                "Cuéntanos un poco más (mínimo 5 caracteres).",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        isSending = true
+                        fallbackErrorMessage = null
+                        val submission = buildSubmission()
+                        coroutineScope.launch {
+                            when (val result = FeedbackReporter.submitFeedback(context, submission)) {
+                                is FeedbackSubmitResult.SentToSheet -> {
+                                    isSending = false
+                                    Toast.makeText(
+                                        context,
+                                        "¡Recibido! Gracias por ayudarnos a mejorar Tasa VE.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    onDismiss()
+                                }
+                                is FeedbackSubmitResult.WebhookNotConfigured -> {
+                                    isSending = false
+                                    val opened = FeedbackReporter.openEmailFallback(context, submission)
+                                    if (opened) {
+                                        onDismiss()
+                                    } else {
+                                        fallbackErrorMessage = "Envío directo pendiente de activación. Escríbenos a soporte@tasave.net."
+                                    }
+                                }
+                                is FeedbackSubmitResult.Error -> {
+                                    isSending = false
+                                    fallbackErrorMessage = result.message
+                                }
+                            }
+                        }
+                    },
+                    enabled = !isSending,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF10B981),
+                        contentColor = Color.Black
+                    )
+                ) {
+                    if (isSending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Enviando...", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    } else {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Enviar reporte / sugerencia", fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegalCenterDialog(
+    isDark: Boolean,
+    initialTab: Int,
+    onOpenWeb: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selectedTab by remember(initialTab) { mutableStateOf(initialTab) }
+    var expandedIndex by remember(selectedTab) { mutableStateOf(0) }
+
+    val dialogBg = if (isDark) Color(0xFF0E0E11) else Color(0xFFF8FAFC)
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val borderCol = if (isDark) Color(0x2694A3B8) else Color(0x1F475569)
+
+    val privacySections = remember {
+        listOf(
+            "1. Responsable y alcance" to
+                "Tasa VE es una aplicación independiente de conversión y cálculo financiero orientada principalmente a usuarios en Venezuela. Esta Política de Privacidad aplica a la aplicación oficial Tasa VE en Google Play y a su sitio web informativo https://tasave.net.",
+            "2. Fuentes de cotizaciones y caché sin conexión (offline)" to
+                "Las cotizaciones mostradas (Dólar BCV, Euro BCV, USDT, Peso Colombiano COP/TRM y series históricas) provienen de APIs públicas de terceros (ve.dolarapi.com, rates.dolarvzla.com, co.dolarapi.com y open.er-api.com). Tasa VE no controla su disponibilidad, continuidad ni exactitud, y no está afiliada al BCV, SENIAT, Zelle, Binance ni entidad bancaria o pasarela alguna. Las últimas tasas se almacenan localmente para operar sin conexión y alimentar los widgets.",
+            "3. Datos almacenados localmente (sin cuentas)" to
+                "Tasa VE no exige registro ni crea cuentas en servidores propios. Tu historial, carrito, parámetros referenciales de impuestos aplicables (IVA/IGTF), perfiles bancarios opcionales (Pago Móvil, Cuenta Bancaria, Zelle, Binance Pay), cálculos en Saca tu cuenta, tu Perfil personalizado (nombre y foto o logo) y las imágenes PNG temporales compartidas (FileProvider) se almacenan exclusivamente en el espacio privado de tu dispositivo Android y están excluidos del respaldo automático en la nube. Eres responsable de verificar la exactitud de los datos que compartas con terceros.",
+            "4. Reportes voluntarios, sugerencias y soporte técnico" to
+                "Cuando decides enviar un reporte de error, consulta o sugerencia desde la app o a soporte@tasave.net, se procesa tu mensaje, el módulo indicado, el contacto opcional si decides suministrarlo y datos técnicos básicos del entorno (versión de la app, tipo de plan, fabricante/modelo del equipo y versión de Android). Esta información se utiliza exclusivamente para diagnosticar fallos, mejorar la estabilidad, responderte y mantenerse como referencia e historial técnico interno de soporte y evolución de la aplicación, salvo que solicites su eliminación expresa escribiendo a soporte@tasave.net.",
+            "5. Analítica, publicidad, facturación y servicios de terceros" to
+                "• Google Firebase Analytics: Métricas agregadas y estadísticas de uso general de pantallas y funciones, sin montos ingresados ni datos bancarios (firebase.google.com/support/privacy).\n• Google Mobile Ads (AdMob): Anuncios en el plan gratuito; puede acceder al ID de publicidad (GAID), metadatos de red y señales antifraude (policies.google.com/technologies/ads). Puedes restablecer o limitar el GAID desde los ajustes de Android.\n• Google Play Billing: Gestiona la suscripción opcional Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año o equivalente local) sin que Tasa VE acceda a tu tarjeta (play.google.com/intl/es_es/about/play-terms/).\n• Google ML Kit: Reconocimiento OCR local en el dispositivo sin subir fotografías a ningún tipo de servidor.",
+            "6. Permisos del sistema Android, widgets y seguridad" to
+                "• Cámara (CAMERA): Solo al abrir el escáner de precios; no lee códigos QR ni de barras, no graba video ni sube fotos a ningún tipo de servidor.\n• Notificaciones (POST_NOTIFICATIONS): Opcional en Android 13+ para avisos o la notificación flotante (Ultra).\n• Widgets de pantalla de inicio (AppWidget / WorkManager): No requieren permisos invasivos; solo operan si los agregas a tu pantalla de inicio, usando caché local, conectividad de red para refrescar tasas y el portapapeles únicamente cuando pulsas copiar datos.\n• Conectividad y facturación (INTERNET, ACCESS_NETWORK_STATE, BILLING): Cotizaciones públicas, anuncios gratuitos, métricas agregadas y suscripciones.\nLas comunicaciones usan cifrado HTTPS/TLS y puedes ocultar datos sensibles en pantalla con el botón de privacidad visual. Ningún sistema es infalible al 100 %; mantén tu equipo actualizado y protegido.",
+            "7. Derechos del usuario, eliminación de datos y menores" to
+                "• Borrado de datos locales: Puedes eliminar historial, carrito o perfiles desde la app, o en Ajustes > Aplicaciones > Tasa VE > Almacenamiento y caché > Borrar caché (archivos temporales) o Borrar datos / Eliminar almacenamiento (restablecimiento completo).\n• Derechos y eliminación de soporte: Conforme a la normativa aplicable, puedes solicitar información, rectificación o eliminación de reportes enviados a soporte escribiendo a soporte@tasave.net con la fecha aproximada y contacto usado.\n• Menores de edad: Tasa VE no está dirigida a menores de 13 años (o la edad mínima legal en tu jurisdicción) ni recopila conscientemente sus datos. Si eres padre, madre o representante legal y consideras que un menor hizo uso indebido de la plataforma o envió datos a soporte, repórtalo de inmediato a soporte@tasave.net para tomar las medidas y eliminaciones correspondientes.",
+            "8. Actualizaciones de estas políticas y contacto" to
+                "Actualizaremos estas políticas cada vez que existan cambios funcionales, técnicos, normativos o actualizaciones relevantes en las políticas de Google Play, publicando siempre la fecha vigente (27 de noviembre de 2026). Para consultar las condiciones vigentes de Google, revisa play.google.com/intl/es_es/about/play-terms/ y policies.google.com/privacy.\nContacto: soporte@tasave.net • Web: https://tasave.net"
+        )
+    }
+
+    val termsSections = remember {
+        listOf(
+            "1. Naturaleza informativa y no intermediación" to
+                "Tasa VE es una herramienta utilitaria de cálculo, conversión referencial y organización de información financiera. TASA VE NO ES UNA ENTIDAD BANCARIA, CASA DE CAMBIO, MERCADO DE DIVISAS, PROCESADOR DE PAGOS, BILLETERA ELECTRÓNICA, ASESORA FINANCIERA, NI ADMINISTRADORA TRIBUTARIA, Y TAMPOCO RECIBE, CUSTODIA, TRANSFIERE, LIQUIDA NI PROCESA DINERO, FONDOS O COBROS POR CUENTA DE LOS USUARIOS.",
+            "2. Exactitud referencial de tasas y cálculos" to
+                "Las tasas, conversiones multimoneda, estimaciones de impuestos aplicables, calendarios y herramientas de Extras (¿Qué me conviene más? y ¿Dividimos la cuenta?) tienen fines estrictamente orientativos e informativos. Pueden diferir de las cotizaciones vigentes o aplicadas por bancos y comercios, y no constituyen asesoría financiera, contable, fiscal ni legal.",
+            "3. Perfiles, Saca tu cuenta e imágenes compartidas" to
+                "Las plantillas de texto para autocompletar en bancos, los cálculos de Saca tu cuenta, los perfiles guardados y las tarjetas PNG compartidas (incluyendo tu Perfil personalizado y las cuentas divididas) son simples fichas informativas generadas bajo tu exclusiva dirección y responsabilidad. No constituyen facturas fiscales, recibos oficiales ni comprobantes bancarios de pago. Tasa VE no verifica titularidad de cuentas, no confirma recepciones de fondos ni asume responsabilidad por errores de digitación, suplantaciones o disputas entre terceros.",
+            "4. Plan gratuito, suscripción Ultra, cancelación y reembolsos" to
+                "El Plan Gratuito incluye funciones base con publicidad de Google AdMob. Tasa VE Ultra (\$0.99 USD/mes o \$7.99 USD/año, o equivalente local en Google Play) se renueva automáticamente salvo cancelación al menos 24 horas antes siguiendo: Google Play Store > Foto de perfil > Pagos y suscripciones > Suscripciones > Tasa VE > Cancelar suscripción (y confirmar en pantalla). Puedes restaurar compras desde la app; los reembolsos se rigen por las políticas vigentes de Google Play.",
+            "5. Propiedad intelectual y titularidad de contenido" to
+                "El código, diseño, interfaz, marca y logotipos de Tasa VE pertenecen a su titular o licenciantes, otorgándose una licencia limitada, revocable, no exclusiva e intransferible de uso. El usuario declara y garantiza contar con la titularidad o autorización legítima sobre los logotipos, marcas comerciales e información que suministre o cargue en la aplicación, asumiendo plena y exclusiva responsabilidad ante cualquier reclamo, controversia o circunstancia que surja del suministro de dichos logotipos o de la información y comprobantes generados en la plataforma.",
+            "6. Conducta prohibida" to
+                "Queda prohibido utilizar Tasa VE para actividades ilícitas, fraudulentas o engañosas; suplantar identidad o falsificar comprobantes; intentar eludir controles técnicos o de suscripción; realizar ingeniería inversa, descompilar o extraer indebidamente el código o servicios asociados más allá de lo permitido por la ley; o sobrecargar/interferir con la infraestructura o APIs conectadas.",
+            "7. Niveles de gravedad, responsabilidad civil y penal, y resolución extrajudicial" to
+                "El incumplimiento de las conductas prohibidas será evaluado según su gravedad:\n• Nivel leve: Uso irregular sin perjuicio técnico ni económico grave (advertencia formal o restricción preventiva).\n• Nivel moderado: Reincidencia, elusión de controles/suscripciones o uso engañoso de plantillas/tarjetas (suspensión o revocación de licencia y reclamo de reparación).\n• Nivel grave: Fraude, suplantación, ataques a la infraestructura/APIs, ingeniería inversa ilícita o vulneración de propiedad intelectual o derechos de terceros (revocación inmediata y responsabilidad civil por daños y perjuicios y/o responsabilidad penal ante las autoridades competentes).\nCuando la naturaleza del hecho lo permita, el titular podrá procurar inicialmente un arreglo extrajudicial (conciliación, mediación o resarcimiento amistoso) para evitar instancias judiciales, sin perjuicio de actuar de inmediato en hechos graves o constitutivos de delito.",
+            "8. Exclusión de garantías y limitación de responsabilidad" to
+                "Tasa VE se ofrece \"TAL CUAL\" (AS IS) y \"SEGÚN DISPONIBILIDAD\" (AS AVAILABLE), sin garantías expresas ni implícitas de exactitud continua o ausencia de errores. En la máxima medida permitida por la ley, el titular no será responsable por pérdidas económicas, lucro cesante, diferencias cambiarias, fallos en APIs externas o decisiones tomadas con base en la app.",
+            "9. Indemnización" to
+                "Aceptas mantener indemne al titular de Tasa VE frente a reclamaciones, daños o responsabilidades de terceros derivados del uso indebido de la aplicación, de la infracción de estos Términos o de la vulneración de derechos de terceros por parte tuya.",
+            "10. Ley aplicable y resolución de controversias" to
+                "Estos Términos se regirán e interpretarán conforme a las leyes aplicables de la República Bolivariana de Venezuela, sin perjuicio de las normas imperativas de protección al consumidor o privacidad vigentes en la jurisdicción del usuario. Ante cualquier controversia, se procurará primero una solución amistosa de buena fe o un arreglo extrajudicial vía soporte@tasave.net (salvo hechos graves que requieran acción inmediata). De no llegarse a un acuerdo satisfactorio, el asunto será sometido ante los tribunales y entes judiciales correspondientes según la naturaleza civil, mercantil o penal del caso.",
+            "11. Divisibilidad e integridad" to
+                "Si alguna disposición de estos Términos resulta declarada inválida o inaplicable por autoridad competente, dicha cláusula se ajustará en la medida mínima necesaria y las restantes disposiciones conservarán plena vigencia y validez legal.",
+            "12. Contacto legal y soporte" to
+                "Para consultas legales, reportes de soporte, ejercicio de derechos de privacidad o notificaciones sobre uso indebido por menores, comunícate a soporte@tasave.net o consulta el documento completo en https://tasave.net/privacy-policy.html."
+        )
+    }
+
+    val activeSections = if (selectedTab == 0) privacySections else termsSections
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.84f)
+                .border(1.dp, borderCol, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Privacidad y Términos — Tasa VE",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Actualizado: 26 nov 2026 • Política y Términos",
+                            fontSize = 10.5.sp,
+                            color = Color(0xFF10B981),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Segmented Selector: Privacidad / Términos
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = Color(0xFF10B981)
+                        ),
+                        label = {
+                            Text(
+                                text = "Privacidad (${privacySections.size})",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    )
+                    FilterChip(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0x2610B981),
+                            selectedLabelColor = Color(0xFF10B981)
+                        ),
+                        label = {
+                            Text(
+                                text = "Términos y Descargo",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    activeSections.forEachIndexed { index, (title, body) ->
+                        SleekDisclosurePanel(
+                            title = title,
+                            isExpanded = expandedIndex == index,
+                            isDark = isDark,
+                            onToggle = {
+                                expandedIndex = if (expandedIndex == index) -1 else index
+                            },
+                            content = body
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onOpenWeb,
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .heightIn(min = 44.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, borderCol)
+                    ) {
+                        Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF10B981))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Ver en Web", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textPrimary)
+                    }
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 44.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981), contentColor = Color.Black)
+                    ) {
+                        Text("Cerrar", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -1686,46 +3367,75 @@ fun SleekDisclosurePanel(
     onToggle: () -> Unit,
     content: String
 ) {
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "chevronRotation"
+    )
+
+    val containerBg = if (isExpanded) {
+        if (isDark) Color(0x1610B981) else Color(0x1210B981)
+    } else {
+        if (isDark) Color(0x0FFFFFFF) else Color.White
+    }
+    val borderColor = if (isExpanded) {
+        Color(0x6610B981)
+    } else {
+        if (isDark) Color(0x1A94A3B8) else Color(0x19475569)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (isDark) Color(0x0FFFFFFF) else Color(0x0A000000))
+            .clip(RoundedCornerShape(14.dp))
+            .background(containerBg)
+            .border(1.dp, borderColor, RoundedCornerShape(14.dp))
             .clickable { onToggle() }
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .animateContentSize(
+                animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)
+            )
+            .padding(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isExpanded) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF10B981))
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(
                 text = title,
-                fontSize = 12.sp,
+                fontSize = 12.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color(0xFF0F172A)
+                color = if (isExpanded) Color(0xFF10B981) else if (isDark) Color.White else Color(0xFF0F172A),
+                modifier = Modifier.weight(1f)
             )
             Icon(
-                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                imageVector = Icons.Default.ExpandMore,
                 contentDescription = if (isExpanded) "Cerrar" else "Abrir",
-                tint = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
-                modifier = Modifier.size(16.dp)
+                tint = if (isExpanded) Color(0xFF10B981) else if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
+                modifier = Modifier
+                    .size(18.dp)
+                    .graphicsLayer { rotationZ = chevronRotation }
             )
         }
 
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
+        if (isExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = content,
-                fontSize = 10.5.sp,
-                lineHeight = 15.sp,
-                color = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569),
-                textAlign = TextAlign.Justify,
-                modifier = Modifier.padding(top = 2.dp)
+                fontSize = 11.5.sp,
+                lineHeight = 17.sp,
+                color = if (isDark) Color(0xFFCBD5E1) else Color(0xFF334155),
+                textAlign = TextAlign.Start
             )
         }
     }
@@ -1747,9 +3457,9 @@ fun GlassCard(
             .border(
                 width = 1.dp,
                 color = if (glowColor != Color.Transparent) glowColor.copy(alpha = 0.35f) else borderStroke,
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(20.dp)
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = cardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -1762,5 +3472,361 @@ private fun copyToClipboard(context: Context, text: String) {
     val clip = ClipData.newPlainText("Tasa VE", text)
     clipboard.setPrimaryClip(clip)
 }
+
+@Composable
+private fun BcvCalendarDialog(
+    isDark: Boolean,
+    snapshots: List<RateSnapshot>,
+    currentUsd: Double,
+    currentEur: Double,
+    currentUsdt: Double,
+    onApplyQuickAmount: (amountUsd: String, useUsdt: Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val dialogBg = if (isDark) Color(0xFF0E0E12) else Color(0xFFF8FAFC)
+    val cardBg = if (isDark) Color(0xFF16161C) else Color.White
+    val textPrimary = if (isDark) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val borderCol = if (isDark) Color(0x2694A3B8) else Color(0x1F475569)
+    val emerald = Color(0xFF10B981)
+    val emeraldLight = Color(0xFF34D399)
+    val amber = Color(0xFFF59E0B)
+
+    val todayCal = remember { BcvCalendarHelper.todayCaracasCalendar() }
+    val todayIso = remember { BcvCalendarHelper.formatIsoDate(todayCal) }
+    var visibleYear by remember { mutableIntStateOf(todayCal.get(Calendar.YEAR)) }
+    var visibleMonth by remember { mutableIntStateOf(todayCal.get(Calendar.MONTH)) }
+
+    val gridCells = remember(visibleYear, visibleMonth) {
+        BcvCalendarHelper.buildMonthGrid(visibleYear, visibleMonth)
+    }
+
+    var selectedDay by remember(visibleYear, visibleMonth) {
+        mutableStateOf(
+            gridCells.filterNotNull().firstOrNull { it.isoDate == todayIso }
+                ?: gridCells.filterNotNull().first()
+        )
+    }
+
+    var quickUsdText by remember { mutableStateOf("10") }
+    var quickUseUsdt by remember { mutableStateOf(false) }
+
+    val dayLookup = remember(selectedDay, snapshots, currentUsd, currentEur, currentUsdt) {
+        BcvCalendarHelper.lookupRateForDate(
+            isoDate = selectedDay.isoDate,
+            snapshots = snapshots,
+            fallbackUsd = currentUsd,
+            fallbackEur = currentEur,
+            fallbackUsdt = currentUsdt
+        )
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .border(1.dp, borderCol, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg)
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Calendario Bancario y Tasas",
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = "Toca cualquier día para ver feriados bancarios y tasa",
+                            fontSize = 10.5.sp,
+                            color = textSecondary
+                        )
+                    }
+                    IconButton(onClick = onDismiss, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = textSecondary)
+                    }
+                }
+
+                // Selector de Mes
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(cardBg)
+                        .border(1.dp, borderCol, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = {
+                            if (visibleMonth == 0) {
+                                visibleMonth = 11
+                                visibleYear -= 1
+                            } else {
+                                visibleMonth -= 1
+                            }
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Mes anterior", tint = textPrimary)
+                    }
+                    Text(
+                        text = BcvCalendarHelper.formatMonthYearEs(visibleYear, visibleMonth),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textPrimary
+                    )
+                    IconButton(
+                        onClick = {
+                            if (visibleMonth == 11) {
+                                visibleMonth = 0
+                                visibleYear += 1
+                            } else {
+                                visibleMonth += 1
+                            }
+                        },
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Icon(Icons.Default.ChevronRight, contentDescription = "Mes siguiente", tint = textPrimary)
+                    }
+                }
+
+                // Cabecera Lun-Dom
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom").forEach { d ->
+                        Text(
+                            text = d,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                // Cuadrícula del mes
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    gridCells.chunked(7).forEach { week ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            for (i in 0 until 7) {
+                                val cell = week.getOrNull(i)
+                                if (cell == null) {
+                                    Spacer(modifier = Modifier.weight(1f).height(38.dp))
+                                } else {
+                                    val isSelected = selectedDay.isoDate == cell.isoDate
+                                    val isToday = cell.isoDate == todayIso
+                                    val cellBg = when {
+                                        isSelected -> emerald.copy(alpha = 0.24f)
+                                        cell.isBankHoliday -> amber.copy(alpha = 0.16f)
+                                        cell.isWeekend -> if (isDark) Color(0x0D94A3B8) else Color(0x0F475569)
+                                        else -> cardBg
+                                    }
+                                    val cellBorder = when {
+                                        isSelected -> emerald
+                                        cell.isBankHoliday -> amber.copy(alpha = 0.65f)
+                                        isToday -> emeraldLight.copy(alpha = 0.55f)
+                                        else -> borderCol
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(38.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(cellBg)
+                                            .border(if (isSelected) 1.5.dp else 1.dp, cellBorder, RoundedCornerShape(10.dp))
+                                            .clickable {
+                                                selectedDay = cell
+                                                com.julcer26.tasave.analytics.AnalyticsTracker.logCalendarDaySelected(
+                                                    context,
+                                                    cell.isBankHoliday
+                                                )
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                text = "${cell.dayOfMonth}",
+                                                fontSize = 11.5.sp,
+                                                fontWeight = if (isSelected || isToday || cell.isBankHoliday) FontWeight.Bold else FontWeight.Medium,
+                                                color = when {
+                                                    cell.isBankHoliday -> amber
+                                                    isSelected -> emeraldLight
+                                                    else -> textPrimary
+                                                }
+                                            )
+                                            if (cell.isBankHoliday || isToday) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(4.dp)
+                                                        .clip(CircleShape)
+                                                        .background(if (cell.isBankHoliday) amber else emeraldLight)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Detalle del día seleccionado
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(cardBg)
+                        .border(1.dp, borderCol, RoundedCornerShape(16.dp))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = selectedDay.isoDate,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textPrimary
+                        )
+                        Text(
+                            text = if (dayLookup.isExactSnapshot) "Histórico exacto" else "Ref. más cercana",
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selectedDay.isBankHoliday) amber else emeraldLight
+                        )
+                    }
+                    Text(
+                        text = selectedDay.statusSummary,
+                        fontSize = 11.sp,
+                        fontWeight = if (selectedDay.isBankHoliday) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selectedDay.isBankHoliday) amber else textSecondary
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            Triple("USD BCV", dayLookup.usdBcv, emeraldLight),
+                            Triple("EUR BCV", dayLookup.eurBcv, Color(0xFF60A5FA)),
+                            Triple("USDT Bin.", dayLookup.usdt, amber)
+                        ).forEach { (label, rateVal, accent) ->
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isDark) Color(0xFF1F2028) else Color(0xFFF1F5F9))
+                                    .padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(label, fontSize = 9.sp, color = textSecondary)
+                                Text(
+                                    text = "Bs. ${VeNumberFormat.formatRate(rateVal, 2)}",
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = accent
+                                )
+                            }
+                        }
+                    }
+
+                    // Cálculo rápido en el día elegido
+                    val quickAmt = VeNumberFormat.parseFlexibleDouble(quickUsdText) ?: 0.0
+                    val chosenRate = if (quickUseUsdt) dayLookup.usdt else dayLookup.usdBcv
+                    val quickBs = quickAmt * chosenRate
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = quickUsdText,
+                            onValueChange = { raw ->
+                                VeNumberFormat.sanitizeEditableInput(raw, quickUsdText, maxIntDigits = 10)?.let {
+                                    quickUsdText = it
+                                }
+                            },
+                            visualTransformation = VenezuelanNumberVisualTransformation,
+                            label = { Text("Cálculo rápido ($)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = if (quickUseUsdt) "A tasa USDT:" else "A tasa BCV:",
+                                fontSize = 10.sp,
+                                color = textSecondary,
+                                modifier = Modifier.clickable { quickUseUsdt = !quickUseUsdt }
+                            )
+                            Text(
+                                text = "Bs. ${VeNumberFormat.formatMoney(quickBs)}",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = emeraldLight,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { quickUseUsdt = !quickUseUsdt },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = if (quickUseUsdt) "Ver en BCV" else "Ver en USDT",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Button(
+                            onClick = { onApplyQuickAmount(quickUsdText, quickUseUsdt) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = emerald, contentColor = Color.Black)
+                        ) {
+                            Text("Pasar al conversor", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 

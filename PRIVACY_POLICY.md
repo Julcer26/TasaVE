@@ -1,96 +1,100 @@
 # Política de Privacidad — Tasa VE
 
-**Última actualización:** 10 de noviembre de 2026
+**Última actualización:** 23 de noviembre de 2026 (Versión 1.2.0)  
+**Aplicación:** Tasa VE • **Sitio oficial:** https://tasave.net • **Contacto:** soporte@tasave.net
 
-La aplicación móvil **Tasa VE** (en adelante, "la Aplicación", "nosotros" o "nuestro") respeta y protege la privacidad de sus usuarios. Esta Política de Privacidad describe cómo se recopila, utiliza y protege la información al interactuar con nuestra aplicación móvil distribuida a través de Google Play Store.
-
----
-
-## 1. Responsable del Tratamiento
-* **Aplicación:** Tasa VE
-* **Identificador de Paquete:** `com.julcer26.tasave`
-* **Contacto de soporte y privacidad:** julioingdlop@gmail.com
-* **Desarrollador:** Julcer26
+La aplicación móvil **Tasa VE** respeta y protege la privacidad de sus usuarios. Esta Política de Privacidad describe de forma transparente cómo se obtienen los datos de referencia, qué información se procesa localmente en su dispositivo, qué métricas anónimas de uso empleamos con Google Firebase Analytics para mejorar la app y cuáles son sus derechos conforme a las políticas de Google Play.
 
 ---
 
-## 2. Información que recopila la Aplicación
-
-### A. Información Personal Directa
-**Tasa VE NO recopila, no solicita ni almacena información personal identificable (PII)** como nombres, correos electrónicos, números telefónicos, contraseñas, documentos de identidad ni ubicaciones físicas del usuario. No se requiere registro de cuenta para utilizar la aplicación.
-
-### B. Datos Almacenados Localmente en el Dispositivo
-Para brindar una experiencia óptima y permitir el funcionamiento fuera de línea (*Modo Offline*), la aplicación almacena información de manera estrictamente local en la memoria de su dispositivo:
-1. **Historial de Conversiones:** Cantidades convertidas, monedas seleccionadas y fecha de cálculo (mediante base de datos SQLite local SQLite/Room).
-2. **Caché de Tasas de Cambio:** Último valor registrado del Dólar BCV, Euro BCV y USDT paralelo para operar sin conexión a Internet.
-3. **Preferencias Visuales:** Configuración del tema (Modo Oscuro / Modo Claro).
-4. **Estado de Compra Pro:** Indicador local de desbloqueo de la versión sin anuncios.
-
-*Estos datos permanecen exclusivamente en su dispositivo móvil y pueden ser borrados en cualquier momento mediante la opción "Borrar historial" dentro de la app o borrando los datos de la app en los ajustes de Android.*
-
-### C. Información Recopilada por Servicios de Terceros
-La aplicación integra servicios oficiales de Google para su funcionamiento, publicidad y monetización:
-
-#### 1. Google Mobile Ads (AdMob)
-La versión gratuita de la aplicación muestra anuncios en formato de banner no invasivo. AdMob puede recopilar y procesar:
-- Identificadores publicitarios del dispositivo (Google Advertising ID - GAID).
-- Dirección IP (anonimizada para geolocalización aproximada de país/región).
-- Datos técnicos de diagnóstico, modelo de dispositivo y operadora.
-- Métricas de interacción con anuncios para prevención de fraudes y entrega de publicidad relevante.
-- Política de Privacidad de Google: [https://policies.google.com/technologies/ads](https://policies.google.com/technologies/ads)
-
-#### 2. Google Play In-App Billing (Facturación de Google Play)
-Si el usuario adquiere la compra única de **Tasa VE Pro ($2.99 USD)** para eliminar la publicidad:
-- Las transacciones financieras son procesadas de forma 100% segura por Google Play.
-- Nosotros nunca tenemos acceso a los números de tarjetas de crédito, cuentas bancarias ni credenciales de pago.
-- Recibimos únicamente un token técnico y anónimo de confirmación emitido por Google Play para verificar y validar la compra.
-- Términos del Servicio de Google Play: [https://play.google.com/intl/es_es/about/play-terms/](https://play.google.com/intl/es_es/about/play-terms/)
-
-#### 3. API de Cotizaciones Públicas (DolarAPI / BCV)
-La aplicación realiza peticiones HTTP a endpoints públicos de consulta de tasas de cambio (`ve.dolarapi.com`) para obtener los promedios oficiales y de mercado. Estas consultas no envían datos de identidad del usuario.
+## 1. Origen y actualización de los datos
+- **Fuentes públicas de referencia:** Las cotizaciones mostradas en la aplicación (Dólar BCV hoy/mañana, Euro BCV hoy/mañana, USDT paralelo, Peso Colombiano COP/TRM y series históricas para el Calendario Bancario) se obtienen mediante consultas automatizadas a APIs públicas (`ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com` y `open.er-api.com`), las cuales reflejan valores informativos del Banco Central de Venezuela (BCV), TRM Colombia y promedios de mercado.
+- **Sin afiliación oficial:** Tasa VE es una herramienta independiente de cálculo matemático. **No está afiliada, autorizada, patrocinada ni vinculada** con el Banco Central de Venezuela (BCV), el SENIAT, el Banco de la República de Colombia ni ninguna institución bancaria, billetera digital o casa de cambio.
+- **Caché local:** Para permitir el funcionamiento sin conexión (*Modo Offline*) y actualizar el Widget de pantalla de inicio, la aplicación almacena localmente las últimas tasas consultadas junto con un historial técnico de variaciones.
 
 ---
 
-## 3. Uso de la Información
-La información técnica recopilada se utiliza exclusivamente para:
-1. Calcular conversiones de divisas con tasas actualizadas y permitir consulta offline.
-2. Desplegar anuncios publicitarios en la versión gratuita a través de Google AdMob.
-3. Validar y respetar la compra de la versión "Tasa VE Pro" para desactivar permanentemente la publicidad.
-4. Mejorar la estabilidad, detectar fallos técnicos y optimizar el rendimiento.
+## 2. Información que recopilamos y estadísticas anónimas
+
+### A. Ausencia de cuentas y recopilación en servidores propios
+**Tasa VE NO recopila, no solicita ni almacena en servidores propios** cuentas de usuario, contraseñas, correos electrónicos, ubicaciones GPS ni datos personales de identidad. No se requiere registro para utilizar la aplicación.
+
+### B. Estadísticas anónimas de uso (Google Firebase Analytics)
+Para conocer de forma agregada qué herramientas se usan más (por ejemplo, si los usuarios abren más el Conversor, COP de frontera, el Calendario Bancario o las calculadoras de **Útiles**) y priorizar mejoras reales, la aplicación integra **Google Firebase Analytics** bajo un esquema estrictamente anónimo:
+- **Qué registramos:** Únicamente nombres genéricos de eventos de navegación (`tasave_tab_opened`, `tasave_util_opened`, `tasave_rate_selected`, `tasave_calendar_opened`, `tasave_calendar_day_selected`, `tasave_scanner_opened`, `tasave_action`).
+- **Qué NUNCA registramos ni enviamos:** Nunca enviamos montos convertidos, totales de carrito, tasas personalizadas, nombres de clientes, cédulas/RIF, teléfonos, correos, cuentas bancarias, fotografías ni perfiles de Pago Móvil/Zelle/Binance.
+
+### C. Datos almacenados exclusivamente de forma local en su dispositivo
+Para ofrecer las herramientas de cálculo, carrito y cobros, la aplicación guarda en la memoria interna protegida (*sandbox*) de su teléfono Android (SQLite/Room y `SharedPreferences`):
+1. **Historial de conversiones:** Montos calculados, divisas y fecha local.
+2. **Carrito de compras y preferencias fiscales:** Productos agregados o editados, cantidades, precios unitarios y preferencia de cálculo referencial de IVA (16 %) e IGTF (3 %).
+3. **Perfiles opcionales de cobro (Módulo Cobros — 1 gratis / ilimitados en Ultra):** Si el usuario decide guardar uno o más perfiles de **Pago Móvil**, **Cuenta Bancaria**, **Zelle** o **Binance Pay** para armar resúmenes de cobro, puede ingresar voluntariamente un alias, banco, Cédula/RIF, número de teléfono, número de cuenta (20 dígitos), nombre del titular o correo/ID digital.
+   - Estos datos **permanecen únicamente en su dispositivo** y **nunca se transmiten a servidores del desarrollador ni a Firebase Analytics**.
+   - Se excluyen explícitamente del respaldo automático en la nube de Android (`android:fullBackupContent` / `dataExtractionRules`) para mayor resguardo.
+4. **Caché temporal de tarjetas visuales (PNG):** Cuando el usuario genera una imagen para compartir un cálculo o resumen de cobro, el archivo PNG temporal se crea únicamente en el caché privado local (`shared_cards/`) expuesto de forma segura mediante `FileProvider`.
+5. **Preferencias de interfaz y cuotas diarias:** Tema visual (Oscuro/Claro), saldo diario de escaneos OCR, notificación fija de tasas y estado de la suscripción Ultra.
 
 ---
 
-## 4. Transferencia y Divulgación de Datos a Terceros
-Nosotros **NO vendemos, comercializamos, alquilamos ni transferimos** datos a terceros con fines de lucro o comercialización directa. Únicamente se comparten datos técnicos con Google (AdMob y Google Play Billing) según lo descrito en la sección 2.C.
+## 3. Uso de la información
+La información procesada local y técnicamente se utiliza exclusivamente para:
+1. Realizar conversiones de divisas (incluyendo BCV Mañana, Peso Colombiano COP de frontera y ajustes porcentuales), consultar feriados en el Calendario Bancario, calcular herramientas de **Útiles** (*¿Con qué pago?* y *Dividir cuenta*), estimar IVA/IGTF y calcular vueltos en pagos mixtos.
+2. Formatear resúmenes y tarjetas visuales PNG de cobro o cálculo que el usuario **elige explícitamente** copiar al portapapeles o compartir mediante otras aplicaciones (como WhatsApp).
+3. Actualizar el Widget de pantalla de inicio, mantener la **notificación fija opcional de tasas (Ultra)** y abrir el **Conversor Flotante** desde la **Barra Rápida** o la notificación fija.
+4. Medir de manera agregada y anónima qué pantallas se usan más, mostrar publicidad no invasiva en la versión gratuita y validar el acceso a **Tasa VE Ultra**.
 
 ---
 
-## 5. Privacidad de Menores (COPPA / GDPR-K)
-Tasa VE no está dirigida a niños menores de 13 años (o 16 años en la Unión Europea). No recopilamos conscientemente información de menores de edad. Si un padre o tutor tiene conocimiento de que su hijo nos ha proporcionado información, puede contactarnos a través de nuestro correo electrónico para gestionarlo.
+## 4. Enlaces externos y compartición nativa
+- Cuando el usuario pulsa **"Enviar por WhatsApp"** o **"Tarjeta (IMG)"** en la calculadora, en **Útiles** o en **Cobros**, o abre enlaces de soporte/políticas/Google Play, Android transfiere la acción fuera de Tasa VE hacia la aplicación de destino elegida por el usuario, la cual se rige por sus propias políticas de privacidad. Las imágenes PNG generadas en `shared_cards/` nunca se suben a servidores del desarrollador.
+- Las consultas a `ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com` y `open.er-api.com` se realizan mediante HTTPS para descargar cotizaciones públicas, sin enviar datos de identidad ni perfiles de cobro.
 
 ---
 
-## 6. Seguridad de la Información
-Aplicamos protocolos de seguridad estándar de la industria:
-- Comunicación cifrada mediante protocolo HTTPS (SSL/TLS) para todas las consultas de red.
-- Almacenamiento seguro en entornos de aplicación en *sandbox* provistos por el sistema operativo Android.
+## 5. Seguridad de los datos
+- **Cifrado en tránsito:** Todas las consultas de red hacia APIs de tasas, Firebase Analytics y servicios de Google se realizan exclusivamente mediante protocolo cifrado **HTTPS (SSL/TLS)**.
+- **Procesamiento en el dispositivo:** El reconocimiento de precios por cámara (OCR), el conversor flotante, la generación de tarjetas PNG y la barra fija se ejecutan localmente en el dispositivo sin leer chats ni pantallas automáticamente.
+- **Aislamiento y exclusión de backup en la nube:** Los datos locales residen en el almacenamiento privado de la app en Android y los perfiles opcionales de Pago Móvil, cuentas bancarias, Zelle y Binance Pay están excluidos de la copia de seguridad automática en la nube.
+- **Control y borrado:** Puede eliminar todo su historial, carrito o métodos de cobro en cualquier momento dentro de la app o desde *Ajustes de Android > Aplicaciones > Tasa VE > Almacenamiento*.
 
 ---
 
-## 7. Derechos del Usuario (GDPR / CCPA)
-Los usuarios tienen derecho a:
-- Eliminar en cualquier momento su historial de conversiones desde la interfaz de la app o borrando los datos de almacenamiento en el menú de Aplicaciones de Android.
-- Restablecer o inhabilitar el identificador de publicidad personalizada desde: *Ajustes de Android > Google > Anuncios > Restablecer ID de publicidad*.
-- Restaurar sus compras previas de Tasa VE Pro en cualquier dispositivo asociado a su cuenta de Google.
+## 6. Publicidad, anuncios bonificados y suscripción Ultra
+- **Versión gratuita (AdMob):** Incluye calculadora exacta multi-tasa (Dólar BCV, Euro BCV, USDT y COP de frontera), BCV Mañana, Calendario bancario, **botón en Barra Rápida** para abrir la app, las herramientas de **Útiles** (*¿Con qué pago?* con descuento libre y *Dividir cuenta* en 5 monedas), Pago Mixto, Tarjeta PNG, Widget Tasas en Vivo, hasta **5 productos en carrito**, **1 perfil de cobro** y **3 escaneos OCR diarios**. Muestra **banners adaptativos**, **anuncios intersticiales ocasionales tras acciones clave** (nunca al abrir la app y con pausas mínimas de control) y ofrece dos opciones **voluntarias** de anuncio bonificado (*Rewarded Ad*): desbloquear **+5 escaneos adicionales** o activar un **pase de 12 horas sin banners ni intersticiales**.
+- **Tasa VE Ultra (Suscripción mensual $0.99 USD / anual $7.99 USD):** Elimina todos los anuncios (banners, intersticiales y bonificados) y desbloquea de forma ilimitada todas las funciones: **Notificación fija opcional de tasas con copia rápida y Pago Móvil**, **conversor flotante multi-tasa (EUR, USDT, COP) + copia con Pago Móvil desde la Barra Rápida o notificación fija**, **escáner de cámara ilimitado**, **Carrito ilimitado + cálculo referencial de IVA/IGTF**, **perfiles de cobro ilimitados**, **logo propio en Tarjetas PNG** y **Widget Calculadora y Cobros Ultra**.
+- **Renovación automática y cancelación:** Las suscripciones se renuevan automáticamente a través de **Google Play** al finalizar cada período salvo cancelación previa con al menos 24 horas de antelación desde *Google Play Store > Suscripciones*.
+- **Seguridad de pagos:** Todas las transacciones son procesadas exclusivamente por **Google Play Billing**; el desarrollador nunca accede a tarjetas, cuentas ni credenciales financieras.
 
 ---
 
-## 8. Modificaciones a esta Política
-Nos reservamos el derecho de actualizar esta Política de Privacidad para reflejar cambios legales, técnicos o funcionales. Cualquier cambio será publicado en este documento y reflejado dentro de la aplicación móvil.
+## 7. Permisos del sistema
+Tasa VE solicita únicamente los permisos estrictamente necesarios:
+1. **Cámara (`CAMERA`):** Opcional y solo en primer plano cuando el usuario abre el escáner de precios. El OCR se ejecuta localmente en el dispositivo; **no grabamos video ni almacenamos ni subimos fotografías a servidores**.
+2. **Notificaciones (`POST_NOTIFICATIONS`):** Opcional en Android 13+ para usuarios que activen la barra fija opcional de tasas (sin servicio continuo ni sonido).
+3. **Barra Rápida (`BIND_QUICK_SETTINGS_TILE`):** Integración estándar de Android que solo opera cuando el usuario pulsa el botón en su panel rápido.
+4. **Internet y estado de red (`INTERNET`, `ACCESS_NETWORK_STATE`):** Necesarios para consultar cotizaciones públicas, enviar métricas anónimas agregadas, mostrar anuncios en la versión gratuita y validar suscripciones en Google Play.
+5. **Facturación de Google Play (`com.android.vending.BILLING`):** Necesario para gestionar la suscripción Tasa VE Ultra y la restauración de compras.
 
 ---
 
-## 9. Contacto
-Si tiene dudas, comentarios o solicitudes relativas a esta Política de Privacidad, por favor comuníquese a:
-* **Correo electrónico:** julioingdlop@gmail.com
-* **Repositorio oficial:** https://github.com/Julcer26/TasaVE
+## 8. Uso de tecnologías de terceros
+La aplicación integra los siguientes SDKs y servicios oficiales certificados:
+- **Google Firebase Analytics:** Telemetría anónima y agregada de interacciones de navegación (sin datos personales ni montos financieros). ([Política de Privacidad de Google / Firebase](https://firebase.google.com/support/privacy))
+- **Google Mobile Ads (AdMob):** Entrega de banners adaptativos, intersticiales ocasionales y anuncios bonificados opcionales en la versión gratuita y prevención de fraude publicitario; puede procesar el ID de publicidad de Android (GAID), dirección IP anonimizada y diagnósticos técnicos. ([Política de Google Ads](https://policies.google.com/technologies/ads))
+- **Google Play Billing Library:** Procesamiento seguro de compras dentro de la app y suscripciones mediante tokens anónimos de confirmación. ([Términos de Google Play](https://play.google.com/intl/es_es/about/play-terms/))
+- **Google ML Kit (Text Recognition):** Reconocimiento óptico de caracteres (OCR) ejecutado **100 % en el dispositivo** para leer precios con la cámara. El SDK puede intercambiar métricas técnicas mínimas de diagnóstico o descarga de modelos con Google.
+- **APIs Públicas de Tasas (`ve.dolarapi.com`, `rates.dolarvzla.com`, `co.dolarapi.com`, `open.er-api.com`):** Fuentes públicas de consulta de cotizaciones e históricos de referencia.
+
+---
+
+## 9. Cambios en esta política
+Podemos actualizar esta Política de Privacidad para reflejar mejoras técnicas, nuevas funcionalidades o requisitos normativos de Google Play. La fecha de *"Última actualización"* al inicio del documento indicará siempre la versión vigente, y los cambios relevantes se reflejarán tanto en esta página como dentro de la aplicación.
+
+*(Privacidad de menores: Tasa VE no está dirigida a menores de 13 años —o 16 años en el EEE— y no recopila conscientemente datos de menores).*
+
+---
+
+## 10. Contacto
+Si tiene preguntas, solicitudes de privacidad o soporte técnico, puede comunicarse directamente con el equipo de Tasa VE:
+- **Correo electrónico:** soporte@tasave.net
+- **Sitio web oficial:** https://tasave.net

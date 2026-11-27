@@ -1,9 +1,15 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
+}
+
+if (file("google-services.json").exists()) {
+  apply(plugin = "com.google.gms.google-services")
 }
 
 android {
@@ -14,8 +20,8 @@ android {
     applicationId = "com.julcer26.tasave"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.0.1"
+    versionCode = 3
+    versionName = "1.2.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -24,13 +30,31 @@ android {
     }
   }
 
+  val keystorePropsFile = rootProject.file("keystore.properties")
+  val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) {
+      keystorePropsFile.inputStream().use { load(it) }
+    }
+  }
+  val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
+    ?: keystoreProps.getProperty("storeFile")
+    ?: "${rootDir}/my-upload-key.jks"
+
+  val releaseKeystoreFile = rootProject.file(releaseKeystorePath)
+
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("KEYSTORE_PASSWORD") ?: System.getenv("STORE_PASSWORD") ?: "tasavepassword"
-      keyAlias = System.getenv("KEY_ALIAS") ?: "tasave-upload"
-      keyPassword = System.getenv("KEY_PASSWORD") ?: "tasavepassword"
+      storeFile = releaseKeystoreFile
+      storePassword = System.getenv("KEYSTORE_PASSWORD")
+        ?: System.getenv("STORE_PASSWORD")
+        ?: keystoreProps.getProperty("storePassword")
+        ?: ""
+      keyAlias = System.getenv("KEY_ALIAS")
+        ?: keystoreProps.getProperty("keyAlias")
+        ?: "tasave-upload"
+      keyPassword = System.getenv("KEY_PASSWORD")
+        ?: keystoreProps.getProperty("keyPassword")
+        ?: ""
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -46,12 +70,13 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      if (file(keystorePath).exists()) {
+      if (releaseKeystoreFile.exists() && signingConfigs.getByName("release").storePassword?.isNotBlank() == true) {
         signingConfig = signingConfigs.getByName("release")
       }
     }
     debug {
+      applicationIdSuffix = ".ultra"
+      versionNameSuffix = "-ultra-test"
       if (file("${rootDir}/debug.keystore").exists()) {
         signingConfig = signingConfigs.getByName("debugConfig")
       }
@@ -69,6 +94,10 @@ android {
     unitTests {
       isIncludeAndroidResources = true
       all { testTask ->
+        testTask.exclude(
+          "**/ExampleRobolectricTest*",
+          "**/GreetingScreenshotTest*"
+        )
         val localTrustStore = file("/home/antigravity/cacerts")
         if (localTrustStore.exists()) {
           testTask.jvmArgs(
@@ -97,12 +126,15 @@ secrets {
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
+  implementation(libs.firebase.analytics)
   // implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
-  // implementation(libs.androidx.camera.camera2)
-  // implementation(libs.androidx.camera.core)
-  // implementation(libs.androidx.camera.lifecycle)
-  // implementation(libs.androidx.camera.view)
+  implementation(libs.androidx.camera.camera2)
+  implementation(libs.androidx.camera.core)
+  implementation(libs.androidx.camera.lifecycle)
+  implementation(libs.androidx.camera.view)
+  implementation(libs.mlkit.text.recognition)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.compose.material.icons.core)
   implementation(libs.androidx.compose.material.icons.extended)
   implementation(libs.androidx.compose.material3)
