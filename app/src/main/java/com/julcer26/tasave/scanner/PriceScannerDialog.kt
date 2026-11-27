@@ -63,6 +63,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.julcer26.tasave.data.RateInfo
 import com.julcer26.tasave.ui.VeNumberFormat
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -308,11 +309,28 @@ fun PriceScannerDialog(
             } else {
                 // Active CameraX Preview + ML Kit OCR (strictly inside reticle, off-main-thread pipeline)
                 val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+                val safeCameraExecutor = remember(cameraExecutor) {
+                    Executor { command ->
+                        if (!cameraExecutor.isShutdown) {
+                            runCatching { cameraExecutor.execute(command) }
+                        }
+                    }
+                }
+                val directExecutor = remember { Executor { command -> command.run() } }
                 val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
                 val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+                val recognizerClosed = remember { AtomicBoolean(false) }
+                val closeRecognizerOnce = remember(textRecognizer) {
+                    {
+                        if (recognizerClosed.compareAndSet(false, true)) {
+                            runCatching { textRecognizer.close() }
+                        }
+                    }
+                }
                 var cameraRef by remember { mutableStateOf<Camera?>(null) }
                 var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
                 var cameraProviderRef by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+                var imageAnalysisRef by remember { mutableStateOf<ImageAnalysis?>(null) }
                 val lastAnalyzedAt = remember { AtomicLong(0L) }
                 val isProcessingFrame = remember { AtomicBoolean(false) }
                 val isDisposed = remember { AtomicBoolean(false) }
@@ -349,12 +367,16 @@ fun PriceScannerDialog(
                 DisposableEffect(Unit) {
                     onDispose {
                         isDisposed.set(true)
-                        try {
-                            cameraProviderRef?.unbindAll()
-                        } catch (_: Exception) {
+                        runCatching { imageAnalysisRef?.clearAnalyzer() }
+                        runCatching { cameraProviderRef?.unbindAll() }
+                        if (!isProcessingFrame.get()) {
+                            safeCameraExecutor.execute {
+                                if (!isProcessingFrame.get()) {
+                                    closeRecognizerOnce()
+                                }
+                            }
                         }
-                        runCatching { textRecognizer.close() }
-                        cameraExecutor.shutdown()
+                        runCatching { cameraExecutor.shutdown() }
                     }
                 }
 
@@ -402,104 +424,129 @@ fun PriceScannerDialog(
                                     .setResolutionSelector(analysisResolution)
                                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                                     .build()
+                                imageAnalysisRef = imageAnalysis
 
-                                imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                                imageAnalysis.setAnalyzer(safeCameraExecutor) { imageProxy ->
                                     val now = System.currentTimeMillis()
                                     if (isDisposed.get() ||
+                                        recognizerClosed.get() ||
                                         isPausedState ||
                                         now - lastAnalyzedAt.get() < 200L ||
                                         !isProcessingFrame.compareAndSet(false, true)
                                     ) {
-                                        imageProxy.close()
+                                        runCatching { imageProxy.close() }
                                         return@setAnalyzer
                                     }
 
-                                    val mediaImage = imageProxy.image
-                                    if (mediaImage == null) {
-                                        isProcessingFrame.set(false)
-                                        imageProxy.close()
-                                        return@setAnalyzer
-                                    }
+                                    try {
+                                        if (isDisposed.get() || recognizerClosed.get()) {
+                                            isProcessingFrame.set(false)
+                                            runCatching { imageProxy.close() }
+                                            if (isDisposed.get()) closeRecognizerOnce()
+                                            return@setAnalyzer
+                                        }
 
-                                    lastAnalyzedAt.set(now)
-                                    val rotation = imageProxy.imageInfo.rotationDegrees
-                                    val rotatedImgW = if (rotation == 90 || rotation == 270) {
-                                        imageProxy.height.toFloat()
-                                    } else {
-                                        imageProxy.width.toFloat()
-                                    }
-                                    val rotatedImgH = if (rotation == 90 || rotation == 270) {
-                                        imageProxy.width.toFloat()
-                                    } else {
-                                        imageProxy.height.toFloat()
-                                    }
+                                        val mediaImage = imageProxy.image
+                                        if (mediaImage == null) {
+                                            isProcessingFrame.set(false)
+                                            runCatching { imageProxy.close() }
+                                            return@setAnalyzer
+                                        }
 
-                                    val roiInImage = computeReticleRectInImage(
-                                        previewBounds = previewBoundsState,
-                                        reticleBounds = reticleBoundsState,
-                                        imgWidth = rotatedImgW,
-                                        imgHeight = rotatedImgH
-                                    )
+                                        lastAnalyzedAt.set(now)
+                                        val rotation = imageProxy.imageInfo.rotationDegrees
+                                        val rotatedImgW = if (rotation == 90 || rotation == 270) {
+                                            imageProxy.height.toFloat()
+                                        } else {
+                                            imageProxy.width.toFloat()
+                                        }
+                                        val rotatedImgH = if (rotation == 90 || rotation == 270) {
+                                            imageProxy.width.toFloat()
+                                        } else {
+                                            imageProxy.height.toFloat()
+                                        }
 
-                                    val image = InputImage.fromMediaImage(mediaImage, rotation)
+                                        val roiInImage = computeReticleRectInImage(
+                                            previewBounds = previewBoundsState,
+                                            reticleBounds = reticleBoundsState,
+                                            imgWidth = rotatedImgW,
+                                            imgHeight = rotatedImgH
+                                        )
 
-                                    textRecognizer.process(image)
-                                        .addOnSuccessListener(cameraExecutor) { visionText ->
-                                            if (isDisposed.get() || isPausedState) return@addOnSuccessListener
-                                            val textInsideBox = if (roiInImage != null) {
-                                                val padX = roiInImage.width() * 0.06f
-                                                val padY = roiInImage.height() * 0.08f
-                                                val expandedRoi = RectF(
-                                                    (roiInImage.left - padX).coerceAtLeast(0f),
-                                                    (roiInImage.top - padY).coerceAtLeast(0f),
-                                                    (roiInImage.right + padX).coerceAtMost(rotatedImgW),
-                                                    (roiInImage.bottom + padY).coerceAtMost(rotatedImgH)
-                                                )
-                                                val matchingLines = visionText.textBlocks
-                                                    .flatMap { it.lines }
-                                                    .filter { line ->
-                                                        val box = line.boundingBox ?: return@filter false
-                                                        expandedRoi.contains(box.exactCenterX(), box.exactCenterY())
+                                        val image = InputImage.fromMediaImage(mediaImage, rotation)
+
+                                        textRecognizer.process(image)
+                                            .addOnSuccessListener(safeCameraExecutor) { visionText ->
+                                                if (isDisposed.get() || isPausedState) return@addOnSuccessListener
+                                                try {
+                                                    val textInsideBox = if (roiInImage != null) {
+                                                        val padX = roiInImage.width() * 0.06f
+                                                        val padY = roiInImage.height() * 0.08f
+                                                        val expandedRoi = RectF(
+                                                            (roiInImage.left - padX).coerceAtLeast(0f),
+                                                            (roiInImage.top - padY).coerceAtLeast(0f),
+                                                            (roiInImage.right + padX).coerceAtMost(rotatedImgW),
+                                                            (roiInImage.bottom + padY).coerceAtMost(rotatedImgH)
+                                                        )
+                                                        val matchingLines = visionText.textBlocks
+                                                            .flatMap { it.lines }
+                                                            .filter { line ->
+                                                                val box = line.boundingBox ?: return@filter false
+                                                                expandedRoi.contains(box.exactCenterX(), box.exactCenterY())
+                                                            }
+                                                        val maxLineH = matchingLines.maxOfOrNull { it.boundingBox?.height() ?: 0 } ?: 0
+                                                        // Prioritize visually larger price text over fine print (weights, SKUs)
+                                                        val orderedLines = if (maxLineH > 0) {
+                                                            matchingLines.sortedByDescending { line ->
+                                                                val h = line.boundingBox?.height() ?: 0
+                                                                when {
+                                                                    h >= maxLineH * 0.72f -> 2
+                                                                    h >= maxLineH * 0.48f -> 1
+                                                                    else -> 0
+                                                                }
+                                                            }
+                                                        } else {
+                                                            matchingLines
+                                                        }
+                                                        orderedLines.joinToString("\n") { it.text }
+                                                    } else {
+                                                        visionText.text
                                                     }
-                                                val maxLineH = matchingLines.maxOfOrNull { it.boundingBox?.height() ?: 0 } ?: 0
-                                                // Prioritize visually larger price text over fine print (weights, SKUs)
-                                                val orderedLines = if (maxLineH > 0) {
-                                                    matchingLines.sortedByDescending { line ->
-                                                        val h = line.boundingBox?.height() ?: 0
-                                                        when {
-                                                            h >= maxLineH * 0.72f -> 2
-                                                            h >= maxLineH * 0.48f -> 1
-                                                            else -> 0
+
+                                                    val extracted = PriceScannerParser.extractPrices(textInsideBox)
+                                                    val state = stabilizer.onFrame(extracted, System.currentTimeMillis())
+                                                    // Only push to Compose main thread when the stabilized result actually changes
+                                                    if (lastEmittedStateRef.getAndSet(state) != state) {
+                                                        mainExecutor.execute {
+                                                            if (!isDisposed.get() && !isPausedState) {
+                                                                detectedPrices = state.detectedPrices
+                                                                selectedPrice = state.selectedPrice
+                                                                isUserPinned = state.isUserPinned
+                                                            }
                                                         }
                                                     }
-                                                } else {
-                                                    matchingLines
-                                                }
-                                                orderedLines.joinToString("\n") { it.text }
-                                            } else {
-                                                visionText.text
-                                            }
-
-                                            val extracted = PriceScannerParser.extractPrices(textInsideBox)
-                                            val state = stabilizer.onFrame(extracted, System.currentTimeMillis())
-                                            // Only push to Compose main thread when the stabilized result actually changes
-                                            if (lastEmittedStateRef.getAndSet(state) != state) {
-                                                mainExecutor.execute {
-                                                    if (!isDisposed.get() && !isPausedState) {
-                                                        detectedPrices = state.detectedPrices
-                                                        selectedPrice = state.selectedPrice
-                                                        isUserPinned = state.isUserPinned
-                                                    }
+                                                } catch (t: Throwable) {
+                                                    Log.w("PriceScanner", "OCR parse error: ${t.message}")
                                                 }
                                             }
+                                            .addOnFailureListener(safeCameraExecutor) { e ->
+                                                Log.w("PriceScanner", "ML Kit error: ${e.message}")
+                                            }
+                                            .addOnCompleteListener(directExecutor) {
+                                                isProcessingFrame.set(false)
+                                                runCatching { imageProxy.close() }
+                                                if (isDisposed.get()) {
+                                                    closeRecognizerOnce()
+                                                }
+                                            }
+                                    } catch (t: Throwable) {
+                                        Log.w("PriceScanner", "Frame analysis error: ${t.message}")
+                                        isProcessingFrame.set(false)
+                                        runCatching { imageProxy.close() }
+                                        if (isDisposed.get()) {
+                                            closeRecognizerOnce()
                                         }
-                                        .addOnFailureListener(cameraExecutor) { e ->
-                                            Log.w("PriceScanner", "ML Kit error: ${e.message}")
-                                        }
-                                        .addOnCompleteListener(cameraExecutor) {
-                                            isProcessingFrame.set(false)
-                                            imageProxy.close()
-                                        }
+                                    }
                                 }
 
                                 cameraProvider.unbindAll()
