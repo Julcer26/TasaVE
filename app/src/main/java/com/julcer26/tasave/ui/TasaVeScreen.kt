@@ -437,53 +437,40 @@ fun TasaVeScreen(
                 Triple(AppTab.MARKET, Icons.Default.GridView, AppTab.MARKET.label),
                 Triple(AppTab.CHECKOUT, Icons.Default.PointOfSale, AppTab.CHECKOUT.label)
             )
-            val dockContainerColor = if (isDark) Color(0xEB0D131D) else Color(0xFAFFFFFF)
-            val dockBorderColor = if (isDark) Color(0x3834D399) else Color(0x1E0F172A)
+            val dockContainerColor = if (isDark) Color(0xF50D131D) else Color(0xFFFFFFFF)
+            val dockBorderColor = if (isDark) Color(0x18FFFFFF) else Color(0x1A0F172A)
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(28.dp),
+                    shape = RoundedCornerShape(24.dp),
                     color = dockContainerColor,
                     border = BorderStroke(1.dp, dockBorderColor),
-                    shadowElevation = if (isDark) 16.dp else 12.dp,
+                    shadowElevation = if (isDark) 18.dp else 10.dp,
                     tonalElevation = 0.dp
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 6.dp, vertical = 6.dp),
+                            .padding(horizontal = 5.dp, vertical = 5.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         navItems.forEach { (tab, icon, label) ->
                             val selected = currentTab == tab
                             val pillBg by animateColorAsState(
-                                targetValue = if (selected) {
-                                    if (isDark) Color(0x2B10B981) else Color(0x1F059669)
-                                } else {
-                                    Color.Transparent
-                                },
+                                targetValue = if (selected) Color(0xFF10B981) else Color.Transparent,
                                 animationSpec = tween(durationMillis = 200),
                                 label = "floatingNavPillBg"
                             )
-                            val pillBorder = if (selected) {
-                                if (isDark) Color(0x5234D399) else Color(0x40059669)
-                            } else {
-                                Color.Transparent
-                            }
                             val itemTint by animateColorAsState(
-                                targetValue = if (selected) {
-                                    if (isDark) Color(0xFF34D399) else Color(0xFF047857)
-                                } else {
-                                    textSecondary
-                                },
+                                targetValue = if (selected) Color(0xFF04130D) else textSecondary,
                                 animationSpec = tween(durationMillis = 200),
                                 label = "floatingNavItemTint"
                             )
@@ -491,9 +478,8 @@ fun TasaVeScreen(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(22.dp))
+                                    .clip(RoundedCornerShape(19.dp))
                                     .background(pillBg)
-                                    .border(1.dp, pillBorder, RoundedCornerShape(22.dp))
                                     .clickable {
                                         if (currentTab != tab) {
                                             currentTab = tab
@@ -507,19 +493,19 @@ fun TasaVeScreen(
                                             }
                                         }
                                     }
-                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                    .padding(vertical = 7.dp, horizontal = 4.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     if (tab == AppTab.CART && cartItems.isNotEmpty()) {
                                         BadgedBox(
                                             badge = {
                                                 Badge(
-                                                    containerColor = Color(0xFF10B981),
-                                                    contentColor = Color.Black
+                                                    containerColor = if (selected) Color(0xFF04130D) else Color(0xFF10B981),
+                                                    contentColor = if (selected) Color(0xFF34D399) else Color(0xFF04130D)
                                                 ) {
                                                     Text(
                                                         text = "${cartItems.sumOf { it.quantity }}",
@@ -533,7 +519,7 @@ fun TasaVeScreen(
                                                 imageVector = icon,
                                                 contentDescription = label,
                                                 tint = itemTint,
-                                                modifier = Modifier.size(20.dp)
+                                                modifier = Modifier.size(19.dp)
                                             )
                                         }
                                     } else {
@@ -541,13 +527,13 @@ fun TasaVeScreen(
                                             imageVector = icon,
                                             contentDescription = label,
                                             tint = itemTint,
-                                            modifier = Modifier.size(20.dp)
+                                            modifier = Modifier.size(19.dp)
                                         )
                                     }
                                     Text(
                                         text = label,
                                         fontSize = 10.5.sp,
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                        fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
                                         color = itemTint,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
